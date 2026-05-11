@@ -43,8 +43,6 @@ export default function Header() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const otherLocale = locale === "ar" ? "en" : "ar";
-  const switchHref = pathname?.replace(`/${locale}`, `/${otherLocale}`) || `/${otherLocale}`;
 
   return (
     <>
@@ -82,12 +80,30 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              href={switchHref}
-              className="hidden md:inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs uppercase tracking-widest text-white/70 hover:border-brand-gold/60 hover:text-brand-goldLight transition-colors"
-            >
-              {t("switchLang")}
-            </Link>
+            {/* desktop flag switcher */}
+          <div className="hidden md:flex items-center gap-1.5">
+            {[
+              { loc: "ar", flag: "🇸🇦" },
+              { loc: "en", flag: "🇬🇧" },
+            ].map(({ loc, flag }) => {
+              const isActive = locale === loc;
+              const href = pathname?.replace(`/${locale}`, `/${loc}`) || `/${loc}`;
+              return (
+                <Link
+                  key={loc}
+                  href={href}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition-all duration-200 ${
+                    isActive
+                      ? "ring-2 ring-brand-gold ring-offset-1 ring-offset-brand-dark scale-110"
+                      : "opacity-50 hover:opacity-90 hover:scale-105"
+                  }`}
+                  aria-label={loc === "ar" ? "العربية" : "English"}
+                >
+                  {flag}
+                </Link>
+              );
+            })}
+          </div>
 
             <button
               type="button"
@@ -219,13 +235,29 @@ export default function Header() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.35 }}
+                  className="flex items-center justify-center gap-3"
                 >
-                  <Link
-                    href={switchHref}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-gold/25 py-3 text-xs uppercase tracking-[0.3em] text-brand-goldLight/80 hover:border-brand-gold/50 hover:text-brand-goldLight transition-colors"
-                  >
-                    {t("switchLang")}
-                  </Link>
+                  {[
+                    { loc: "ar", flag: "🇸🇦", label: "العربية" },
+                    { loc: "en", flag: "🇬🇧", label: "English" },
+                  ].map(({ loc, flag, label }) => {
+                    const isActive = locale === loc;
+                    const href = pathname?.replace(`/${locale}`, `/${loc}`) || `/${loc}`;
+                    return (
+                      <Link
+                        key={loc}
+                        href={href}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm transition-all duration-200 ${
+                          isActive
+                            ? "bg-brand-gold/10 ring-1 ring-brand-gold/50 text-brand-goldLight"
+                            : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="text-xl">{flag}</span>
+                        <span className="text-xs tracking-wide">{label}</span>
+                      </Link>
+                    );
+                  })}
                 </motion.div>
               </div>
             </motion.div>
