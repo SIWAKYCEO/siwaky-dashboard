@@ -4,12 +4,12 @@ import { motion, useInView, useMotionValue, useTransform, animate } from "framer
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 
-const STATS = [
+const STATS: { key: string; value: number; suffix: string; decimals?: number }[] = [
   { key: "ordersDelivered", value: 5000, suffix: "+" },
   { key: "rating",          value: 4.9,  suffix: "★", decimals: 1 },
   { key: "natural",         value: 100,  suffix: "%" },
   { key: "flavors",         value: 4,    suffix: "" },
-] as const;
+];
 
 function Counter({ to, decimals = 0 }: { to: number; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
