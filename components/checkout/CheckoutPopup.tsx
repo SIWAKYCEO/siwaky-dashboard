@@ -146,22 +146,27 @@ export default function CheckoutPopup({ open, onClose }: Props) {
     <AnimatePresence>
       {open && current && (
         <>
+          {/* backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm"
           />
+
+          {/* mobile: bottom sheet  |  desktop: centered modal */}
+          <div className="fixed inset-0 z-[61] flex items-end justify-center sm:items-center sm:p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 16 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-1/2 top-1/2 z-[61] w-full max-w-md -translate-x-1/2 -translate-y-1/2 px-4"
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", stiffness: 340, damping: 38 }}
+            style={{ originY: 1 }}
+            className="w-full sm:max-w-md"
           >
-            <div className="relative overflow-hidden rounded-2xl border border-brand-gold/30 bg-brand-dark shadow-goldStrong">
+            <div className="relative overflow-hidden rounded-t-3xl border border-brand-gold/30 bg-brand-dark shadow-goldStrong sm:rounded-2xl">
               <header className="flex items-center justify-between border-b border-white/5 px-5 py-4">
                 <h2 className="font-display text-xl text-white">{t("checkout.title")}</h2>
                 <button
@@ -174,7 +179,10 @@ export default function CheckoutPopup({ open, onClose }: Props) {
                 </button>
               </header>
 
-              <div className="max-h-[80vh] overflow-y-auto px-5 py-5">
+              {/* drag indicator on mobile */}
+              <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
+
+              <div className="max-h-[85vh] overflow-y-auto px-5 py-5 sm:max-h-[80vh]">
                 <div className="rounded-xl border border-white/5 bg-brand-dark2/60 p-4 text-sm">
                   <p className="text-brand-goldLight">{t("checkout.summary")}</p>
                   <div className="mt-3 flex items-center justify-between">
@@ -249,6 +257,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
               </div>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
