@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 const FLAVORS = [
-  { key: "natural", emoji: "🌿", tint: "from-emerald-700/40 to-emerald-900/20" },
-  { key: "mint",    emoji: "🌱", tint: "from-teal-700/40 to-teal-900/20" },
-  { key: "clove",   emoji: "🌶️", tint: "from-amber-800/40 to-orange-900/20" },
-  { key: "coconut", emoji: "🥥", tint: "from-stone-500/30 to-stone-800/20" },
+  { key: "natural", img: "/images/flavors/natural.png",  tint: "from-emerald-700/30 to-emerald-900/10" },
+  { key: "mint",    img: "/images/flavors/mint.png",     tint: "from-teal-700/30 to-teal-900/10" },
+  { key: "clove",   img: "/images/flavors/clove.png",    tint: "from-amber-800/30 to-orange-900/10" },
+  { key: "coconut", img: "/images/flavors/coconut.png",  tint: "from-stone-500/20 to-stone-800/10" },
 ] as const;
 
 export default function FlavorsSection() {
@@ -41,8 +41,16 @@ export default function FlavorsSection() {
                 className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${f.tint} opacity-60`}
               />
               <div className="relative">
-                <div className="text-5xl">{f.emoji}</div>
-                <h3 className="mt-5 font-display text-2xl text-white">
+                <div className="flex h-28 items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={f.img}
+                    alt=""
+                    className="h-24 w-24 object-contain drop-shadow-lg"
+                    draggable={false}
+                  />
+                </div>
+                <h3 className="mt-4 font-display text-2xl text-white">
                   {t(`items.${f.key}.name`)}
                 </h3>
                 <p className="mt-1 font-serif text-sm uppercase tracking-[0.3em] text-brand-goldLight">
