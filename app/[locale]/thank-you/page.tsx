@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 
 import ThankYouContent from "@/components/thank-you/ThankYouContent";
@@ -12,5 +13,9 @@ export async function generateMetadata({ params: { locale } }: Props): Promise<M
 
 export default function ThankYouPage({ params: { locale } }: Props) {
   unstable_setRequestLocale(locale);
-  return <ThankYouContent />;
+  return (
+    <Suspense>
+      <ThankYouContent />
+    </Suspense>
+  );
 }
