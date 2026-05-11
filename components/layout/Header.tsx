@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -10,9 +11,9 @@ import Logo from "@/components/shared/Logo";
 import { useCartStore } from "@/store/cartStore";
 
 const NAV = [
-  { href: "", key: "home" },
+  { href: "",         key: "home" },
   { href: "/product", key: "product" },
-  { href: "/about", key: "about" },
+  { href: "/about",   key: "about" },
   { href: "/contact", key: "contact" },
 ] as const;
 
@@ -33,100 +34,204 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  /* close drawer on navigation */
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  /* lock body scroll while drawer is open */
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   const otherLocale = locale === "ar" ? "en" : "ar";
   const switchHref = pathname?.replace(`/${locale}`, `/${otherLocale}`) || `/${otherLocale}`;
 
   return (
-    <header
-      className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-        scrolled ? "glass-dark" : "bg-transparent"
-      }`}
-    >
-      <div className="container-luxury flex h-16 items-center justify-between md:h-20">
-        <Link href={`/${locale}`} aria-label="SIWAKY home" className="shrink-0">
-          <Logo size="lg" />
-        </Link>
-
-        <nav className="hidden gap-8 md:flex">
-          {NAV.map((item) => {
-            const href = `/${locale}${item.href}`;
-            const active =
-              pathname === href || (item.href === "" && pathname === `/${locale}`);
-            return (
-              <Link
-                key={item.key}
-                href={href}
-                className={`relative text-base transition-colors ${
-                  active ? "text-brand-goldLight" : "text-white/80 hover:text-white"
-                }`}
-              >
-                {t(item.key)}
-                {active && (
-                  <span className="absolute -bottom-1.5 start-0 end-0 mx-auto block h-px w-8 bg-brand-gold" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={switchHref}
-            className="hidden md:inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs uppercase tracking-widest text-white/70 hover:border-brand-gold/60 hover:text-brand-goldLight transition-colors"
-          >
-            {t("switchLang")}
+    <>
+      <header
+        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+          scrolled ? "glass-dark" : "bg-transparent"
+        }`}
+      >
+        <div className="container-luxury flex h-16 items-center justify-between md:h-20">
+          <Link href={`/${locale}`} aria-label="SIWAKY home" className="shrink-0">
+            <Logo size="lg" />
           </Link>
 
-          <button
-            type="button"
-            onClick={openCart}
-            aria-label={t("cart")}
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight"
-          >
-            <ShoppingBag className="size-5" />
-            {totalQty > 0 && (
-              <span className="absolute -top-1 -end-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1 text-[11px] font-bold text-brand-dark">
-                {totalQty}
-              </span>
-            )}
-          </button>
+          {/* desktop nav */}
+          <nav className="hidden gap-8 md:flex">
+            {NAV.map((item) => {
+              const href = `/${locale}${item.href}`;
+              const active =
+                pathname === href || (item.href === "" && pathname === `/${locale}`);
+              return (
+                <Link
+                  key={item.key}
+                  href={href}
+                  className={`relative text-base transition-colors ${
+                    active ? "text-brand-goldLight" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {t(item.key)}
+                  {active && (
+                    <span className="absolute -bottom-1.5 start-0 end-0 mx-auto block h-px w-8 bg-brand-gold" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-          <button
-            type="button"
-            aria-label={t("menu")}
-            onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 md:hidden"
-          >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <div className="md:hidden glass-dark border-t border-white/5">
-          <div className="container-luxury flex flex-col py-4">
-            {NAV.map((item) => (
-              <Link
-                key={item.key}
-                href={`/${locale}${item.href}`}
-                className="py-3 text-lg text-white/90 hover:text-brand-goldLight"
-              >
-                {t(item.key)}
-              </Link>
-            ))}
+          <div className="flex items-center gap-2">
             <Link
               href={switchHref}
-              className="py-3 text-sm uppercase tracking-widest text-white/60"
+              className="hidden md:inline-flex rounded-full border border-white/10 px-3 py-1.5 text-xs uppercase tracking-widest text-white/70 hover:border-brand-gold/60 hover:text-brand-goldLight transition-colors"
             >
               {t("switchLang")}
             </Link>
+
+            <button
+              type="button"
+              onClick={openCart}
+              aria-label={t("cart")}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight"
+            >
+              <ShoppingBag className="size-5" />
+              {totalQty > 0 && (
+                <span className="absolute -top-1 -end-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-gold px-1 text-[11px] font-bold text-brand-dark">
+                  {totalQty}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              aria-label={t("menu")}
+              onClick={() => setMobileOpen((v) => !v)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight md:hidden"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {mobileOpen ? (
+                  <motion.span
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <X className="size-5" />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <Menu className="size-5" />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
           </div>
         </div>
-      )}
-    </header>
+      </header>
+
+      {/* ── Mobile drawer portal ─────────────────────────── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:hidden"
+              aria-hidden
+            />
+
+            {/* drawer panel — slides from the left */}
+            <motion.div
+              key="drawer"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 34 }}
+              className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#0a0a0a] shadow-2xl md:hidden"
+              style={{ borderRight: "1px solid rgba(212,175,55,0.15)" }}
+            >
+              {/* drawer header */}
+              <div className="flex h-16 items-center justify-between px-6 border-b border-white/5">
+                <Logo size="sm" />
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/70 hover:border-brand-gold/50 hover:text-brand-goldLight transition-colors"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* gold divider */}
+              <div className="h-px bg-gradient-to-r from-brand-gold/40 via-brand-goldLight/20 to-transparent" />
+
+              {/* nav links */}
+              <nav className="flex flex-col gap-1 px-4 py-6">
+                {NAV.map((item, i) => {
+                  const href = `/${locale}${item.href}`;
+                  const active =
+                    pathname === href || (item.href === "" && pathname === `/${locale}`);
+                  return (
+                    <motion.div
+                      key={item.key}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.08 + i * 0.06, duration: 0.3 }}
+                    >
+                      <Link
+                        href={href}
+                        className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-all ${
+                          active
+                            ? "bg-brand-gold/10 text-brand-goldLight"
+                            : "text-white/75 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {active && (
+                          <span className="inline-block h-4 w-0.5 rounded-full bg-brand-gold" />
+                        )}
+                        {t(item.key)}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </nav>
+
+              {/* spacer */}
+              <div className="flex-1" />
+
+              {/* language switcher at bottom */}
+              <div className="px-4 pb-8 pt-4 border-t border-white/5">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <Link
+                    href={switchHref}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-gold/25 py-3 text-xs uppercase tracking-[0.3em] text-brand-goldLight/80 hover:border-brand-gold/50 hover:text-brand-goldLight transition-colors"
+                  >
+                    {t("switchLang")}
+                  </Link>
+                </motion.div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
