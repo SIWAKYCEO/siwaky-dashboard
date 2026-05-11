@@ -1,0 +1,63 @@
+import "./globals.css";
+
+import type { Metadata, Viewport } from "next";
+import {
+  Cormorant_Garamond,
+  Noto_Naskh_Arabic,
+  Scheherazade_New,
+} from "next/font/google";
+
+const scheherazade = Scheherazade_New({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-scheherazade",
+  display: "swap",
+});
+
+const naskh = Noto_Naskh_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-naskh",
+  display: "swap",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cormorant",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://siwaky.com"),
+  title: { default: "SIWAKY — السواك الفاخر", template: "%s · سواكي" },
+  description: "السواك الفاخر بأربع نكهات — دفع عند الاستلام، توصيل لجميع مناطق السعودية.",
+  applicationName: "SIWAKY",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    type: "website",
+    siteName: "SIWAKY",
+    images: ["/og.jpg"],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#28282A",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${scheherazade.variable} ${naskh.variable} ${cormorant.variable}`}
+      suppressHydrationWarning
+    >
+      <body>{children}</body>
+    </html>
+  );
+}

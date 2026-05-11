@@ -1,0 +1,12 @@
+{
+  "name": "SIWAKY",
+  "short_name": "SIWAKY",
+  "description": "السواك الفاخر بأربع نكهات",
+  "start_url": "/ar",
+  "display": "standalone",
+  "background_color": "#28282A",
+  "theme_color": "#28282A",
+  "icons": [
+    { "src": "/logo.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}

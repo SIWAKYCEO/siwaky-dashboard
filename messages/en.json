@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "home":     { "title": "SIWAKY — Premium Miswak in Four Flavors", "description": "Luxury natural miswak in four flavors. Halal certified, KSA-wide delivery, cash on delivery." },
+    "product":  { "title": "SIWAKY — Order Now from 245 SAR",          "description": "Premium box of 12 miswak sticks in four natural flavors. COD, 2–4 day delivery across KSA." },
+    "about":    { "title": "About — SIWAKY by EMYRA LTD",              "description": "The story of SIWAKY: love of the Sunnah meets a passion for luxury. UK-registered company with global halal certification." },
+    "contact":  { "title": "Contact — SIWAKY",                          "description": "We answer all inquiries within 24 hours via email or WhatsApp." },
+    "thankYou": { "title": "Thank you — Order received",                "description": "Our team will call you shortly to confirm." }
+  },
+  "nav": { "home": "Home", "product": "Product", "about": "About", "contact": "Contact", "cart": "Cart", "menu": "Menu", "switchLang": "AR" },
+  "trust": {
+    "halal": "Halal certified",
+    "natural": "100% Natural",
+    "shipping": "KSA-wide delivery",
+    "refund": "Refund guarantee",
+    "cod": "Cash on delivery"
+  },
+  "hero": {
+    "headline": "The Prophet's ﷺ Sunnah — your flavor.",
+    "sub": "Luxury natural miswak in four curated flavors — in a box worthy of the Sunnah.",
+    "tagline": "Where Tradition Meets Luxury",
+    "cta": "Order now — 245 SAR",
+    "scarcity": "🔴 Only 12 boxes left!"
+  },
+  "story": {
+    "kicker": "Our story",
+    "title": "More than just a miswak",
+    "body": "SIWAKY was born from love of the Sunnah and a passion for craft. We hand-pick the finest arak twigs from the Arabian Peninsula and pair them with four curated flavors — returning miswak to its rightful place in modern life."
+  },
+  "flavors": {
+    "title": "Four luxury flavors",
+    "sub": "Each box contains 12 sticks — 3 of each flavor",
+    "items": {
+      "natural": { "name": "Natural", "en": "الطبيعي", "desc": "Classic, closest to traditional miswak" },
+      "mint":    { "name": "Mint",    "en": "النعناع",  "desc": "Long-lasting freshness, cool breath" },
+      "clove":   { "name": "Clove",   "en": "القرنفل",  "desc": "Warm, deep, soothing on gums" },
+      "coconut": { "name": "Coconut", "en": "جوز الهند","desc": "Natural sweetness, tropical touch" }
+    }
+  },
+  "sunnah": {
+    "kicker": "The Prophet's Sunnah",
+    "hadith": "“Were it not for the hardship on my nation, I would have ordered them to use miswak at every prayer.”",
+    "narrator": "— The Prophet Muhammad ﷺ",
+    "items": {
+      "sunnah":  { "title": "Rooted in the Prophet's Sunnah", "desc": "A revived practice beloved across Muslim history" },
+      "natural": { "title": "100% natural ingredients",        "desc": "Authentic arak twigs — zero chemical additives" },
+      "halal":   { "title": "Globally certified halal",         "desc": "Officially certified by International Halal Certification" }
+    }
+  },
+  "stats": { "ordersDelivered": "orders delivered", "rating": "customer rating", "natural": "natural ingredients", "flavors": "premium flavors" },
+  "halal": {
+    "title": "Globally certified halal",
+    "sub": "Certified by International Halal Certification",
+    "certNo": "Certificate no: CR/IHCP/SAC/03/26/HC",
+    "validUntil": "Valid until March 2027",
+    "download": "Download certificate (PDF)"
+  },
+  "testimonials": {
+    "title": "What customers say",
+    "sub": "5,000+ orders delivered — 4.9 / 5",
+    "items": [
+      { "name": "Ahmed",  "city": "Riyadh",   "text": "I didn't expect this quality — the box is luxurious and the clove smells incredible." },
+      { "name": "Sara",   "city": "Jeddah",   "text": "Bought this as a gift for my father — he loved it. Packaging is genuinely premium." },
+      { "name": "Khalid", "city": "Dammam",   "text": "The perfect gift for men — Sunnah and luxury in one." },
+      { "name": "Fatima", "city": "Makkah",   "text": "The mint flavor is excellent — I won't go back to ordinary miswak." },
+      { "name": "Mohammed","city": "Madinah", "text": "Premium box. Arrived in perfect condition and delivery was fast." },
+      { "name": "Reem",   "city": "Riyadh",   "text": "Tried the clove and the natural — both delicious. Thank you SIWAKY." }
+    ]
+  },
+  "finalCta": {
+    "title": "Try SIWAKY today",
+    "sub": "The Sunnah of the Prophet ﷺ — your flavor — delivered across KSA.",
+    "scarcity": "🔴 Only 12 boxes left!",
+    "cta": "Order now — 245 SAR"
+  },
+  "footer": {
+    "links": "Quick links",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "certificate": "Halal certificate",
+    "rights": "© 2026 SIWAKY — EMYRA LTD. All rights reserved.",
+    "follow": "Follow us",
+    "contactUs": "Contact us"
+  },
+  "product": {
+    "title": "SIWAKY — Premium Miswak in Four Flavors",
+    "ratingCount": "127 reviews",
+    "ratingLine": "⭐⭐⭐⭐⭐ ({count} reviews)",
+    "addToCart": "Add to cart 🛒",
+    "selectOffer": "Choose your offer",
+    "scarcity": "🔴 Only 8 boxes left at this price",
+    "offers": {
+      "box-1": { "title": "One box",    "detail": "12 sticks · 4 flavors",              "badge": "" },
+      "box-2": { "title": "Two boxes",  "detail": "24 sticks · save 191 SAR",           "badge": "🔥 Best seller" },
+      "box-3": { "title": "Three boxes","detail": "36 sticks · save 386 SAR",           "badge": "💎 Best value" }
+    },
+    "benefits": {
+      "title": "Why SIWAKY?",
+      "items": [
+        { "icon": "🌿", "title": "100% Natural",       "desc": "No chemicals — straight from nature" },
+        { "icon": "🦷", "title": "Strengthens gums",    "desc": "Natural antibacterial action" },
+        { "icon": "✨", "title": "Whitens teeth",       "desc": "Without chemicals" },
+        { "icon": "💨", "title": "Fresh breath",         "desc": "In four luxury flavors" },
+        { "icon": "📖", "title": "Prophet's Sunnah ﷺ",  "desc": "Worship and health, together" },
+        { "icon": "🎁", "title": "The perfect gift",     "desc": "Luxury packaging, ready to gift" }
+      ]
+    },
+    "ingredients": {
+      "title": "What's in SIWAKY?",
+      "science": "Studies show miswak contains 70+ natural compounds beneficial to oral health.",
+      "items": [
+        { "icon": "🌿", "title": "Arak stick",  "desc": "Natural antibacterial, rich in Salvadorine & Tannins" },
+        { "icon": "🌱", "title": "Mint",        "desc": "Fresh breath, fights germs" },
+        { "icon": "🌶️", "title": "Clove",       "desc": "Anti-inflammatory, natural pain relief" },
+        { "icon": "🥥", "title": "Coconut",     "desc": "Antifungal, moisturizing and protective" }
+      ]
+    },
+    "howTo": {
+      "title": "How to use SIWAKY",
+      "steps": [
+        "Peel the tip of the stick with a knife or by light chewing",
+        "Brush teeth in gentle circular motions",
+        "Rinse the stick with water after use",
+        "Use 3 times daily — especially before prayer"
+      ]
+    },
+    "reviews": {
+      "title": "Customer reviews",
+      "average": "Average rating: 4.9 / 5",
+      "verified": "Verified buyer",
+      "items": [
+        { "name": "Ahmed",   "city": "Riyadh",  "stars": 5, "text": "Excellent quality — luxurious box and the clove flavor is amazing. Worth it." },
+        { "name": "Sara",    "city": "Jeddah",  "stars": 5, "text": "Bought as a gift for my father, he loved it. Premium packaging." },
+        { "name": "Khalid",  "city": "Dammam",  "stars": 5, "text": "Best gift for men — Sunnah and luxury combined. Ordered three boxes, all arrived perfectly." },
+        { "name": "Fatima",  "city": "Makkah",  "stars": 5, "text": "Mint flavor is great. Won't go back to ordinary miswak." },
+        { "name": "Mohammed","city": "Madinah", "stars": 4, "text": "Premium box. Arrived in perfect condition and delivery was fast." }
+      ]
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "items": [
+        { "q": "Is SIWAKY halal certified?",       "a": "Yes — certified by International Halal Certification (CR/IHCP/SAC/03/26/HC)." },
+        { "q": "How do I pay?",                    "a": "Cash on delivery only — no bank card required." },
+        { "q": "How long does delivery take?",     "a": "2–4 business days across all regions of KSA." },
+        { "q": "Can I return?",                    "a": "Yes — a 7-day return guarantee in case of defect." },
+        { "q": "How many sticks per box?",         "a": "12 sticks per box — 3 of each flavor." },
+        { "q": "Is it suitable as a gift?",        "a": "Absolutely — premium packaging perfect for gifting." }
+      ]
+    }
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "emptyCta": "Shop SIWAKY",
+    "subtotal": "Subtotal",
+    "shipping": "🚚 Free shipping",
+    "urgency": "⚡ Fast order — delivery in 2-4 days",
+    "trust": "Cash on delivery · no bank details required",
+    "checkout": "Checkout now",
+    "remove": "Remove",
+    "upgradeTitle": "💡 Save more",
+    "upgrade12": "Add a 2nd box and save 191 SAR",
+    "upgrade23": "Add a 3rd box and save 50 SAR more",
+    "upgradeAccept": "Upgrade order"
+  },
+  "checkout": {
+    "title": "Complete your order",
+    "summary": "📦 Order summary",
+    "shippingFree": "Free",
+    "shipping": "Shipping",
+    "total": "Total",
+    "payment": "Payment: cash on delivery ✅",
+    "socialProof": "⭐⭐⭐⭐⭐ “Best product I've tried” — Ahmed, Riyadh",
+    "scarcity": "🔴 Only 8 orders left at this price!",
+    "name": "Full name",
+    "namePh": "Your full name",
+    "phone": "Phone number",
+    "phonePh": "05XXXXXXXX",
+    "phoneHint": "Valid Saudi mobile numbers only",
+    "submit": "✅ Confirm order — cash on delivery",
+    "submitting": "Sending your order…",
+    "errors": {
+      "name": "Please enter your full name (at least 3 characters)",
+      "phone": "Please enter a valid Saudi mobile number",
+      "geo": "Sorry — orders are only available inside the Kingdom of Saudi Arabia.",
+      "generic": "Something went wrong, please try again in a moment."
+    }
+  },
+  "thankYou": {
+    "title": "Thank you! Your order is in.",
+    "sub": "Our team will call you shortly to confirm.",
+    "delivery": "⏱️ Delivery in 2–4 business days",
+    "orderId": "Order ID",
+    "shareTitle": "Share SIWAKY with your friends",
+    "backHome": "Back to home"
+  },
+  "about": {
+    "title": "The story of SIWAKY",
+    "kicker": "EMYRA LTD · UK-registered company",
+    "body": "SIWAKY was born from a simple idea: that the Prophet's ﷺ Sunnah deserves the finest expression. We at EMYRA LTD, a UK-registered company, chose to revive the Sunnah of miswak with a touch of authentic Arabian luxury — hand-picked arak twigs, four natural flavors, packaging worthy of any occasion.",
+    "missionTitle": "Our mission",
+    "mission": "To restore miswak to its rightful place in modern life — with global halal certification, fast delivery and cash on delivery.",
+    "valuesTitle": "Our values",
+    "values": ["Authenticity", "Quality", "Luxury", "Faith"]
+  },
+  "contact": {
+    "title": "Contact us",
+    "sub": "We answer all inquiries within 24 hours",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "submit": "Send message",
+    "success": "Thanks! Your message is in — we'll be in touch soon.",
+    "email_label": "Email",
+    "whatsapp_label": "WhatsApp"
+  },
+  "common": { "currency": "SAR", "save": "Save", "loading": "Loading…", "addedToCart": "Added to cart" }
+}
