@@ -4,8 +4,10 @@ Drop the following files in this folder before deploy (or update component paths
 
 | File                  | What it is                                          |
 | --------------------- | --------------------------------------------------- |
-| `logo.png`            | SIWAKY calligraphy mark — white on transparent     |
-| `favicon.ico`         | 32×32 favicon                                       |
+| `logo.png`            | SIWAKY calligraphy mark — white on transparent (source for favicons) |
+| `favicon.ico`         | Multi-size ICO generated via `npm run generate:favicons`             |
+| `static/icons/*.png`  | 16 / 32 / 48 / 512 px icons on `#28282A`                             |
+| `apple-touch-icon.png`| 180×180 for iOS home screen                                          |
 | `og.jpg`              | 1200×630 Open Graph image                            |
 | `halal-cert.pdf`      | Halal certificate PDF (linked from the homepage)    |
 | `manifest.webmanifest`| PWA manifest                                        |
