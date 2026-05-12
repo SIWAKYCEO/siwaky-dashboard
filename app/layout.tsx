@@ -34,7 +34,17 @@ export const metadata: Metadata = {
   description: "السواك الفاخر بأربع نكهات — دفع عند الاستلام، توصيل لجميع مناطق السعودية.",
   applicationName: "SIWAKY",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/static/icons/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/static/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/logo.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+  },
   openGraph: {
     type: "website",
     siteName: "SIWAKY",
