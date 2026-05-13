@@ -147,9 +147,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
     const offerEnc = encodeURIComponent(cartItem.offerId);
 
     document.body.style.overflow = "";
-    onClose();
-    useCartStore.getState().close();
-    useCartStore.getState().clear();
+    useCartStore.getState().clearCart();
 
     const dest = `/${locale}/thank-you?order=${encodeURIComponent(res.data.order_id)}&qty=${q}&total=${tot}&offer=${offerEnc}`;
     if (typeof window !== "undefined") {

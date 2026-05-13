@@ -3,35 +3,52 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import CartItem from "@/components/cart/CartItem";
 import UpgradeOffer from "@/components/cart/UpgradeOffer";
 import CheckoutPopup from "@/components/checkout/CheckoutPopup";
 
-import { useCartStore } from "@/store/cartStore";
 import { track } from "@/lib/pixels";
+import { useCartStore } from "@/store/cartStore";
+
+function isThankYouPath(path: string | null | undefined): boolean {
+  if (!path) return false;
+  return path.includes("thank-you");
+}
 
 export default function CartDrawer() {
   const t = useTranslations();
+  const pathname = usePathname();
   const isOpen = useCartStore((s) => s.isOpen);
+  const checkoutOpen = useCartStore((s) => s.isCheckoutOpen);
   const items = useCartStore((s) => s.items);
   const close = useCartStore((s) => s.close);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const openCheckout = useCartStore((s) => s.openCheckout);
+  const closeCheckout = useCartStore((s) => s.closeCheckout);
   const total = useCartStore((s) => s.total());
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const hideShell = isThankYouPath(pathname);
 
-  // Lock body scroll when drawer is open
   useEffect(() => {
+    if (!hideShell) return;
+    document.body.style.overflow = "";
+    clearCart();
+    closeCheckout();
+  }, [hideShell, clearCart, closeCheckout]);
+
+  useEffect(() => {
+    if (hideShell) return;
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, hideShell]);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
@@ -40,8 +57,10 @@ export default function CartDrawer() {
       currency: "SAR",
       contents: items.map((i) => ({ id: i.offerId, quantity: i.quantity, item_price: i.price })),
     });
-    setCheckoutOpen(true);
+    openCheckout();
   };
+
+  if (hideShell) return null;
 
   return (
     <>
@@ -64,7 +83,7 @@ export default function CartDrawer() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 280 }}
-              className="fixed end-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-brand-dark border-s border-brand-gold/20 shadow-2xl"
+              className="fixed end-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-s border-brand-gold/20 bg-brand-dark shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-label={t("cart.title")}
@@ -74,7 +93,7 @@ export default function CartDrawer() {
                 <button
                   type="button"
                   onClick={close}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/5"
+                  className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white/5"
                   aria-label="إغلاق"
                 >
                   <X className="size-5" />
@@ -84,11 +103,7 @@ export default function CartDrawer() {
               {items.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
                   <p className="text-white/70">{t("cart.empty")}</p>
-                  <Link
-                    href={`/${locale}/product`}
-                    onClick={close}
-                    className="btn-ghost-gold mt-5"
-                  >
+                  <Link href={`/${locale}/product`} onClick={close} className="btn-ghost-gold mt-5">
                     {t("cart.emptyCta")}
                   </Link>
                 </div>
@@ -116,16 +131,10 @@ export default function CartDrawer() {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-emerald-300">{t("cart.shipping")}</p>
-                    <button
-                      type="button"
-                      onClick={handleCheckout}
-                      className="btn-primary mt-4 w-full text-base"
-                    >
+                    <button type="button" onClick={handleCheckout} className="btn-primary mt-4 w-full text-base">
                       {t("cart.checkout")} ←
                     </button>
-                    <p className="mt-3 text-center text-[11px] text-white/50">
-                      {t("cart.trust")}
-                    </p>
+                    <p className="mt-3 text-center text-[11px] text-white/50">{t("cart.trust")}</p>
                   </footer>
                 </>
               )}
@@ -134,7 +143,7 @@ export default function CartDrawer() {
         )}
       </AnimatePresence>
 
-      <CheckoutPopup open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+      <CheckoutPopup open={checkoutOpen} onClose={closeCheckout} />
     </>
   );
 }

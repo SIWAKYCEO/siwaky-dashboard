@@ -9,7 +9,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+# Drop stale .next from COPY layers; timestamp BUILD_ID busts Next build id / chunk fingerprints.
+RUN rm -rf .next && BUILD_ID="$(date +%s)" npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

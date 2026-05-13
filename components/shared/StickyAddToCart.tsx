@@ -12,8 +12,7 @@ interface Props {
 }
 
 /**
- * Visible only on mobile, fixed to the bottom of the viewport, after the user
- * has scrolled past the hero/offer block.
+ * Mobile-only sticky bar — appears after scrolling past the hero block.
  */
 export default function StickyAddToCart({ offerId }: Props) {
   const t = useTranslations();
@@ -21,7 +20,7 @@ export default function StickyAddToCart({ offerId }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 600);
+    const onScroll = () => setVisible(window.scrollY > 420);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -42,19 +41,19 @@ export default function StickyAddToCart({ offerId }: Props) {
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-30 md:hidden transition-transform duration-300 ${
+      className={`fixed inset-x-0 bottom-0 z-40 md:hidden transition-transform duration-300 ease-out ${
         visible ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="glass-dark border-t border-brand-gold/20 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <div className="border-t-2 border-brand-gold/45 bg-brand-dark px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.85)]">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm">
-            <p className="text-white/60">{offer.quantity} × سواكي</p>
+          <div className="font-sans text-sm">
+            <p className="text-white/55">{offer.quantity} × سواكي</p>
             <p className="text-base font-semibold text-white">
               {offer.price} {t("common.currency")}
             </p>
           </div>
-          <button onClick={handleClick} className="btn-primary !py-3 !px-5 !text-sm">
+          <button type="button" onClick={handleClick} className="btn-primary !px-6 !py-3 !text-sm">
             {t("product.addToCart")}
           </button>
         </div>

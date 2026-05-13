@@ -24,6 +24,7 @@ export default function Header() {
   const locale = params?.locale ?? "ar";
   const openCart = useCartStore((s) => s.open);
   const totalQty = useCartStore((s) => s.totalQty());
+  const thankYouRoute = pathname?.includes("/thank-you");
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -34,8 +35,14 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* close drawer on navigation */
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  /* close drawers on navigation */
+  useEffect(() => {
+    setMobileOpen(false);
+    if (pathname?.includes("/thank-you")) {
+      useCartStore.getState().clearCart();
+      useCartStore.getState().closeCheckout();
+    }
+  }, [pathname]);
 
   /* lock body scroll while drawer is open */
   useEffect(() => {
@@ -107,9 +114,17 @@ export default function Header() {
 
             <button
               type="button"
-              onClick={openCart}
+              onClick={() => {
+                if (!thankYouRoute) openCart();
+              }}
+              disabled={thankYouRoute}
+              aria-disabled={thankYouRoute}
               aria-label={t("cart")}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight"
+              className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border text-white/90 transition-colors ${
+                thankYouRoute
+                  ? "cursor-not-allowed border-white/[0.06] opacity-35"
+                  : "border-white/10 hover:border-brand-gold/60 hover:text-brand-goldLight"
+              }`}
             >
               <ShoppingBag className="size-5" />
               {totalQty > 0 && (

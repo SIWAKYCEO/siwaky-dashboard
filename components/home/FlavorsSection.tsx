@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
+
 const FLAVORS = [
   { key: "natural", img: "/images/flavors/natural.png",  tint: "from-emerald-700/30 to-emerald-900/10" },
   { key: "mint",    img: "/images/flavors/mint.png",     tint: "from-teal-700/30 to-teal-900/10" },
@@ -45,9 +47,11 @@ export default function FlavorsSection() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={f.img}
-                    alt=""
+                    alt={`${IMAGE_ALT_AR.flavorPrefix} ${t(`items.${f.key}.name`)} — سواكي`}
                     className="h-24 w-24 object-contain drop-shadow-lg"
                     draggable={false}
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <h3 className="mt-4 font-display text-2xl text-white">

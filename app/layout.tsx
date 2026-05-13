@@ -12,6 +12,7 @@ const scheherazade = Scheherazade_New({
   weight: ["400", "700"],
   variable: "--font-scheherazade",
   display: "swap",
+  preload: true,
 });
 
 const naskh = Noto_Naskh_Arabic({
@@ -19,6 +20,7 @@ const naskh = Noto_Naskh_Arabic({
   weight: ["400", "500", "600", "700"],
   variable: "--font-naskh",
   display: "swap",
+  preload: true,
 });
 
 const cormorant = Cormorant_Garamond({
@@ -26,12 +28,11 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "500", "600", "700"],
   variable: "--font-cormorant",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://siwaky.com"),
-  title: { default: "SIWAKY — السواك الفاخر", template: "%s · سواكي" },
-  description: "السواك الفاخر بأربع نكهات — دفع عند الاستلام، توصيل لجميع مناطق السعودية.",
   applicationName: "SIWAKY",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -44,11 +45,6 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
-  },
-  openGraph: {
-    type: "website",
-    siteName: "SIWAKY",
-    images: ["/og.jpg"],
   },
 };
 

@@ -3,14 +3,10 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, unstable_setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import CartDrawer from "@/components/cart/CartDrawer";
-import PixelsLoader from "@/components/shared/PixelsLoader";
-import SocialProofTicker from "@/components/shared/SocialProofTicker";
-import WhatsappFab from "@/components/shared/WhatsappFab";
 import HtmlAttributes from "@/components/shared/HtmlAttributes";
+import PixelsLoader from "@/components/shared/PixelsLoader";
 import { locales, type Locale } from "@/i18n";
+import { localBusinessSchema, organizationSchema } from "@/lib/seo/jsonld";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -26,17 +22,17 @@ export default async function LocaleLayout({ children, params: { locale } }: Pro
   const dir = locale === "ar" ? "rtl" : "ltr";
   const lang = locale;
 
+  const orgJson = JSON.stringify(organizationSchema());
+  const localJson = JSON.stringify(localBusinessSchema());
+
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <HtmlAttributes lang={lang} dir={dir} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJson }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: localJson }} />
       <div lang={lang} dir={dir} className="min-h-screen bg-brand-dark font-sans text-white">
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <CartDrawer />
-        <SocialProofTicker />
-        <WhatsappFab />
         <PixelsLoader />
+        {children}
       </div>
     </NextIntlClientProvider>
   );

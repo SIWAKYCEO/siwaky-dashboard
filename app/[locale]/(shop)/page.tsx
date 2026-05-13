@@ -10,6 +10,7 @@ import StatsSection from "@/components/home/StatsSection";
 import HalalCertSection from "@/components/home/HalalCertSection";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FinalCTA from "@/components/home/FinalCTA";
+import { buildPageMetadata, mergeLocaleShell } from "@/lib/seo/metadata";
 
 interface Props {
   params: { locale: string };
@@ -17,7 +18,19 @@ interface Props {
 
 export async function generateMetadata({ params: { locale } }: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "meta.home" });
-  return { title: t("title"), description: t("description") };
+  return mergeLocaleShell(
+    locale,
+    buildPageMetadata({
+      locale,
+      path: "",
+      title: t("title"),
+      description: t("description"),
+      ogTitle: t("ogTitle"),
+      ogDescription: t("ogDescription"),
+      twitterTitle: t("twitterTitle"),
+      twitterDescription: t("twitterDescription"),
+    }),
+  );
 }
 
 export default function HomePage({ params: { locale } }: Props) {

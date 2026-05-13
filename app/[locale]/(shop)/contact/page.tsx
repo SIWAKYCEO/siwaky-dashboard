@@ -2,12 +2,25 @@ import type { Metadata } from "next";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 
 import ContactForm from "@/components/contact/ContactForm";
+import { buildPageMetadata, mergeLocaleShell } from "@/lib/seo/metadata";
 
 interface Props { params: { locale: string }; }
 
 export async function generateMetadata({ params: { locale } }: Props): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: "meta.contact" });
-  return { title: t("title"), description: t("description") };
+  return mergeLocaleShell(
+    locale,
+    buildPageMetadata({
+      locale,
+      path: "/contact",
+      title: t("title"),
+      description: t("description"),
+      ogTitle: t("ogTitle"),
+      ogDescription: t("ogDescription"),
+      twitterTitle: t("twitterTitle"),
+      twitterDescription: t("twitterDescription"),
+    }),
+  );
 }
 
 export default async function ContactPage({ params: { locale } }: Props) {
@@ -41,7 +54,7 @@ export default async function ContactPage({ params: { locale } }: Props) {
             <p className="mt-2 text-sm text-white/85">قريباً</p>
           </div>
           <div className="card-luxury text-center">
-            <p className="text-xs uppercase tracking-[0.3em] text-brand-goldLight">EMYRA LTD</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-brand-goldLight">EMYRA LTD (UK)</p>
             <p className="mt-2 text-sm text-white/85">United Kingdom</p>
           </div>
         </div>

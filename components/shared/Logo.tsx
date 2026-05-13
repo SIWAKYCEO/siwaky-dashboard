@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
+
 interface LogoProps {
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -36,7 +38,7 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo.png"
-        alt="SIWAKY"
+        alt={IMAGE_ALT_AR.logo}
         onError={() => setFailed(true)}
         className={`${HEIGHT[size]} w-auto object-contain`}
         style={{ background: "none" }}

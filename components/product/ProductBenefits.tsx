@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Activity,
-  BookOpen,
-  Gift,
-  Leaf,
-  Sparkles,
-  Wind,
-} from "lucide-react";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 interface Item {
@@ -16,47 +9,46 @@ interface Item {
   desc: string;
 }
 
-const BENEFIT_ICONS = [Leaf, Activity, Sparkles, Wind, BookOpen, Gift] as const;
-
 export default function ProductBenefits() {
   const t = useTranslations("product.benefits");
   const items = t.raw("items") as Item[];
 
   return (
-    <section className="relative z-[1] bg-[#28282A] py-7 md:py-8">
+    <motion.section
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
+      transition={{ duration: 0.55 }}
+      className="bg-brand-dark py-14 md:py-20"
+    >
       <div className="container-luxury">
-        <div className="flex min-h-0 flex-col gap-6 md:max-h-[300px] md:flex-row md:items-start md:gap-10 md:overflow-y-auto md:overscroll-y-contain lg:gap-14">
-          <header className="shrink-0 md:w-[min(280px,32%)] md:pt-0.5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.35em] text-brand-gold/85">
-              {t("kicker")}
-            </p>
-            <h2 className="mt-2 font-display text-2xl leading-tight text-white md:text-[1.65rem]">
-              {t("title")}
-            </h2>
-          </header>
+        <h2 className="text-center font-display text-3xl text-white md:text-[2.75rem]">{t("title")}</h2>
 
-          <ul className="grid flex-1 grid-cols-1 gap-x-10 gap-y-2 sm:grid-cols-2 sm:gap-y-2 md:content-start md:gap-x-12 md:gap-y-2">
-            {items.map((it, i) => {
-              const Icon = BENEFIT_ICONS[i] ?? Leaf;
-              return (
-                <li key={`${it.title}-${i}`} className="flex items-start gap-2.5">
-                  <span
-                    className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-gold/[0.09] text-brand-gold shadow-[inset_0_0_0_1px_rgba(201,168,76,0.12)]"
-                    aria-hidden
-                  >
-                    <Icon className="size-3.5" strokeWidth={1.65} />
-                  </span>
-                  <p className="min-w-0 text-[0.8125rem] leading-snug text-white/[0.82] md:text-[0.84375rem]">
-                    <span className="font-medium text-white/95">{it.title}</span>
-                    <span className="text-white/45"> · </span>
-                    <span className="text-white/[0.72]">{it.desc}</span>
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <ul className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2 md:gap-y-5">
+          {items.map((it, i) => (
+            <motion.li
+              key={`${it.title}-${i}`}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
+              className="flex items-start gap-3"
+            >
+              <span
+                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-brand-gold/45 bg-black text-xl shadow-[inset_0_0_0_1px_rgba(201,168,76,0.12)]"
+                aria-hidden
+              >
+                {it.icon}
+              </span>
+              <p className="min-w-0 font-sans text-[0.9375rem] leading-relaxed text-white/82 md:text-[0.96875rem]">
+                <span className="font-semibold text-white">{it.title}</span>
+                <span className="text-brand-gold/55"> · </span>
+                <span>{it.desc}</span>
+              </p>
+            </motion.li>
+          ))}
+        </ul>
       </div>
-    </section>
+    </motion.section>
   );
 }

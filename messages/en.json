@@ -1,10 +1,41 @@
 {
   "meta": {
-    "home":     { "title": "SIWAKY — Premium Miswak in Four Flavors", "description": "Luxury natural miswak in four flavors. Halal certified, KSA-wide delivery, cash on delivery." },
-    "product":  { "title": "SIWAKY — Order Now from 245 SAR",          "description": "Premium box of 12 miswak sticks in four natural flavors. COD, 2–4 day delivery across KSA." },
-    "about":    { "title": "About — SIWAKY by EMYRA LTD",              "description": "The story of SIWAKY: love of the Sunnah meets a passion for luxury. UK-registered company with global halal certification." },
-    "contact":  { "title": "Contact — SIWAKY",                          "description": "We answer all inquiries within 24 hours via email or WhatsApp." },
-    "thankYou": { "title": "Thank you — Order received",                "description": "Our team will call you shortly to confirm." }
+    "home": {
+      "title": "SIWAKY Premium Miswak | سواكي — Premium Natural Miswak",
+      "description": "SIWAKY — Premium natural miswak in 4 flavors: Mint, Clove, Coconut, Natural. Halal certified, delivery across Saudi Arabia and GCC",
+      "ogTitle": "SIWAKY — Premium Natural Miswak in Four Flavors",
+      "ogDescription": "Halal-certified miswak inspired by the Sunnah — delivery across Saudi Arabia and the GCC.",
+      "twitterTitle": "SIWAKY — Premium Miswak",
+      "twitterDescription": "Natural miswak in four flavors — Mint, Clove, Coconut, Natural."
+    },
+    "product": {
+      "title": "SIWAKY Premium Miswak Box — Order Now | سواكي",
+      "description": "Premium natural miswak in 4 flavors — Mint, Clove, Coconut, Natural. Halal certified. From 245 SAR — delivery across Saudi Arabia and the GCC.",
+      "ogTitle": "SIWAKY Premium Miswak Box",
+      "ogDescription": "Natural miswak in four flavors. Halal certified — Saudi Arabia & GCC delivery.",
+      "twitterTitle": "SIWAKY — Premium Miswak Box",
+      "twitterDescription": "Four flavors. Halal certified. From 245 SAR."
+    },
+    "about": {
+      "title": "About — SIWAKY by EMYRA LTD (UK)",
+      "description": "The story of SIWAKY: love of the Sunnah meets craft. UK-registered company — premium natural miswak for Saudi Arabia and the GCC.",
+      "ogTitle": "About SIWAKY — EMYRA LTD (UK)",
+      "ogDescription": "Premium miswak brand with global halal certification and GCC delivery.",
+      "twitterTitle": "SIWAKY — Our story",
+      "twitterDescription": "EMYRA LTD (UK) · Natural miswak in four flavors."
+    },
+    "contact": {
+      "title": "Contact — SIWAKY",
+      "description": "We answer inquiries within 24 hours by email — Saudi Arabia & GCC delivery.",
+      "ogTitle": "Contact SIWAKY",
+      "ogDescription": "Customer care for orders and delivery across Saudi Arabia and the GCC.",
+      "twitterTitle": "SIWAKY — Contact",
+      "twitterDescription": "We reply within 24 hours."
+    },
+    "thankYou": {
+      "title": "Thank you — Order received",
+      "description": "Our team will contact you shortly to confirm your order."
+    }
   },
   "nav": { "home": "Home", "product": "Product", "about": "About", "contact": "Contact", "cart": "Cart", "menu": "Menu", "switchLang": "AR" },
   "trust": {
@@ -96,57 +127,122 @@
     },
     "benefits": {
       "kicker": "Benefits",
-      "title": "Why SIWAKY?",
+      "title": "لماذا سواكي؟",
       "items": [
-        { "icon": "🌿", "title": "100% Natural",       "desc": "No chemicals — straight from nature" },
-        { "icon": "🦷", "title": "Strengthens gums",    "desc": "Natural antibacterial action" },
-        { "icon": "✨", "title": "Whitens teeth",       "desc": "Without chemicals" },
-        { "icon": "💨", "title": "Fresh breath",         "desc": "In four luxury flavors" },
-        { "icon": "📖", "title": "Prophet's Sunnah ﷺ",  "desc": "Worship and health, together" },
-        { "icon": "🎁", "title": "The perfect gift",     "desc": "Luxury packaging, ready to gift" }
+        { "icon": "🌿", "title": "طبيعي 100%", "desc": "لا مواد كيميائية، مباشر من الطبيعة" },
+        { "icon": "🦷", "title": "يقوّي اللثة", "desc": "مضاد طبيعي للبكتيريا" },
+        { "icon": "✨", "title": "يبيّض الأسنان", "desc": "بدون مواد كيميائية" },
+        { "icon": "💨", "title": "ينعّش النفَس", "desc": "بأربع نكهات فاخرة" },
+        { "icon": "📖", "title": "سنّة النبي ﷺ", "desc": "عبادة وصحة في آن واحد" },
+        { "icon": "🎁", "title": "هدية مثالية", "desc": "تغليف فاخر يناسب المناسبات" }
+      ]
+    },
+    "flavorsShowcase": {
+      "title": "اختر نكهتك",
+      "items": [
+        { "emoji": "🌿", "name": "الطبيعي", "desc": "نقاء الأراك الأصيل" },
+        { "emoji": "🌱", "name": "النعناع", "desc": "نفَس منعش بعد كل صلاة" },
+        { "emoji": "🌶️", "name": "القرنفل", "desc": "دفء وقوة مضادة للالتهابات" },
+        { "emoji": "🥥", "name": "جوز الهند", "desc": "ناعم، مرطّب، فاخر" }
       ]
     },
     "ingredients": {
-      "title": "What's in SIWAKY?",
-      "science": "Studies show miswak contains 70+ natural compounds beneficial to oral health.",
+      "title": "ماذا يحتوي سواكي؟",
+      "science": "أثبتت الدراسات العلمية أن السواك يحتوي على أكثر من 70 مادة طبيعية نافعة لصحة الفم",
       "items": [
-        { "icon": "🌿", "title": "Arak stick",  "desc": "Natural antibacterial, rich in Salvadorine & Tannins" },
-        { "icon": "🌱", "title": "Mint",        "desc": "Fresh breath, fights germs" },
-        { "icon": "🌶️", "title": "Clove",       "desc": "Anti-inflammatory, natural pain relief" },
-        { "icon": "🥥", "title": "Coconut",     "desc": "Antifungal, moisturizing and protective" }
+        { "icon": "🌿", "title": "عود الأراك", "desc": "مضاد طبيعي للبكتيريا يحتوي على سالفادرين والعفص الطبيعي" },
+        { "icon": "🌱", "title": "نعناع طبيعي", "desc": "يمنح نفساً منعشاً ويحارب الجراثيم" },
+        { "icon": "🌶️", "title": "قرنفل طبيعي", "desc": "مضاد للالتهابات، مسكّن طبيعي للألم" },
+        { "icon": "🥥", "title": "جوز الهند", "desc": "مضاد للفطريات، يرطّب ويحمي" }
       ]
     },
     "howTo": {
-      "title": "How to use SIWAKY",
+      "title": "كيف تستخدم السواك؟",
       "steps": [
-        "Peel the tip of the stick with a knife or by light chewing",
-        "Brush teeth in gentle circular motions",
-        "Rinse the stick with water after use",
-        "Use 3 times daily — especially before prayer"
+        "قشّر طرف العود بلطف",
+        "افرك بالأسنان بحركة دائرية",
+        "اغسل العود بالماء بعد الاستخدام",
+        "استخدمه 3 مرات يومياً قبل كل صلاة"
+      ]
+    },
+    "comparison": {
+      "title": "سواكي مقابل معجون الأسنان العادي",
+      "colFeature": "الميزة",
+      "colUs": "سواكي",
+      "colOther": "معجون عادي",
+      "rows": [
+        { "feature": "طبيعي 100%", "us": true, "other": false },
+        { "feature": "حلال معتمد", "us": true, "other": false },
+        { "feature": "بدون كيماويات", "us": true, "other": false },
+        { "feature": "سنّة النبي ﷺ", "us": true, "other": false },
+        { "feature": "تغليف فاخر", "us": true, "other": false },
+        { "feature": "للهدايا", "us": true, "other": false }
       ]
     },
     "reviews": {
-      "title": "Customer reviews",
-      "average": "Average rating: 4.9 / 5",
-      "verified": "Verified buyer",
+      "title": "ماذا يقول عملاؤنا؟",
+      "average": "⭐ 4.9/5 من 127 تقييم",
+      "verified": "موثّق",
       "items": [
-        { "name": "Ahmed",   "city": "Riyadh",  "stars": 5, "text": "Excellent quality — luxurious box and the clove flavor is amazing. Worth it." },
-        { "name": "Sara",    "city": "Jeddah",  "stars": 5, "text": "Bought as a gift for my father, he loved it. Premium packaging." },
-        { "name": "Khalid",  "city": "Dammam",  "stars": 5, "text": "Best gift for men — Sunnah and luxury combined. Ordered three boxes, all arrived perfectly." },
-        { "name": "Fatima",  "city": "Makkah",  "stars": 5, "text": "Mint flavor is great. Won't go back to ordinary miswak." },
-        { "name": "Mohammed","city": "Madinah", "stars": 4, "text": "Premium box. Arrived in perfect condition and delivery was fast." }
+        {
+          "name": "أحمد",
+          "city": "الرياض",
+          "stars": 5,
+          "date": "٢٠٢٦/٠١/٠٨",
+          "text": "والله ما توقعت الجودة تكون بهالمستوى، العلبة فخمة وريحة القرنفل رهيبة"
+        },
+        {
+          "name": "سارة",
+          "city": "جدة",
+          "stars": 5,
+          "date": "٢٠٢٦/٠١/٠٦",
+          "text": "اشتريت هدية لأبوي وانبسط جداً، التغليف فاخر ويستاهل"
+        },
+        {
+          "name": "خالد",
+          "city": "الدمام",
+          "stars": 5,
+          "date": "٢٠٢٦/٠١/٠٥",
+          "text": "أحسن هدية للرجال، سنّة وفخامة في نفس الوقت"
+        },
+        {
+          "name": "فاطمة",
+          "city": "مكة",
+          "stars": 5,
+          "date": "٢٠٢٦/٠١/٠٤",
+          "text": "النعناع نكهته ممتازة، ما رح أرجع للسواك العادي"
+        },
+        {
+          "name": "محمد",
+          "city": "المدينة",
+          "stars": 5,
+          "date": "٢٠٢٦/٠١/٠٢",
+          "text": "علبة فخمة جداً، استلمتها بحالة ممتازة والتوصيل كان سريع"
+        },
+        {
+          "name": "ريم",
+          "city": "الرياض",
+          "stars": 5,
+          "date": "٢٠٢٥/١٢/٢٨",
+          "text": "جربت القرنفل والطبيعي، الاثنين زاكيين، شكراً سواكي"
+        }
       ]
     },
     "faq": {
-      "title": "Frequently asked questions",
+      "title": "الأسئلة الشائعة",
       "items": [
-        { "q": "Is SIWAKY halal certified?",       "a": "Yes — certified by International Halal Certification (CR/IHCP/SAC/03/26/HC)." },
-        { "q": "How do I pay?",                    "a": "Cash on delivery only — no bank card required." },
-        { "q": "How long does delivery take?",     "a": "2–4 business days across all regions of KSA." },
-        { "q": "Can I return?",                    "a": "Yes — a 7-day return guarantee in case of defect." },
-        { "q": "How many sticks per box?",         "a": "12 sticks per box — 3 of each flavor." },
-        { "q": "Is it suitable as a gift?",        "a": "Absolutely — premium packaging perfect for gifting." }
+        { "q": "هل السواكي معتمد حلال؟", "a": "نعم، شهادة الحلال العالمية معتمدة." },
+        { "q": "كيف يتم الدفع؟", "a": "الدفع عند الاستلام فقط، لا حاجة لبطاقة بنكية." },
+        { "q": "كم يستغرق التوصيل؟", "a": "1–4 أيام عمل لجميع مناطق السعودية." },
+        { "q": "هل يمكن الإرجاع؟", "a": "نعم، ضمان الاسترجاع متاح." },
+        { "q": "كم عدد الأعواد في العلبة؟", "a": "12 عود، 3 من كل نكهة." },
+        { "q": "هل مناسب كهدية؟", "a": "نعم، التغليف فاخر ومثالي للهدايا والمناسبات." }
       ]
+    },
+    "finalCtaProduct": {
+      "headline": "جرّب سواكي اليوم",
+      "sub": "سنّة النبي ﷺ بنكهتك — توصيل لجميع مناطق السعودية",
+      "cta": "اطلب الآن"
     }
   },
   "cart": {
@@ -155,7 +251,7 @@
     "emptyCta": "Shop SIWAKY",
     "subtotal": "Subtotal",
     "shipping": "🚚 Free shipping",
-    "urgency": "⚡ Fast order — delivery in 2-4 days",
+    "urgency": "⚡ Fast order — delivery in 1–4 days",
     "trust": "Cash on delivery · no bank details required",
     "checkout": "Checkout now",
     "remove": "Remove",
@@ -188,22 +284,36 @@
     }
   },
   "thankYou": {
-    "headlineLine1": "Thank you!",
-    "headlineLine2": "Your order was received ✓",
-    "summaryTitle": "Order summary",
+    "title": "Thank you — Your order was received successfully ✅",
+    "sub": "Our team will contact you shortly to confirm your order.",
+    "delivery": "Expected delivery within 1-4 business days 🚚",
+    "orderSummary": "Order summary",
+    "payment": "Cash on delivery ✅",
+    "copyId": "Copy order ID",
+    "copied": "Copied ✓",
+    "whatsNext": "What happens next?",
+    "step1": "Our team will contact you within 24 hours to confirm your order.",
+    "step2": "Your order is prepared and packed with care.",
+    "step3": "Your order is delivered to your door within 1-4 business days.",
+    "shareTitle": "Share SIWAKY with those you love 🌿",
+    "shareSub": "Help your family and friends discover the Prophet's ﷺ Sunnah with a luxurious flavor.",
+    "whatsapp": "Share on WhatsApp",
+    "copyLink": "Copy link",
+    "moreTitle": "Want to add more?",
+    "backHome": "Back to home",
+    "orderAgain": "Order another box",
+    "whatsappPrefill": "I tried SIWAKY — luxury natural miswak in four flavors 🌿 Order at siwaky.com",
     "productLabel": "Product",
     "qtyLabel": "Quantity",
     "priceLabel": "Total",
-    "summaryFallback": "Your order is saved securely. If the full breakdown does not appear, you can still explore the collection below or reach us anytime on WhatsApp.",
+    "summaryFallback": "Your order was saved successfully. If details don’t appear fully, return to the shop or contact us.",
     "orderIdLabel": "Order ID",
-    "teamCall": "Our concierge team will call you shortly to confirm your order.",
-    "delivery": "Delivery in 2-4 business days 🚚",
-    "ctaExplore": "Explore more",
-    "share": {
-      "whatsapp": "WhatsApp",
-      "copy": "Copy link",
-      "copied": "Copied",
-      "whatsappText": "Discover SIWAKY — luxury natural oral care.\n{url}"
+    "trust": {
+      "items": [
+        { "icon": "🔒", "text": "Secure cash-on-delivery payment" },
+        { "icon": "✅", "text": "Globally certified halal" },
+        { "icon": "↩️", "text": "Refund guarantee" }
+      ]
     }
   },
   "about": {

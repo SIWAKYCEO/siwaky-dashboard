@@ -16,19 +16,27 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="section-padding bg-[#28282A]">
+    <motion.section
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.55 }}
+      className="bg-brand-dark py-14 md:py-20"
+    >
       <div className="container-luxury">
-        <div className="text-center">
-          <h2 className="font-display text-3xl text-white md:text-5xl">{t("title")}</h2>
-        </div>
+        <h2 className="text-center font-display text-3xl text-white md:text-[2.75rem]">{t("title")}</h2>
 
         <div className="mx-auto mt-10 max-w-3xl space-y-3">
           {items.map((item, i) => {
             const isOpen = open === i;
             return (
-              <div
+              <motion.div
                 key={i}
-                className="overflow-hidden rounded-2xl border border-white/5 bg-brand-dark2/60"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04 }}
+                className="overflow-hidden rounded-2xl border border-brand-gold/20 bg-black"
               >
                 <button
                   type="button"
@@ -36,11 +44,12 @@ export default function FAQSection() {
                   className="flex w-full items-center justify-between gap-4 px-5 py-4 text-start"
                   aria-expanded={isOpen}
                 >
-                  <span className="text-base font-medium text-white">{item.q}</span>
+                  <span className="font-sans text-base font-medium text-white">{item.q}</span>
                   <ChevronDown
-                    className={`size-5 shrink-0 text-brand-goldLight transition-transform ${
+                    className={`size-5 shrink-0 text-brand-gold transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
                     }`}
+                    strokeWidth={2.25}
                   />
                 </button>
 
@@ -51,20 +60,20 @@ export default function FAQSection() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      transition={{ duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-5 text-sm leading-7 text-white/75">
+                      <p className="border-t border-white/[0.06] px-5 pb-5 pt-4 font-sans text-sm leading-8 text-white/75">
                         {item.a}
                       </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

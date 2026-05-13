@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 
 export const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL ?? "https://api.siwaky.com";
 
 export const api = axios.create({
   baseURL: apiBaseUrl,

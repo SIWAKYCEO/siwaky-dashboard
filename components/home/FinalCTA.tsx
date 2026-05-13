@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import ScarcityBar from "@/components/shared/ScarcityBar";
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 export default function FinalCTA() {
   const t = useTranslations("finalCta");
@@ -14,11 +15,16 @@ export default function FinalCTA() {
 
   return (
     <section className="section-padding relative overflow-hidden bg-brand-black">
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-cover bg-center opacity-30"
-        style={{ backgroundImage: "url('/images/cta.jpg')" }}
-      />
+      <div className="absolute inset-0 opacity-30">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/cta.jpg"
+          alt={IMAGE_ALT_AR.ctaBg}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
       <div className="container-luxury relative">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

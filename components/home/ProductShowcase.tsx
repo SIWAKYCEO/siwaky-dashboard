@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { OFFERS } from "@/lib/offers";
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 const ORDER: Array<keyof typeof OFFERS> = ["box-1", "box-2", "box-3"];
 
@@ -24,10 +25,13 @@ export default function ProductShowcase() {
           transition={{ duration: 0.7 }}
           className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold"
         >
-          <div
-            className="aspect-square w-full bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/product.jpg')" }}
-            aria-hidden
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/product.jpg"
+            alt={IMAGE_ALT_AR.productShowcase}
+            className="aspect-square w-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-transparent to-transparent" />
           <span className="absolute top-4 start-4 badge-gold">حلال معتمد</span>

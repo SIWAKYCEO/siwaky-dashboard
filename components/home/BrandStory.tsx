@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
+
 export default function BrandStory() {
   const t = useTranslations("story");
 
@@ -34,10 +36,13 @@ export default function BrandStory() {
           className="order-1 md:order-2"
         >
           <div className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold">
-            <div
-              className="aspect-[4/5] w-full bg-cover bg-center"
-              style={{ backgroundImage: "url('/images/story.jpg')" }}
-              aria-hidden
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/story.jpg"
+              alt={IMAGE_ALT_AR.story}
+              className="aspect-[4/5] w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent" />
           </div>

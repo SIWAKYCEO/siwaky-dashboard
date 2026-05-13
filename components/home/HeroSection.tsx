@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
 import ScarcityBar from "@/components/shared/ScarcityBar";
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 export default function HeroSection() {
   const t = useTranslations();
@@ -15,15 +16,21 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-[92vh] w-full overflow-hidden">
-      {/* Background photo / gradient */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage:
-            "linear-gradient(180deg, rgba(40,40,42,0.55) 0%, rgba(40,40,42,0.85) 60%, #28282A 100%), url('/images/hero.jpg')",
-        }}
-      />
+      <div className="absolute inset-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/hero.jpg"
+          alt={IMAGE_ALT_AR.hero}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(40,40,42,0.55)_0%,rgba(40,40,42,0.85)_60%,#28282A_100%)]"
+        />
+      </div>
       {/* Decorative gold radial */}
       <div
         aria-hidden

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import type { CartItem as Item } from "@/store/cartStore";
 import { useCartStore } from "@/store/cartStore";
+import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 interface Props {
   item: Item;
@@ -16,10 +17,15 @@ export default function CartItem({ item }: Props) {
 
   return (
     <div className="flex items-center gap-3 py-4">
-      <div
-        className="size-16 shrink-0 overflow-hidden rounded-xl bg-cover bg-center border border-white/5"
-        style={{ backgroundImage: "url('/images/product.jpg')" }}
-        aria-hidden
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/product.jpg"
+        alt={IMAGE_ALT_AR.cartThumb}
+        width={64}
+        height={64}
+        className="size-16 shrink-0 overflow-hidden rounded-xl border border-white/5 object-cover"
+        loading="lazy"
+        decoding="async"
       />
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-white">
