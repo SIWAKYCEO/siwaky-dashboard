@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
@@ -11,6 +11,7 @@ import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
 import { createOrder } from "@/lib/api";
+import { OFFERS } from "@/lib/offers";
 import { track } from "@/lib/pixels";
 import { useCartStore } from "@/store/cartStore";
 
@@ -63,7 +64,6 @@ interface Props {
 
 export default function CheckoutPopup({ open, onClose }: Props) {
   const t = useTranslations();
-  const router = useRouter();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
@@ -71,7 +71,6 @@ export default function CheckoutPopup({ open, onClose }: Props) {
   const total = useCartStore((s) => s.total());
   const source = useCartStore((s) => s.source);
   const campaign = useCartStore((s) => s.campaign);
-  const clear = useCartStore((s) => s.clear);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const initialFocus = useRef<HTMLInputElement | null>(null);
@@ -105,14 +104,15 @@ export default function CheckoutPopup({ open, onClose }: Props) {
   const onSubmit = async (values: FormValues) => {
     if (items.length === 0) return;
     const cartItem = items[0];
+    const bundle = OFFERS[cartItem.offerId];
     const eventId = uuid();
 
     const res = await createOrder({
       name: values.name,
       phone: values.phone,
       offer: cartItem.offerId,
-      quantity: cartItem.quantity,
-      price_sar: cartItem.price * cartItem.quantity,
+      quantity: bundle.quantity,
+      price_sar: bundle.price,
       source,
       campaign,
       event_id: eventId,
@@ -132,12 +132,29 @@ export default function CheckoutPopup({ open, onClose }: Props) {
       value: res.data.price_sar,
       currency: "SAR",
       content_ids: [cartItem.offerId],
-      contents: [{ id: cartItem.offerId, quantity: cartItem.quantity, item_price: cartItem.price }],
+      contents: [
+        {
+          id: cartItem.offerId,
+          quantity: bundle.quantity,
+          item_price: bundle.price / bundle.quantity,
+        },
+      ],
       content_type: "product",
     });
 
-    clear();
-    router.push(`/${locale}/thank-you?order=${encodeURIComponent(res.data.order_id)}`);
+    const q = bundle.quantity;
+    const tot = bundle.price;
+    const offerEnc = encodeURIComponent(cartItem.offerId);
+
+    document.body.style.overflow = "";
+    onClose();
+    useCartStore.getState().close();
+    useCartStore.getState().clear();
+
+    const dest = `/${locale}/thank-you?order=${encodeURIComponent(res.data.order_id)}&qty=${q}&total=${tot}&offer=${offerEnc}`;
+    if (typeof window !== "undefined") {
+      window.location.assign(dest);
+    }
   };
 
   const current = items[0];
