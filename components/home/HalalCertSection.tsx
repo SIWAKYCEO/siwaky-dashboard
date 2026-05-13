@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 export default function HalalCertSection() {
   const t = useTranslations("halal");
   return (
-    <section className="section-padding bg-brand-dark">
+    <section className="section-padding bg-[#28282A]">
       <div className="container-luxury">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

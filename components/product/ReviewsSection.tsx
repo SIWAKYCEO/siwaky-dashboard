@@ -25,7 +25,7 @@ export default function ReviewsSection() {
   );
 
   return (
-    <section className="section-padding bg-brand-dark2">
+    <section className="section-padding bg-[#28282A]">
       <div className="container-luxury">
         <div className="text-center">
           <h2 className="font-display text-3xl text-white md:text-5xl">{t("title")}</h2>

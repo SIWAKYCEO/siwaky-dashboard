@@ -23,7 +23,7 @@ export default function ProductBenefits() {
   const items = t.raw("items") as Item[];
 
   return (
-    <section className="border-t border-white/[0.06] bg-brand-dark2 py-7 md:py-8">
+    <section className="relative z-[1] bg-[#28282A] py-7 md:py-8">
       <div className="container-luxury">
         <div className="flex min-h-0 flex-col gap-6 md:max-h-[300px] md:flex-row md:items-start md:gap-10 md:overflow-y-auto md:overscroll-y-contain lg:gap-14">
           <header className="shrink-0 md:w-[min(280px,32%)] md:pt-0.5">

@@ -16,7 +16,7 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="section-padding bg-brand-dark">
+    <section className="section-padding bg-[#28282A]">
       <div className="container-luxury">
         <div className="text-center">
           <h2 className="font-display text-3xl text-white md:text-5xl">{t("title")}</h2>

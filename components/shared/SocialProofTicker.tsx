@@ -33,7 +33,7 @@ export default function SocialProofTicker() {
   if (index == null) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-24 start-4 z-30 max-w-[80vw] md:bottom-6 md:start-6">
+    <div className="pointer-events-none fixed bottom-24 start-4 z-10 max-w-[80vw] md:bottom-6 md:start-6">
       <AnimatePresence mode="wait">
         <motion.div
           key={index}

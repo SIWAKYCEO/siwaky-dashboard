@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import OfferSelector from "@/components/product/OfferSelector";
 import ProductImages from "@/components/product/ProductImages";
+import GoldOrnamentalDivider from "@/components/shared/GoldOrnamentalDivider";
 import TrustBadges from "@/components/shared/TrustBadges";
 import StickyAddToCart from "@/components/shared/StickyAddToCart";
 import CountdownTimer from "@/components/shared/CountdownTimer";
@@ -32,7 +33,7 @@ export default function ProductHero() {
   };
 
   return (
-    <section className="bg-brand-dark pt-8 md:pt-12">
+    <section className="bg-[#28282A] pt-8 md:pt-12">
       <div className="container-luxury grid items-start gap-10 md:grid-cols-2 md:gap-14">
         <ProductImages />
 
@@ -74,6 +75,10 @@ export default function ProductHero() {
             <TrustBadges variant="grid" />
           </div>
         </div>
+      </div>
+
+      <div className="container-luxury mt-8 pb-2 md:mt-10">
+        <GoldOrnamentalDivider className="py-2 md:py-3" />
       </div>
 
       <StickyAddToCart offerId={offer} />
