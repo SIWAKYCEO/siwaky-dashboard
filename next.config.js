@@ -13,6 +13,10 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/logo.png",
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
+      },
+      {
         source: "/:locale(ar|en)/product",
         headers: [
           { key: "Cache-Control", value: "private, no-store, max-age=0, must-revalidate" },
@@ -31,6 +35,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://api.siwaky.com",
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || "https://siwaky.com",
+    /** Bump via env or increment default after replacing `public/logo.png` to bust CDN / `/_next/image` cache */
+    NEXT_PUBLIC_LOGO_REVISION: process.env.NEXT_PUBLIC_LOGO_REVISION || "6",
   },
   reactStrictMode: true,
   poweredByHeader: false,
