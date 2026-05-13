@@ -95,6 +95,7 @@
       "box-3": { "title": "Three boxes","detail": "36 sticks · save 386 SAR",           "badge": "💎 Best value" }
     },
     "benefits": {
+      "kicker": "Benefits",
       "title": "Why SIWAKY?",
       "items": [
         { "icon": "🌿", "title": "100% Natural",       "desc": "No chemicals — straight from nature" },
@@ -187,12 +188,23 @@
     }
   },
   "thankYou": {
-    "title": "Thank you! Your order is in.",
-    "sub": "Our team will call you shortly to confirm.",
-    "delivery": "⏱️ Delivery in 2–4 business days",
-    "orderId": "Order ID",
-    "shareTitle": "Share SIWAKY with your friends",
-    "backHome": "Back to home"
+    "headlineLine1": "Thank you!",
+    "headlineLine2": "Your order was received ✓",
+    "summaryTitle": "Order summary",
+    "productLabel": "Product",
+    "qtyLabel": "Quantity",
+    "priceLabel": "Total",
+    "summaryFallback": "Your order is saved securely. If the full breakdown does not appear, you can still explore the collection below or reach us anytime on WhatsApp.",
+    "orderIdLabel": "Order ID",
+    "teamCall": "Our concierge team will call you shortly to confirm your order.",
+    "delivery": "Delivery in 2-4 business days 🚚",
+    "ctaExplore": "Explore more",
+    "share": {
+      "whatsapp": "WhatsApp",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "whatsappText": "Discover SIWAKY — luxury natural oral care.\n{url}"
+    }
   },
   "about": {
     "title": "The story of SIWAKY",
