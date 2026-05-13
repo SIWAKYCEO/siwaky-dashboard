@@ -3,14 +3,9 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 
-import { productGalleryAlt } from "@/lib/seo/image-alts-ar";
+import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 
-const IMAGES = [
-  "/images/product-1.jpg",
-  "/images/product-2.jpg",
-  "/images/product-3.jpg",
-  "/images/product-4.jpg",
-];
+const GALLERY_SLOTS = 4;
 
 export default function ProductImages() {
   const [active, setActive] = useState(0);
@@ -24,40 +19,23 @@ export default function ProductImages() {
         transition={{ duration: 0.35 }}
         className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={IMAGES[active]}
-          alt={productGalleryAlt(active)}
-          className="aspect-square w-full object-cover"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-        />
+        <LuxuryMediaPlaceholder variant="galleryMain" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent" />
         <span className="absolute top-4 start-4 badge-gold">حلال معتمد</span>
       </motion.div>
 
       <div className="mt-4 grid grid-cols-4 gap-3">
-        {IMAGES.map((src, i) => (
+        {Array.from({ length: GALLERY_SLOTS }).map((_, i) => (
           <button
-            key={src}
+            key={i}
             type="button"
             onClick={() => setActive(i)}
             className={`relative aspect-square overflow-hidden rounded-xl border transition-all ${
-              i === active
-                ? "border-brand-gold shadow-gold"
-                : "border-white/5 hover:border-brand-gold/50"
+              i === active ? "border-brand-gold shadow-gold" : "border-white/5 hover:border-brand-gold/50"
             }`}
-            aria-label={productGalleryAlt(i)}
+            aria-label={`Product photo ${i + 1}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt={productGalleryAlt(i)}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
+            <LuxuryMediaPlaceholder variant="galleryThumb" />
           </button>
         ))}
       </div>

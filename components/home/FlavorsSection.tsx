@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
+import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import { FLAVOR_VISUALS } from "@/lib/flavors-visual";
-import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 export default function FlavorsSection() {
   const t = useTranslations("flavors");
@@ -38,14 +38,9 @@ export default function FlavorsSection() {
               />
               <div className="relative">
                 <div className="flex h-28 items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={f.img}
-                    alt={`${IMAGE_ALT_AR.flavorPrefix} ${t(`items.${f.key}.name`)} — سواكي`}
-                    className="h-24 w-24 object-contain drop-shadow-lg"
-                    draggable={false}
-                    loading="lazy"
-                    decoding="async"
+                  <LuxuryMediaPlaceholder
+                    variant="flavorIcon"
+                    tintClass={`bg-gradient-to-br ${f.tint}`}
                   />
                 </div>
                 <h3 className="mt-4 font-display text-2xl text-white">

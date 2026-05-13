@@ -2,10 +2,15 @@
 
 import { useEffect } from "react";
 
-/** Verify production deploys in DevTools → Console. */
+/**
+ * Verify production deploys in DevTools → Console.
+ * `next.config.js` uses `compiler.removeConsole` in production — `console.warn` is kept (see exclude list).
+ */
 export default function ProductDeployProbe() {
   useEffect(() => {
-    console.log("SIWAKY VERSION 2.0");
+    const build = process.env.NEXT_PUBLIC_APP_BUILD_ID ?? "local-dev";
+    console.warn("[SIWAKY PDP] build:", build);
+    document.documentElement.dataset.siwakyBuild = build;
   }, []);
 
   return null;

@@ -72,7 +72,7 @@ export function productSchema(locale: string) {
     "@type": "Product",
     name,
     description,
-    image: [`${SITE_URL}/images/product-1.jpg`, `${SITE_URL}/og.jpg`],
+    image: [`${SITE_URL}/og.jpg`],
     brand: { "@type": "Brand", name: "SIWAKY" },
     sku: "SIWAKY-BOX",
     offers,

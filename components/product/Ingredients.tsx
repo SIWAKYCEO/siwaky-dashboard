@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
+import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import { getFlavorVisual } from "@/lib/flavors-visual";
-import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 /** Order matches `product.ingredients.items`: arak → natural, mint, clove, coconut. */
 const INGREDIENT_FLAVOR_KEYS = ["natural", "mint", "clove", "coconut"] as const;
@@ -47,25 +47,12 @@ export default function Ingredients() {
                 className="rounded-2xl border border-[rgba(201,168,76,0.28)] bg-[#28282A] px-6 py-6 shadow-[inset_0_1px_0_rgba(201,168,76,0.06)] md:px-7 md:py-7"
               >
                 <div className="flex gap-4 sm:gap-5">
-                  <div className="relative flex h-[5.75rem] w-[5.75rem] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-brand-gold/20 bg-[#28282A] sm:h-24 sm:w-24">
-                    {visual ? (
-                      <>
-                        <div
-                          aria-hidden
-                          className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${visual.tint} opacity-45`}
-                        />
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={visual.img}
-                          alt={`${IMAGE_ALT_AR.flavorPrefix} ${it.title} — سواكي`}
-                          className="relative z-[1] h-[4.25rem] w-[4.25rem] object-contain drop-shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
-                          draggable={false}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </>
-                    ) : null}
-                  </div>
+                  <LuxuryMediaPlaceholder
+                    variant="ingredientThumb"
+                    tintClass={
+                      visual ? `bg-gradient-to-br ${visual.tint}` : undefined
+                    }
+                  />
                   <div className="min-w-0 flex-1">
                     <h3 className="font-display text-xl text-white md:text-[1.35rem]">{it.title}</h3>
                     <p className="mt-2 font-sans text-sm leading-7 text-white/72 md:text-[0.9375rem]">{it.desc}</p>

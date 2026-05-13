@@ -58,7 +58,7 @@ export default function ProductPage({ params: { locale } }: Props) {
       <span
         suppressHydrationWarning
         aria-hidden
-        dangerouslySetInnerHTML={{ __html: "<!-- SIWAKY_PDP_VERSION_2.0 -->" }}
+        dangerouslySetInnerHTML={{ __html: "<!-- SIWAKY_PDP_VERSION_3.0 -->" }}
         style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", clip: "rect(0,0,0,0)" }}
       />
       <ProductJsonLd locale={locale} />
@@ -67,7 +67,7 @@ export default function ProductPage({ params: { locale } }: Props) {
       <div
         dir="rtl"
         lang="ar"
-        data-siwaky-pdp-version="2.0"
+        data-siwaky-pdp-version="3.0"
         className="bg-[#28282A] pb-28 font-sans text-white md:pb-0"
       >
         <ProductHero />

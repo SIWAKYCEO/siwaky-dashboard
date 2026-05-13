@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
+import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import ScarcityBar from "@/components/shared/ScarcityBar";
-import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 export default function FinalCTA() {
   const t = useTranslations("finalCta");
@@ -14,16 +14,10 @@ export default function FinalCTA() {
   const locale = params?.locale ?? "ar";
 
   return (
-    <section className="section-padding relative overflow-hidden bg-brand-black">
-      <div className="absolute inset-0 opacity-30">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/cta.jpg"
-          alt={IMAGE_ALT_AR.ctaBg}
-          className="h-full w-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
+    <section className="section-padding relative overflow-hidden bg-[#28282A]">
+      <div className="absolute inset-0">
+        <LuxuryMediaPlaceholder variant="cta" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(40,40,42,0.9)_0%,rgba(26,26,28,0.94)_100%)]" aria-hidden />
       </div>
       <div className="container-luxury relative">
         <motion.div
