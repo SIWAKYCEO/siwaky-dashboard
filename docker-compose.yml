@@ -1,0 +1,62 @@
+version: "3.9"
+
+# Local dev only. Production runs on Easypanel (see docs/deployment.md).
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: siwaky_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: SIWAKY
+      POSTGRES_PASSWORD: SIWAKY
+      POSTGRES_DB: siwaky
+    ports:
+      - "5432:5432"
+    volumes:
+      - siwaky_pg:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: siwaky_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://SIWAKY:SIWAKY@db:5432/siwaky?sslmode=disable
+      FRONTEND_URL: http://localhost:3000
+      ENVIRONMENT: development
+      PORT: "8000"
+      MAXMIND_ACCOUNT_ID: ""
+      MAXMIND_LICENSE_KEY: ""
+      META_PIXEL_ID: "1898036304185332"
+      META_ACCESS_TOKEN: ""
+      TIKTOK_PIXEL_ID: "D722UD3C77UDBCCMEAQG"
+      TIKTOK_ACCESS_TOKEN: ""
+      SNAP_PIXEL_ID: ""
+      SNAP_ACCESS_TOKEN: ""
+      SHEETS_WEBHOOK_URL: ""
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: siwaky_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_META_PIXEL_ID: "1898036304185332"
+      NEXT_PUBLIC_TIKTOK_PIXEL_ID: "D722UD3C77UDBCCMEAQG"
+      NEXT_PUBLIC_SNAP_PIXEL_ID: ""
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  siwaky_pg:
