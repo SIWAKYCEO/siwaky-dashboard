@@ -40,10 +40,30 @@ The backend's `DATABASE_URL` should be this string verbatim. The backend contain
 
 ## 4. Frontend deploy
 
+### Easypanel ↔ GitHub — verify if production never matches `main`
+
+There is **no** Easypanel config file in git; open **Easypanel → siwaky-frontend → Source** and confirm the clone URL and paths match **how this repo is structured**:
+
+| Where `git push` goes | Repository URL in Easypanel | Root directory / **Subdirectory** | Dockerfile path (typical) |
+|-----------------------|-----------------------------|-----------------------------------|-----------------------------|
+| **Monorepo** with top-level `frontend/` (this workspace layout in `docs/deployment.md`) | Mono-repo HTTPS/SSH URL | **`frontend`** (subdirectory = build context) | `Dockerfile` (file inside that folder) |
+| **Frontend-only** repo (only Next.js app at repo root; no nested `frontend/` folder) | That repo URL | **`/`** or leave blank — **never** `frontend/` | `Dockerfile` or `dockerfile` at repo root |
+
+**Common bug:** GitHub app is **`SIWAKYCEO/frontend`** but Easypanel still uses subdirectory **`frontend/`** as if it were the mono-repo → builds pull the wrong tree or never update.
+
+**Common bug:** Easypanel wired to an **old fork** or archived repo → deploy “green” but stale bundle.
+
+After correcting Source, run one **Rebuild without cache**.
+
+### Which file serves `/product`
+
+Only **`frontend/app/[locale]/(shop)/product/page.tsx`** defines the PDP. The `(shop)` segment does **not** appear in the URL. There must **not** be a second `frontend/app/[locale]/product/page.tsx` or Next.js will conflict.
+
 ### App settings (Easypanel)
 - **Type:** App (Docker)
-- **Source:** GitHub → branch `main` → root path `frontend/`
-- **Dockerfile path:** `frontend/Dockerfile`
+- **Source:** GitHub → branch `main`
+  - **Monorepo:** subdirectory / root path **`frontend`**, Dockerfile **`Dockerfile`** (inside context).
+  - **Frontend-only repo:** subdirectory **`/`** (repo root), Dockerfile **`Dockerfile`** at root.
 - **Port:** `3000`
 - **Domain:** `siwaky.com` (+ `www.siwaky.com` redirect)
 
