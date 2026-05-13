@@ -1,6 +1,7 @@
 /**
- * Product PDP route (URL: /{locale}/product).
- * Implemented under the `(shop)` segment — there is no separate `app/[locale]/product/page.tsx`.
+ * ACTIVE PRODUCT PDP — Next.js resolves ONLY this file for `/[locale]/product`.
+ * Route: `app/[locale]/(shop)/product/page.tsx` — `(shop)` is invisible in the URL.
+ * There must NOT be a second `app/[locale]/product/page.tsx` or builds conflict.
  */
 import type { Metadata } from "next";
 import { unstable_noStore as noStore } from "next/cache";
@@ -8,13 +9,13 @@ import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 
 import ProductHero from "@/components/product/ProductHero";
 import ProductBenefits from "@/components/product/ProductBenefits";
-import ProductFlavorsShowcase from "@/components/product/ProductFlavorsShowcase";
 import Ingredients from "@/components/product/Ingredients";
 import HowToUse from "@/components/product/HowToUse";
 import ProductComparisonTable from "@/components/product/ProductComparisonTable";
 import ReviewsSection from "@/components/product/ReviewsSection";
 import FAQSection from "@/components/product/FAQSection";
 import ProductFinalCTA from "@/components/product/ProductFinalCTA";
+import ProductDeployProbe from "@/components/product/ProductDeployProbe";
 import ProductSectionDivider from "@/components/product/ProductSectionDivider";
 import ProductViewedTracker from "@/components/product/ProductViewedTracker";
 import ProductJsonLd from "@/components/seo/ProductJsonLd";
@@ -53,13 +54,24 @@ export default function ProductPage({ params: { locale } }: Props) {
   unstable_setRequestLocale(locale);
   return (
     <>
+      {/* HTML source marker — View Page Source → search SIWAKY_PDP */}
+      <span
+        suppressHydrationWarning
+        aria-hidden
+        dangerouslySetInnerHTML={{ __html: "<!-- SIWAKY_PDP_VERSION_2.0 -->" }}
+        style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", clip: "rect(0,0,0,0)" }}
+      />
       <ProductJsonLd locale={locale} />
       <ProductViewedTracker />
-      <div dir="rtl" lang="ar" className="bg-brand-dark pb-28 font-sans text-white md:pb-0">
+      <ProductDeployProbe />
+      <div
+        dir="rtl"
+        lang="ar"
+        data-siwaky-pdp-version="2.0"
+        className="bg-[#28282A] pb-28 font-sans text-white md:pb-0"
+      >
         <ProductHero />
         <ProductBenefits />
-        <ProductSectionDivider />
-        <ProductFlavorsShowcase />
         <ProductSectionDivider />
         <Ingredients />
         <ProductSectionDivider />

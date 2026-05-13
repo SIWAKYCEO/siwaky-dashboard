@@ -19,17 +19,17 @@ export default function ProductComparisonTable() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.55 }}
-      className="bg-brand-dark py-14 md:py-20"
+      className="bg-[#28282A] py-14 md:py-20"
     >
       <div className="container-luxury">
         <h2 className="text-center font-display text-2xl leading-snug text-white md:text-[2.35rem]">
           {t("title")}
         </h2>
 
-        <div className="mt-10 overflow-x-auto rounded-2xl border border-brand-gold/35 bg-black md:overflow-visible">
+        <div className="mt-10 overflow-x-auto rounded-2xl border border-[rgba(201,168,76,0.28)] bg-[#28282A] shadow-[inset_0_1px_0_rgba(201,168,76,0.06)] md:overflow-visible">
           <table className="w-full min-w-[340px] border-collapse font-sans text-sm md:text-base rtl:text-right">
             <thead>
-              <tr className="border-b border-brand-gold/35 bg-brand-dark2/80">
+              <tr className="border-b border-brand-gold/35 bg-[#1A1A1A]/90">
                 <th scope="col" className="px-4 py-4 font-semibold text-brand-goldLight md:px-6">
                   {t("colFeature")}
                 </th>

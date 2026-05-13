@@ -137,23 +137,14 @@
         { "icon": "🎁", "title": "هدية مثالية", "desc": "تغليف فاخر يناسب المناسبات" }
       ]
     },
-    "flavorsShowcase": {
-      "title": "اختر نكهتك",
-      "items": [
-        { "emoji": "🌿", "name": "الطبيعي", "desc": "نقاء الأراك الأصيل" },
-        { "emoji": "🌱", "name": "النعناع", "desc": "نفَس منعش بعد كل صلاة" },
-        { "emoji": "🌶️", "name": "القرنفل", "desc": "دفء وقوة مضادة للالتهابات" },
-        { "emoji": "🥥", "name": "جوز الهند", "desc": "ناعم، مرطّب، فاخر" }
-      ]
-    },
     "ingredients": {
-      "title": "ماذا يحتوي سواكي؟",
-      "science": "أثبتت الدراسات العلمية أن السواك يحتوي على أكثر من 70 مادة طبيعية نافعة لصحة الفم",
+      "title": "What's inside SIWAKY?",
+      "science": "Research shows miswak contains 70+ natural compounds that support oral health.",
       "items": [
-        { "icon": "🌿", "title": "عود الأراك", "desc": "مضاد طبيعي للبكتيريا يحتوي على سالفادرين والعفص الطبيعي" },
-        { "icon": "🌱", "title": "نعناع طبيعي", "desc": "يمنح نفساً منعشاً ويحارب الجراثيم" },
-        { "icon": "🌶️", "title": "قرنفل طبيعي", "desc": "مضاد للالتهابات، مسكّن طبيعي للألم" },
-        { "icon": "🥥", "title": "جوز الهند", "desc": "مضاد للفطريات، يرطّب ويحمي" }
+        { "title": "Arak twig", "desc": "Natural antibacterial profile including salvadorine and tannins." },
+        { "title": "Natural mint", "desc": "Fresh breath and helps fight germs." },
+        { "title": "Natural clove", "desc": "Anti-inflammatory and gentle natural soothing." },
+        { "title": "Coconut", "desc": "Anti-fungal, moisturizing, and protective." }
       ]
     },
     "howTo": {

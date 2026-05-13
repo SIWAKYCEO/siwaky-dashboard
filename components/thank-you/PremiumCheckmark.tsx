@@ -22,7 +22,7 @@ export default function PremiumCheckmark() {
       />
 
       <motion.div
-        className="relative flex size-[6.75rem] items-center justify-center rounded-full border-[2.5px] border-brand-gold/90 bg-[radial-gradient(ellipse_at_30%_20%,rgba(240,223,160,0.22),transparent_55%),rgba(26,26,26,0.92)] shadow-[inset_0_1px_0_rgba(240,223,160,0.35),0_0_52px_-8px_rgba(201,168,76,0.75)]"
+        className="relative flex size-[6.75rem] items-center justify-center rounded-full border-[2.5px] border-brand-gold/90 bg-[radial-gradient(ellipse_at_30%_20%,rgba(240,223,160,0.22),transparent_55%),rgba(40,40,42,0.96)] shadow-[inset_0_1px_0_rgba(240,223,160,0.35),0_0_52px_-8px_rgba(201,168,76,0.75)]"
         initial={{ rotate: -90, scale: 0.92 }}
         animate={{ rotate: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 180, damping: 20, delay: 0.12 }}

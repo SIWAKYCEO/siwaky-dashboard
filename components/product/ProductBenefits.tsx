@@ -19,7 +19,7 @@ export default function ProductBenefits() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.18 }}
       transition={{ duration: 0.55 }}
-      className="bg-brand-dark py-14 md:py-20"
+      className="bg-[#28282A] py-14 md:py-20"
     >
       <div className="container-luxury">
         <h2 className="text-center font-display text-3xl text-white md:text-[2.75rem]">{t("title")}</h2>
@@ -35,7 +35,7 @@ export default function ProductBenefits() {
               className="flex items-start gap-3"
             >
               <span
-                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-brand-gold/45 bg-black text-xl shadow-[inset_0_0_0_1px_rgba(201,168,76,0.12)]"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-brand-gold/45 bg-[#28282A] text-xl shadow-[inset_0_0_0_1px_rgba(201,168,76,0.12)]"
                 aria-hidden
               >
                 {it.icon}

@@ -45,7 +45,7 @@ export default function StickyAddToCart({ offerId }: Props) {
         visible ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      <div className="border-t-2 border-brand-gold/45 bg-brand-dark px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.85)]">
+      <div className="border-t-2 border-brand-gold/45 bg-[#28282A] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-12px_40px_-12px_rgba(40,40,42,0.75)]">
         <div className="flex items-center justify-between gap-3">
           <div className="font-sans text-sm">
             <p className="text-white/55">{offer.quantity} × سواكي</p>

@@ -5,7 +5,7 @@ import GoldOrnamentalDivider from "@/components/shared/GoldOrnamentalDivider";
 /** Islamic-inspired geometric strip between luxury sections */
 export default function ProductSectionDivider() {
   return (
-    <div className="relative bg-brand-dark py-4 md:py-5" aria-hidden>
+    <div className="relative bg-[#28282A] py-4 md:py-5" aria-hidden>
       <svg
         className="pointer-events-none absolute inset-x-0 top-1/2 mx-auto h-6 w-[min(100%,520px)] -translate-y-1/2 opacity-[0.22]"
         viewBox="0 0 520 24"

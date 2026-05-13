@@ -3,20 +3,14 @@
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
+import { FLAVOR_VISUALS } from "@/lib/flavors-visual";
 import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
-
-const FLAVORS = [
-  { key: "natural", img: "/images/flavors/natural.png",  tint: "from-emerald-700/30 to-emerald-900/10" },
-  { key: "mint",    img: "/images/flavors/mint.png",     tint: "from-teal-700/30 to-teal-900/10" },
-  { key: "clove",   img: "/images/flavors/clove.png",    tint: "from-amber-800/30 to-orange-900/10" },
-  { key: "coconut", img: "/images/flavors/coconut.png",  tint: "from-stone-500/20 to-stone-800/10" },
-] as const;
 
 export default function FlavorsSection() {
   const t = useTranslations("flavors");
 
   return (
-    <section className="section-padding bg-brand-dark2">
+    <section className="section-padding bg-brand-dark">
       <div className="container-luxury">
         <div className="text-center">
           <span className="ornament text-xs uppercase tracking-[0.4em] text-brand-goldLight">
@@ -29,7 +23,7 @@ export default function FlavorsSection() {
         </div>
 
         <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-          {FLAVORS.map((f, i) => (
+          {FLAVOR_VISUALS.map((f, i) => (
             <motion.div
               key={f.key}
               initial={{ opacity: 0, y: 24 }}

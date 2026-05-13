@@ -21,7 +21,7 @@ export default function FAQSection() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.55 }}
-      className="bg-brand-dark py-14 md:py-20"
+      className="bg-[#28282A] py-14 md:py-20"
     >
       <div className="container-luxury">
         <h2 className="text-center font-display text-3xl text-white md:text-[2.75rem]">{t("title")}</h2>
@@ -36,7 +36,7 @@ export default function FAQSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.04 }}
-                className="overflow-hidden rounded-2xl border border-brand-gold/20 bg-black"
+                className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.22)] bg-[#28282A]"
               >
                 <button
                   type="button"

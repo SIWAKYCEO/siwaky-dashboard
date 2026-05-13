@@ -16,7 +16,7 @@ export default function ProductFinalCTA() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.55 }}
-      className="border-y border-brand-gold/25 bg-black py-16 md:py-24"
+      className="border-y border-brand-gold/25 bg-[#28282A] py-16 md:py-24"
     >
       <div className="container-luxury text-center">
         <h2 className="font-display text-3xl text-white md:text-[2.85rem]">{t("headline")}</h2>

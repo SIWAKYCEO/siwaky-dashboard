@@ -22,7 +22,7 @@ export default function ReviewsSection() {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.55 }}
-      className="bg-brand-dark py-14 md:py-20"
+      className="bg-[#28282A] py-14 md:py-20"
     >
       <div className="container-luxury">
         <div className="text-center">
@@ -63,7 +63,7 @@ function ReviewCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.4 }}
-      className={`relative rounded-2xl border border-brand-gold/20 bg-black px-5 py-5 md:px-6 md:py-6 ${className}`}
+      className={`relative rounded-2xl border border-[rgba(201,168,76,0.22)] bg-[#28282A] px-5 py-5 shadow-[inset_0_1px_0_rgba(201,168,76,0.05)] md:px-6 md:py-6 ${className}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-3">
         <div className="flex items-center gap-1 text-brand-gold">

@@ -37,7 +37,7 @@ export default function OfferSelector({ value, onChange }: Props) {
               className={`relative w-full overflow-hidden rounded-2xl border p-4 text-start transition-all duration-200
                 ${active
                   ? "border-brand-gold bg-brand-gold/10 shadow-gold"
-                  : "border-white/10 bg-brand-dark2/60 hover:border-brand-gold/40"}`}
+                  : "border-white/10 bg-[#28282A]/95 hover:border-brand-gold/40"}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">

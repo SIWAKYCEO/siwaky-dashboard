@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BadgeCheck, RotateCcw, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
-import Logo from "@/components/shared/Logo";
 import { type OfferId } from "@/lib/offers";
 import { SITE_URL } from "@/lib/seo/site";
 import { formatSAR } from "@/lib/utils";
@@ -31,10 +31,8 @@ function parseTotal(raw: string | null): number {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-interface TrustRow {
-  icon: string;
-  text: string;
-}
+
+const TRUST_ICONS_LUX = [ShieldCheck, BadgeCheck, RotateCcw] as const;
 
 interface NextStep {
   icon: string;
@@ -93,7 +91,7 @@ export default function ThankYouContent() {
     }
   };
 
-  const trustRows = t.raw("trust.items") as TrustRow[];
+  const trustRows = t.raw("trust.items") as { icon?: string; text: string }[];
   const nextSteps: NextStep[] = [
     { icon: STEP_ICONS[0], text: t("step1") },
     { icon: STEP_ICONS[1], text: t("step2") },
@@ -101,13 +99,13 @@ export default function ThankYouContent() {
   ];
 
   return (
-    <section dir="rtl" lang="ar" className="relative min-h-[calc(100vh-5rem)] overflow-hidden bg-brand-dark pb-24 pt-12 md:pb-28 md:pt-16">
+    <section dir="rtl" lang="ar" className="relative min-h-[calc(100vh-5rem)] overflow-hidden bg-[#28282A] pb-24 pt-12 md:pb-28 md:pt-16">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_50%_at_50%_-8%,rgba(201,168,76,0.14),transparent_58%)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.35)_0%,transparent_35%,transparent_75%,rgba(0,0,0,0.45)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(26,26,26,0.25)_0%,transparent_38%,transparent_72%,rgba(26,26,26,0.35)_100%)]"
         aria-hidden
       />
 
@@ -149,7 +147,9 @@ export default function ThankYouContent() {
             transition={{ delay: 0.72, duration: 0.45 }}
           >
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-gold/65 to-transparent" />
-            <Logo size="sm" />
+            <span className="ornament whitespace-nowrap px-1 text-xs uppercase tracking-[0.4em] text-brand-goldLight">
+              SIWAKY
+            </span>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-brand-gold/65 to-transparent" />
           </motion.div>
         </div>
@@ -162,34 +162,28 @@ export default function ThankYouContent() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <div className="relative overflow-hidden rounded-2xl border-2 border-brand-gold/50 bg-black px-6 py-7 shadow-[0_0_0_1px_rgba(240,223,160,0.08),0_28px_70px_-34px_rgba(201,168,76,0.35)] md:px-8 md:py-8">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.06]"
-              style={{
-                background:
-                  "repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(201,168,76,0.55) 10px, rgba(201,168,76,0.55) 11px)",
-              }}
-            />
+          <div className="relative overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[#28282A] px-6 py-7 shadow-[0_24px_56px_-26px_rgba(201,168,76,0.18)] md:px-8 md:py-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_50%_-20%,rgba(201,168,76,0.06),transparent_55%)]" aria-hidden />
 
             <p className="relative text-center text-xs font-semibold uppercase tracking-[0.38em] text-brand-goldLight">
               {t("orderSummary")}
             </p>
 
             {hasSummary ? (
-              <dl className="relative mt-7 space-y-4 border-t border-white/[0.07] pt-6">
+              <dl className="relative mt-7 space-y-4 border-t border-white/[0.07] pt-6 font-sans">
                 <div className="flex flex-col gap-1 border-b border-white/[0.06] pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <dt className="font-sans text-sm text-white/50">{t("productLabel")}</dt>
-                  <dd className="font-display text-lg text-white">
+                  <dt className="text-sm text-white/50">{t("productLabel")}</dt>
+                  <dd className="text-lg font-medium text-white">
                     SIWAKY — {tOffer(`${offerId}.title`)}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-white/[0.06] pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <dt className="font-sans text-sm text-white/50">{t("qtyLabel")}</dt>
-                  <dd className="font-sans text-lg tabular-nums text-brand-goldLight">{qty}</dd>
+                  <dt className="text-sm text-white/50">{t("qtyLabel")}</dt>
+                  <dd className="text-lg tabular-nums text-brand-goldLight">{qty}</dd>
                 </div>
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <dt className="font-sans text-sm font-medium text-brand-gold/90">{t("priceLabel")}</dt>
-                  <dd className="font-display text-2xl font-semibold tabular-nums text-white md:text-3xl">
+                  <dt className="text-sm font-medium text-brand-gold/90">{t("priceLabel")}</dt>
+                  <dd className="text-2xl font-semibold tabular-nums text-white md:text-3xl">
                     {formatSAR(total, locale)}
                   </dd>
                 </div>
@@ -203,7 +197,7 @@ export default function ThankYouContent() {
             {orderId && (
               <div className="relative mt-6 flex flex-col items-center gap-3 border-t border-white/[0.06] pt-6">
                 <p className="font-sans text-xs uppercase tracking-[0.25em] text-white/45">{t("orderIdLabel")}</p>
-                <p className="font-mono text-sm text-brand-goldLight/95">{orderId}</p>
+                <p className="break-all text-sm font-medium tracking-normal text-brand-goldLight/95">{orderId}</p>
                 <button
                   type="button"
                   onClick={copyOrderId}
@@ -246,7 +240,7 @@ export default function ThankYouContent() {
                   transition={{ delay: i * 0.08, duration: 0.45 }}
                   className="relative flex gap-4 md:flex-col md:items-center md:text-center"
                 >
-                  <span className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border-2 border-brand-gold bg-black font-display text-xl font-bold text-brand-goldLight shadow-[0_0_22px_-8px_rgba(201,168,76,0.65)]">
+                  <span className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border-2 border-brand-gold bg-[#28282A] font-display text-xl font-bold text-brand-goldLight shadow-[0_0_22px_-8px_rgba(201,168,76,0.65)]">
                     {i + 1}
                   </span>
                   <div className="min-w-0 pt-1 md:pt-4">
@@ -263,31 +257,34 @@ export default function ThankYouContent() {
 
         {/* ── Trust ───────────────────────────────────────── */}
         <motion.div
-          className="mx-auto mt-16 grid max-w-xl grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-3"
+          className="mx-auto mt-16 flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-4 md:gap-x-12"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
+          role="list"
         >
-          {trustRows.map((row, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              className="flex flex-col items-center rounded-2xl border border-brand-gold/25 bg-black/80 px-4 py-5 text-center"
-            >
-              <span className="text-2xl" aria-hidden>
-                {row.icon}
-              </span>
-              <p className="mt-3 font-sans text-sm leading-6 text-white/82">{row.text}</p>
-            </motion.div>
-          ))}
+          {trustRows.map((row, i) => {
+            const Icon = TRUST_ICONS_LUX[i] ?? BadgeCheck;
+            return (
+              <motion.div
+                key={i}
+                role="listitem"
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-center gap-2.5"
+              >
+                <Icon className="size-[1.35rem] shrink-0 text-brand-gold" strokeWidth={1.65} aria-hidden />
+                <span className="font-sans text-sm leading-snug text-white/85">{row.text}</span>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {/* ── Share ───────────────────────────────────────── */}
         <motion.div
-          className="mx-auto mt-16 max-w-lg rounded-2xl border border-brand-gold/20 bg-black/50 px-6 py-8 text-center backdrop-blur-sm"
+          className="mx-auto mt-16 max-w-lg rounded-2xl border border-brand-gold/25 bg-[#28282A]/95 px-6 py-8 text-center shadow-[inset_0_1px_0_rgba(201,168,76,0.08)] backdrop-blur-sm"
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -324,7 +321,7 @@ export default function ThankYouContent() {
 
         {/* ── Final CTA ───────────────────────────────────── */}
         <motion.div
-          className="mx-auto mt-16 max-w-md rounded-2xl border border-white/[0.06] bg-brand-dark2/40 px-6 py-10 text-center"
+          className="mx-auto mt-16 max-w-md rounded-2xl border border-brand-gold/20 bg-[#28282A] px-6 py-10 text-center shadow-[inset_0_1px_0_rgba(201,168,76,0.06)]"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
