@@ -5,8 +5,11 @@
 #
 # Service name MUST be **dashboard-frontend**: Easypanel merges docker-compose.override.yml that
 # targets this key; renaming to `frontend` leaves override-only stubs (no build) and compose fails.
-# Orphan cleanup: old `frontend_*` containers — run compose with `--remove-orphans` once (Easypanel
-# extra args) or `./scripts/docker-compose-up.sh`.
+# Orphan cleanup: Easypanel reads x-docker-compose-flags.remove_orphans; manual runs can use
+# `./scripts/docker-compose-up.sh` (passes --remove-orphans on the CLI).
+
+x-docker-compose-flags:
+  remove_orphans: true
 
 services:
   backend:
@@ -37,6 +40,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3001"
+      HOSTNAME: "0.0.0.0"
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
       DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}

@@ -26,6 +26,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 USER nextjs
 EXPOSE 3001
+# Next standalone binds 0.0.0.0:PORT (reachable from Traefik / other containers)
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
