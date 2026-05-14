@@ -12,15 +12,20 @@ from app.config import (
     selected_database_source,
     selected_database_url_redacted,
 )
+from app.routes import store_orders
 from app.services.orders_db import fetch_orders_array, ping_database
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
+app.include_router(store_orders.router)
 
 # Required CORS hosts (dashboard ↔ API in Docker / prod).
 _cors_required = (
     "http://dashboard-frontend:3001",
     "https://dashboard.siwaky.com",
     "https://siwaky.com",
+    "https://www.siwaky.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
 )

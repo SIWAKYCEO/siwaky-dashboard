@@ -4,10 +4,144 @@ from __future__ import annotations
 
 import datetime
 import decimal
-from typing import Any
+import logging
+from decimal import Decimal
+from typing import Any, Optional
 
 import psycopg
+from psycopg import errors as pg_errors
 from psycopg.rows import dict_row
+
+logger = logging.getLogger(__name__)
+
+
+def _allocate_order_id(cur: psycopg.Cursor, *, today: datetime.date) -> str:
+    prefix = f"ORD-{today.strftime('%Y%m%d')}-"
+    cur.execute(
+        "SELECT COUNT(*)::int FROM orders WHERE order_id LIKE %s",
+        (prefix + "%",),
+    )
+    row = cur.fetchone()
+    n = int(row[0]) if row and row[0] is not None else 0
+    return f"{prefix}{n + 1:03d}"
+
+
+_INSERT_ORDER_SQL = """
+INSERT INTO orders (
+    order_id,
+    name,
+    phone,
+    city,
+    product,
+    offer,
+    quantity,
+    price_sar,
+    status,
+    source,
+    campaign,
+    ip_address,
+    user_agent,
+    event_id,
+    notes,
+    created_at,
+    updated_at
+)
+VALUES (
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    %s,
+    NOW(),
+    NOW()
+)
+RETURNING created_at
+"""
+
+
+def insert_store_order(
+    *,
+    database_url: str,
+    name: str,
+    phone: str,
+    city: Optional[str],
+    product: str,
+    offer: str,
+    quantity: int,
+    price_sar: Decimal,
+    status: str,
+    source: Optional[str],
+    campaign: Optional[str],
+    ip_address: Optional[str],
+    user_agent: Optional[str],
+    event_id: Optional[str],
+    notes: Optional[str],
+) -> tuple[str, datetime.datetime]:
+    """Insert checkout row into ``orders``. Retries briefly on rare ``order_id`` collisions."""
+    if not database_url.strip():
+        raise ValueError("DATABASE_URL is empty")
+
+    today = datetime.date.today()
+    last_violation: BaseException | None = None
+
+    for attempt in range(20):
+        try:
+            with psycopg.connect(database_url) as conn:
+                with conn.transaction():
+                    with conn.cursor() as cur:
+                        order_id = _allocate_order_id(cur, today=today)
+                        cur.execute(
+                            _INSERT_ORDER_SQL,
+                            (
+                                order_id,
+                                name,
+                                phone,
+                                city,
+                                product,
+                                offer,
+                                quantity,
+                                price_sar,
+                                status,
+                                source,
+                                campaign,
+                                ip_address,
+                                user_agent,
+                                event_id,
+                                notes,
+                            ),
+                        )
+                        row = cur.fetchone()
+
+            if not row or row[0] is None:
+                raise RuntimeError("INSERT orders returned no created_at")
+
+            created_at = row[0]
+            if not isinstance(created_at, datetime.datetime):
+                created_at = datetime.datetime.fromisoformat(str(created_at))
+
+            logger.info("[orders] insert ok order_id=%s attempt=%s", order_id, attempt + 1)
+            return order_id, created_at
+
+        except pg_errors.UniqueViolation as exc:
+            last_violation = exc
+            logger.warning(
+                "[orders] UniqueViolation allocating order_id (attempt %s), retrying: %s",
+                attempt + 1,
+                exc,
+            )
+
+    raise RuntimeError("could not insert order after retries") from last_violation
+
 
 # Schema matches `app.models.order.Order` (siwaky store API).
 _ORDERS_SQL = """

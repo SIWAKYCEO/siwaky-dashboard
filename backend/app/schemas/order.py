@@ -25,6 +25,7 @@ class OrderCreate(BaseModel):
     source: Optional[str] = Field(default=None, max_length=100)
     campaign: Optional[str] = Field(default=None, max_length=255)
     event_id: Optional[str] = Field(default=None, max_length=100)
+    notes: Optional[str] = Field(default=None, max_length=4000)
 
 
 class OrderResponse(BaseModel):
