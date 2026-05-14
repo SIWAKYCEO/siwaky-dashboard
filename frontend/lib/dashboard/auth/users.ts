@@ -38,13 +38,24 @@ function normalizeUsersJsonRaw(raw: string | undefined): string {
 }
 
 /**
- * Env UIs often strip the leading `$` from bcrypt hashes (`$2b$12$...` → `2b$12$...`).
- * bcrypt requires the full `$2b$...` prefix.
+ * Easypanel / shell env often strips `$` from bcrypt hashes.
+ * Valid: `$2b$12$<salt+hash>`. Broken examples: `2b$12$...`, `2b12...` (all `$` gone).
  */
 function normalizePossiblyMangledBcryptHash(hash: string): string {
-  const h = hash.trim();
+  let h = hash.trim();
   if (h.startsWith("$")) return h;
-  if (/^2[aby]\$\d{2}\$/.test(h)) return `$${h}`;
+
+  // Only leading `$` missing; inner `$` still present (e.g. `2b$12$...`)
+  if (h.startsWith("2b$") || h.startsWith("2a$") || h.startsWith("2y$")) {
+    h = `$${h}`;
+    return h;
+  }
+
+  // Some systems strip every `$` → `2b12Jgc...` (cost digits follow `2b` immediately)
+  if (/^2[aby]\d{2}[A-Za-z0-9./]+$/.test(h) && !h.includes("$")) {
+    return `$${h.slice(0, 2)}$${h.slice(2, 4)}$${h.slice(4)}`;
+  }
+
   return h;
 }
 
