@@ -1,12 +1,11 @@
-# Easypanel: clone full repo root (compose file next to backend/ + frontend/).
-# Build uses context "." so Docker finds backend/Dockerfile and frontend/Dockerfile reliably
-# even when tooling resolves paths oddly (see Bake / BuildKit).
+# Repo root compose: backend/Dockerfile and frontend/Dockerfile (context ./backend | ./frontend).
+# Easypanel: use full monorepo checkout (root contains this file, backend/, frontend/).
 
 services:
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       PORT: "8000"
@@ -23,8 +22,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - backend
