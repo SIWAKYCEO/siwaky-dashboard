@@ -6,6 +6,51 @@ const withNextIntl = createNextIntlPlugin("./i18n.ts");
 const nextConfig = {
   /** Unique `_next/static` chunk URLs on every build — avoids stale hashed assets after deploy. */
   generateBuildId: async () => Date.now().toString(),
+  async redirects() {
+    const d = "/ar";
+    return [
+      {
+        source: "/product",
+        destination: `${d}/product`,
+        permanent: true,
+      },
+      {
+        source: "/about",
+        destination: `${d}/about`,
+        permanent: true,
+      },
+      {
+        source: "/contact",
+        destination: `${d}/contact`,
+        permanent: true,
+      },
+      {
+        source: "/privacy-policy",
+        destination: `${d}/privacy-policy`,
+        permanent: true,
+      },
+      {
+        source: "/terms",
+        destination: `${d}/terms`,
+        permanent: true,
+      },
+      {
+        source: "/shipping",
+        destination: `${d}/shipping`,
+        permanent: true,
+      },
+      {
+        source: "/returns",
+        destination: `${d}/returns`,
+        permanent: true,
+      },
+      {
+        source: "/thank-you",
+        destination: `${d}/thank-you`,
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

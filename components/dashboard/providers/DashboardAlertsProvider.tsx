@@ -16,8 +16,29 @@ import type { OrderRow } from "@/lib/dashboard/types";
 
 import { OrderToastStack, type OrderToastRecord } from "@/components/dashboard/notifications/OrderToastStack";
 
-/** Optional WAV — if missing, a Web Audio synthetic chime is used (always works after unlock). */
-export const ORDER_ARRIVAL_SOUND_SRC = "/sounds/order-arrival.wav";
+/** Persisted in Next `public/sounds/` → URL path below (see `public/sounds/kaching.mp3`). */
+export const ORDER_ALERT_SOUND_SRC = "/sounds/kaching.mp3";
+/** @deprecated use ORDER_ALERT_SOUND_SRC */
+export const ORDER_ARRIVAL_SOUND_SRC = ORDER_ALERT_SOUND_SRC;
+
+/** `<audio>` output is 0–1 (browser cap). */
+const ORDER_CHIME_HTML_VOLUME = 1;
+/** Boost decoded MP3 in Web Audio (asset is fairly quiet). */
+const ORDER_CHIME_BUFFER_GAIN = 2.55;
+/** Synthetic fallback bus level. */
+const ORDER_CHIME_SYNTH_BUS_GAIN = 1.28;
+
+function dashAudioLog(...args: unknown[]) {
+  if (typeof console !== "undefined" && console.warn) {
+    console.warn("[dash-audio]", ...args);
+  }
+}
+
+/** Absolute URL for fetch / Audio (works with subpaths if ever added to next.config). */
+function soundFileUrl(): string {
+  if (typeof window === "undefined") return ORDER_ALERT_SOUND_SRC;
+  return new URL(ORDER_ALERT_SOUND_SRC, window.location.origin).href;
+}
 
 function getAudioContextCtor(): (typeof AudioContext) | null {
   if (typeof window === "undefined") return null;
@@ -28,14 +49,13 @@ function getAudioContextCtor(): (typeof AudioContext) | null {
   return Win.AudioContext ?? Win.webkitAudioContext ?? null;
 }
 
-/** Shopify-style bright three-note chime — no asset file required. */
 function playSyntheticOrderChime(ctx: AudioContext): void {
   const t = ctx.currentTime;
   const bus = ctx.createGain();
-  bus.gain.value = 0.32;
+  bus.gain.value = ORDER_CHIME_SYNTH_BUS_GAIN;
   bus.connect(ctx.destination);
 
-  const freqs = [698.46, 880.0, 1046.5]; // F5 A5 C6 — retail ping
+  const freqs = [698.46, 880.0, 1046.5];
   freqs.forEach((freq, i) => {
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
@@ -52,6 +72,20 @@ function playSyntheticOrderChime(ctx: AudioContext): void {
   });
 }
 
+function createPreloadAudioElement(): HTMLAudioElement {
+  const el = new Audio();
+  el.preload = "auto";
+  el.src = soundFileUrl();
+  try {
+    el.setAttribute("playsinline", "");
+    el.setAttribute("webkit-playsinline", "true");
+  } catch {
+    /* ignore */
+  }
+  el.load();
+  return el;
+}
+
 type Ctx = {
   alertsChannelReady: boolean;
   soundEnabled: boolean;
@@ -59,14 +93,45 @@ type Ctx = {
   toastEnabled: boolean;
   setToastEnabled: (v: boolean) => void;
   audioUnlocked: boolean;
+  /** True when sound is on but browser has not yet allowed playback (autoplay policy). */
+  needsSoundInteraction: boolean;
+  soundAssetStatus: "loading" | "ready" | "decode-failed";
   signalNewOrders: (orders: OrderRow[]) => void;
-  /** Idempotent unlock — call from gestures / Sound toggle / Enable sound control */
   primeDashboardAudio: () => Promise<void>;
-  /** Short preview after enabling sound (respects autoplay unlock). */
   previewOrderChime: () => Promise<boolean>;
 };
 
 const DashboardAlertsContext = createContext<Ctx | null>(null);
+
+function SoundUnlockBanner({
+  visible,
+  onEnable,
+}: {
+  visible: boolean;
+  onEnable: () => void;
+}) {
+  if (!visible) return null;
+
+  return (
+    <div
+      className="pointer-events-none fixed bottom-0 left-0 right-0 z-[2100] flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4"
+      role="status"
+    >
+      <div className="pointer-events-auto flex max-w-lg flex-col gap-2 rounded-2xl border border-amber-400/35 bg-[#1e1e22]/95 px-4 py-3 text-center shadow-[0_-8px_40px_rgba(0,0,0,0.45)] backdrop-blur-md sm:flex-row sm:items-center sm:gap-4 sm:text-left">
+        <p className="font-dashSans text-[12px] leading-snug text-white/88">
+          Tap to enable notification sound — your browser blocks audio until you interact.
+        </p>
+        <button
+          type="button"
+          className="shrink-0 rounded-xl border border-[#c9a962]/50 bg-[#c9a962]/20 px-4 py-2.5 font-dashSans text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f5efd9] motion-safe:transition-colors hover:bg-[#c9a962]/35"
+          onClick={() => onEnable()}
+        >
+          Enable notification sound
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   const initialSoundEnv =
@@ -76,6 +141,9 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
 
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [decodeReady, setDecodeReady] = useState(false);
+  const [soundAssetStatus, setSoundAssetStatus] = useState<"loading" | "ready" | "decode-failed">(
+    "loading",
+  );
   const [soundEnabled, setSoundEnabledState] = useState(initialSoundEnv);
   const [toastEnabled, setToastEnabledState] = useState(true);
 
@@ -84,11 +152,12 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const decodedBufferRef = useRef<AudioBuffer | null>(null);
-  const gesturePrimedRef = useRef(false);
   const pendingChimeRef = useRef(false);
   const toastTimersRef = useRef<Map<string, number>>(new Map());
   const soundEnabledRef = useRef(soundEnabled);
+  const audioUnlockedRef = useRef(audioUnlocked);
   soundEnabledRef.current = soundEnabled;
+  audioUnlockedRef.current = audioUnlocked;
 
   const setSoundEnabled = useCallback((v: boolean) => {
     setSoundEnabledState(v);
@@ -121,34 +190,57 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /** Decode WAV when present — synthetic path works regardless. */
   useEffect(() => {
     let cancelled = false;
 
-    const html = new Audio();
-    html.preload = "auto";
-    html.crossOrigin = "anonymous";
-    html.src = ORDER_ARRIVAL_SOUND_SRC;
-    html.load();
+    const html = createPreloadAudioElement();
     htmlAudioRef.current = html;
+
+    const onCanPlay = () => {
+      if (cancelled) return;
+      dashAudioLog("sound loaded (HTMLAudio can play)", ORDER_ALERT_SOUND_SRC, soundFileUrl());
+    };
+    html.addEventListener("canplaythrough", onCanPlay, { once: true });
+    html.addEventListener("error", () => {
+      if (cancelled) return;
+      dashAudioLog("sound preload error (HTMLAudio)", ORDER_ALERT_SOUND_SRC);
+    });
 
     void (async () => {
       try {
         const Ctor = getAudioContextCtor();
         if (!Ctor) {
-          if (!cancelled) setDecodeReady(true);
+          if (!cancelled) {
+            setDecodeReady(true);
+            setSoundAssetStatus("decode-failed");
+          }
           return;
         }
         const ctx = audioCtxRef.current ?? new Ctor();
         audioCtxRef.current = ctx;
 
-        const res = await fetch(ORDER_ARRIVAL_SOUND_SRC, { cache: "force-cache", credentials: "same-origin" });
-        if (!res.ok) throw new Error(`wav ${res.status}`);
+        const url = soundFileUrl();
+        const res = await fetch(ORDER_ALERT_SOUND_SRC, {
+          cache: "force-cache",
+          credentials: "same-origin",
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status} for ${ORDER_ALERT_SOUND_SRC}`);
         const raw = await res.arrayBuffer();
-        const buf = await ctx.decodeAudioData(raw.slice(0));
-        if (!cancelled) decodedBufferRef.current = buf;
-      } catch {
+        if (raw.byteLength < 100) throw new Error("sound file too small");
+
+        const copy = raw.slice(0);
+        const buf = await ctx.decodeAudioData(copy);
+        if (!cancelled) {
+          decodedBufferRef.current = buf;
+          setSoundAssetStatus("ready");
+          dashAudioLog("sound decoded for Web Audio (buffer)", buf.duration.toFixed(2) + "s", url);
+        }
+      } catch (e) {
         decodedBufferRef.current = null;
+        if (!cancelled) {
+          setSoundAssetStatus("decode-failed");
+          dashAudioLog("decodeAudioData failed — will use <audio> MP3 path", e);
+        }
       } finally {
         if (!cancelled) setDecodeReady(true);
       }
@@ -156,66 +248,90 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      html.removeEventListener("canplaythrough", onCanPlay);
     };
   }, []);
 
+  const playHtmlMp3 = useCallback(async (): Promise<boolean> => {
+    const html = htmlAudioRef.current;
+    if (!html) {
+      dashAudioLog("play MP3: no HTMLAudio element");
+      return false;
+    }
+    try {
+      if (html.src !== soundFileUrl()) {
+        html.src = soundFileUrl();
+        html.load();
+      }
+      html.muted = false;
+      html.volume = ORDER_CHIME_HTML_VOLUME;
+      await html.play();
+      dashAudioLog("play success (<audio> MP3)", ORDER_ALERT_SOUND_SRC);
+      return true;
+    } catch (e) {
+      dashAudioLog("play failure (<audio> MP3)", e);
+      return false;
+    }
+  }, []);
+
   const playOrderChime = useCallback(async (): Promise<boolean> => {
-    const ctxExisting = audioCtxRef.current;
+    dashAudioLog("play triggered");
+
     const Ctor = getAudioContextCtor();
 
     try {
       const ctx =
-        ctxExisting ??
+        audioCtxRef.current ??
         (Ctor
           ? new Ctor()
           : (() => {
               throw new Error("no AudioContext");
             })());
       audioCtxRef.current = ctx;
-      if (ctx.state === "suspended") await ctx.resume();
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+        dashAudioLog("AudioContext resumed ->", ctx.state);
+      }
 
       const buf = decodedBufferRef.current;
       if (decodeReady && buf) {
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        const gain = ctx.createGain();
-        gain.gain.value = 0.34;
-        src.connect(gain);
-        gain.connect(ctx.destination);
-        src.start();
-        return true;
+        try {
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const gain = ctx.createGain();
+          gain.gain.value = ORDER_CHIME_BUFFER_GAIN;
+          src.connect(gain);
+          gain.connect(ctx.destination);
+          src.start();
+          dashAudioLog("play success (Web Audio buffer)");
+          return true;
+        } catch (e) {
+          dashAudioLog("play failure (Web Audio buffer), falling back", e);
+        }
       }
-
-      playSyntheticOrderChime(ctx);
-      return true;
-    } catch {
-      /* fall through */
+    } catch (e) {
+      dashAudioLog("Web Audio path error, trying <audio>", e);
     }
 
-    try {
-      const html = htmlAudioRef.current;
-      if (html) {
-        html.pause();
-        html.currentTime = 0;
-        html.volume = 0.42;
-        await html.play();
-        return true;
-      }
-    } catch {
-      /* fall through */
-    }
+    const mp3Ok = await playHtmlMp3();
+    if (mp3Ok) return true;
 
     try {
       const ctx = audioCtxRef.current ?? (Ctor ? new Ctor() : null);
-      if (!ctx) return false;
+      if (!ctx) {
+        dashAudioLog("play failure — no AudioContext for synthetic");
+        return false;
+      }
       audioCtxRef.current = ctx;
       if (ctx.state === "suspended") await ctx.resume();
       playSyntheticOrderChime(ctx);
+      dashAudioLog("play success (synthetic fallback)");
       return true;
-    } catch {
+    } catch (e) {
+      dashAudioLog("play failure (synthetic)", e);
       return false;
     }
-  }, [decodeReady]);
+  }, [decodeReady, playHtmlMp3]);
 
   const flushPendingChime = useCallback(() => {
     if (!pendingChimeRef.current || !soundEnabledRef.current) return;
@@ -224,49 +340,68 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   }, [playOrderChime]);
 
   const primeDashboardAudio = useCallback(async (): Promise<void> => {
+    if (audioUnlockedRef.current) {
+      dashAudioLog("prime: skip (already unlocked)");
+      return;
+    }
+
     const Ctor = getAudioContextCtor();
+    let unlocked = false;
+
     try {
       const ctx = audioCtxRef.current ?? (Ctor ? new Ctor() : null);
       if (ctx) {
         audioCtxRef.current = ctx;
         if (ctx.state === "suspended") await ctx.resume();
+        if (ctx.state === "running") unlocked = true;
+        dashAudioLog("prime: AudioContext", ctx.state);
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      dashAudioLog("prime: AudioContext error", e);
     }
 
     try {
       const html = htmlAudioRef.current;
       if (html) {
+        if (html.src !== soundFileUrl()) {
+          html.src = soundFileUrl();
+          html.load();
+        }
         html.muted = true;
         html.volume = 0;
         await html.play();
         html.pause();
         html.currentTime = 0;
         html.muted = false;
-        html.volume = 0.42;
+        html.volume = ORDER_CHIME_HTML_VOLUME;
+        unlocked = true;
+        dashAudioLog("prime: muted HTMLAudio unlock OK");
       }
-    } catch {
-      /* ignore */
+    } catch (e) {
+      dashAudioLog("prime: muted HTMLAudio unlock failed", e);
     }
 
-    setAudioUnlocked(true);
-    flushPendingChime();
+    if (unlocked) {
+      setAudioUnlocked(true);
+      dashAudioLog("audio unlocked");
+      flushPendingChime();
+    } else {
+      dashAudioLog("audio still locked after prime");
+    }
   }, [flushPendingChime]);
 
   useEffect(() => {
-    const onGesture = () => {
-      if (gesturePrimedRef.current) return;
-      gesturePrimedRef.current = true;
+    const tryPrimeUntilUnlocked = () => {
+      if (audioUnlockedRef.current) return;
       void primeDashboardAudio();
     };
 
-    window.addEventListener("pointerdown", onGesture, { capture: true, passive: true });
-    window.addEventListener("keydown", onGesture, { capture: true });
+    window.addEventListener("pointerdown", tryPrimeUntilUnlocked, { capture: true, passive: true });
+    window.addEventListener("keydown", tryPrimeUntilUnlocked, { capture: true });
 
     return () => {
-      window.removeEventListener("pointerdown", onGesture, { capture: true });
-      window.removeEventListener("keydown", onGesture, { capture: true });
+      window.removeEventListener("pointerdown", tryPrimeUntilUnlocked, { capture: true });
+      window.removeEventListener("keydown", tryPrimeUntilUnlocked, { capture: true });
     };
   }, [primeDashboardAudio]);
 
@@ -316,11 +451,12 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
       }
 
       if (soundEnabled) {
-        if (audioUnlocked) void playOrderChime();
+        dashAudioLog("new order signal → chime; unlocked=", audioUnlockedRef.current);
+        if (audioUnlockedRef.current) void playOrderChime();
         else pendingChimeRef.current = true;
       }
     },
-    [audioUnlocked, dismissToast, playOrderChime, soundEnabled, toastEnabled],
+    [dismissToast, playOrderChime, soundEnabled, toastEnabled],
   );
 
   useEffect(
@@ -331,6 +467,15 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const needsSoundInteraction = soundEnabled && !audioUnlocked;
+
+  const onBannerEnable = useCallback(() => {
+    void (async () => {
+      await primeDashboardAudio();
+      await playOrderChime();
+    })();
+  }, [primeDashboardAudio, playOrderChime]);
+
   const value = useMemo<Ctx>(
     () => ({
       alertsChannelReady: process.env.NEXT_PUBLIC_DASHBOARD_AUTH_READY === "true",
@@ -339,12 +484,16 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
       toastEnabled,
       setToastEnabled,
       audioUnlocked,
+      needsSoundInteraction,
+      soundAssetStatus,
       signalNewOrders,
       primeDashboardAudio,
       previewOrderChime: playOrderChime,
     }),
     [
       audioUnlocked,
+      needsSoundInteraction,
+      soundAssetStatus,
       playOrderChime,
       primeDashboardAudio,
       signalNewOrders,
@@ -359,6 +508,7 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
     <DashboardAlertsContext.Provider value={value}>
       {children}
       <OrderToastStack items={toasts} onDismiss={dismissToast} />
+      <SoundUnlockBanner visible={needsSoundInteraction} onEnable={onBannerEnable} />
     </DashboardAlertsContext.Provider>
   );
 }
