@@ -1,10 +1,7 @@
 import { SignJWT } from "jose/jwt/sign";
 import { jwtVerify } from "jose/jwt/verify";
 
-import {
-  DASHBOARD_AUTH_SECRET_FALLBACK,
-  isDashboardUsersJsonNonEmpty,
-} from "@/lib/dashboard/auth/env-defaults";
+import { DASHBOARD_AUTH_SECRET_FALLBACK } from "@/lib/dashboard/auth/env-defaults";
 import { DASHBOARD_SESSION_MAX_AGE_SEC } from "@/lib/dashboard/auth/constants";
 
 export type DashboardSession = {
@@ -32,20 +29,17 @@ const loggedPlaces = new Set<string>();
  * Middleware (Edge) bundles literals from this module; `DASHBOARD_AUTH_SECRET_FALLBACK` is always available.
  * Prefer `console.log` for clarity; prod keeps `log` because `compiler.removeConsole` excludes it below.
  */
-export function logDashboardAuthDiagnostics(where: string, includeUsersJson = true): void {
-  const key = includeUsersJson ? `${where}:full` : `${where}:secret`;
+export function logDashboardAuthDiagnostics(where: string): void {
+  const key = where;
   if (loggedPlaces.has(key)) return;
   loggedPlaces.add(key);
-  console.log("AUTH SECRET:", resolvedAuthSecret() ? "SET" : "NOT SET");
-  if (includeUsersJson) {
-    console.log("USERS_JSON:", isDashboardUsersJsonNonEmpty() ? "SET" : "NOT SET");
-  }
+  console.log(`[dashboard-auth:${where}] AUTH SECRET:`, resolvedAuthSecret() ? "SET" : "NOT SET");
 }
 
-/** False when secret/users missing — Node routes show login + config hint */
+/** JWT signing requires a 32+ char secret; admin email/password are checked only on the login API route. */
 export function isDashboardAuthConfigured(): boolean {
-  logDashboardAuthDiagnostics("isDashboardAuthConfigured", true);
-  return getSecretBytes() != null && isDashboardUsersJsonNonEmpty();
+  logDashboardAuthDiagnostics("isDashboardAuthConfigured");
+  return getSecretBytes() != null;
 }
 
 export async function signDashboardSessionToken(session: DashboardSession): Promise<string | null> {

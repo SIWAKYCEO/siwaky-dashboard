@@ -2,7 +2,7 @@
 #
 # Frontend (Next.js) listens internally on PORT **3001** (`dashboard-frontend` publishes **3001:3001** below).
 #
-# **`DASHBOARD_AUTH_SECRET` / `DASHBOARD_USERS_JSON`:** fallback values are baked into the image from
+# **`DASHBOARD_AUTH_SECRET` / `DASHBOARD_ADMIN_*`:** fallback values are baked into the image from
 # `dockerfile`; do **not** set them here to blank strings (`${VAR}` with Easypanel unset) or Compose will
 # override the image `ENV`.
 #

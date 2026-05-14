@@ -46,20 +46,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid email or password format" }, { status: 400 });
   }
 
-  // eslint-disable-next-line no-console -- temporary login diagnostics
-  console.log("[dashboard/auth/login] attempt", {
-    email: parsed.data.email,
-    passwordLength: parsed.data.password.length,
-    passwordChars: [...parsed.data.password].length,
-  });
-  const verbosePwd = process.env.DASHBOARD_LOGIN_LOG_PASSWORD === "true";
-  if (verbosePwd) {
-    // eslint-disable-next-line no-console
-    console.log("[dashboard/auth/login] password verbatim (DASHBOARD_LOGIN_LOG_PASSWORD=true)", {
-      password: parsed.data.password,
-    });
-  }
-
   const user = await verifyDashboardCredentials(parsed.data.email, parsed.data.password);
   if (!user) {
     await new Promise((r) => setTimeout(r, 350));

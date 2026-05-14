@@ -23,7 +23,7 @@ function isPublicDashboardApi(pathname: string): boolean {
 }
 
 async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
-  logDashboardAuthDiagnostics("middleware-edge", false);
+  logDashboardAuthDiagnostics("middleware-edge");
   const { pathname } = req.nextUrl;
 
   const touchesDashboardUi = pathname === "/dashboard" || pathname.startsWith("/dashboard/");

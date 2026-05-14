@@ -67,9 +67,9 @@ export function DashboardLoginForm({ authConfigured }: { authConfigured: boolean
         >
           Dashboard auth is not configured. Set{" "}
           <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_AUTH_SECRET</code>{" "}
-          and{" "}
-          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_USERS_JSON</code>{" "}
-          on the server, then restart Next.js.
+          (32+ characters for JWT signing), then restart Next.js. Optional:{" "}
+          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_ADMIN_EMAIL</code>,{" "}
+          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_ADMIN_PASSWORD</code>.
         </div>
       ) : null}
 

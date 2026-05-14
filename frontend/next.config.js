@@ -73,7 +73,7 @@ const nextConfig = {
         ? { exclude: ["error", "warn", "log"] }
         : false,
   },
-  // Never put `DASHBOARD_AUTH_SECRET` / `DASHBOARD_USERS_JSON` in `env` — Next bundles `env.*` into
+  // Never put `DASHBOARD_AUTH_SECRET` / `DASHBOARD_ADMIN_*` in `env` — Next bundles `env.*` into
   // CLIENT JavaScript (`process.env[NEXT_PUBLIC_*]` pattern + explicit keys), which would leak secrets.
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://api.siwaky.com",

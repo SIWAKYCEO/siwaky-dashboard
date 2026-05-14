@@ -11,7 +11,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
-ENV DASHBOARD_USERS_JSON='[{"email":"siwaky.assistance@gmail.com","role":"admin","passwordHash":"$$2b$$12$$JgcBQkW2jvlbrkBnI0dWVOXclGsR2qAPQwLCdg6KVkvhYFNpCZTfO"}]'
+ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
+ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
 RUN rm -rf .next
 RUN BUILD_ID="$(date +%s)" && \
   export BUILD_ID && \
@@ -22,7 +23,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
-ENV DASHBOARD_USERS_JSON='[{"email":"siwaky.assistance@gmail.com","role":"admin","passwordHash":"$$2b$$12$$JgcBQkW2jvlbrkBnI0dWVOXclGsR2qAPQwLCdg6KVkvhYFNpCZTfO"}]'
+ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
+ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
