@@ -2,19 +2,20 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { FLAVOR_VISUALS } from "@/lib/flavors-visual";
 
 export default function FlavorsSection() {
   const t = useTranslations("flavors");
+  const locale = useLocale();
 
   return (
     <section className="section-padding bg-brand-dark">
       <div className="container-luxury">
         <div className="text-center">
           <span className="ornament text-xs uppercase tracking-[0.4em] text-brand-goldLight">
-            Flavors
+            {t("sectionKicker")}
           </span>
           <h2 className="mt-4 font-display text-3xl text-white md:text-5xl">
             {t("title")}
@@ -49,9 +50,11 @@ export default function FlavorsSection() {
                 <h3 className="mt-4 font-display text-2xl text-white">
                   {t(`items.${f.key}.name`)}
                 </h3>
-                <p className="mt-1 font-serif text-sm uppercase tracking-[0.3em] text-brand-goldLight">
-                  {t(`items.${f.key}.en`)}
-                </p>
+                {locale !== "en" ? (
+                  <p className="mt-1 font-serif text-sm uppercase tracking-[0.3em] text-brand-goldLight">
+                    {t(`items.${f.key}.secondary`)}
+                  </p>
+                ) : null}
                 <p className="mt-3 text-sm text-white/70">
                   {t(`items.${f.key}.desc`)}
                 </p>

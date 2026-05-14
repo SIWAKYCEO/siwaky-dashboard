@@ -80,7 +80,7 @@ export function MetricsCommandDeck({
     {
       label: "Delivery rate",
       value: a.deliveryRatePct == null ? "—" : `${a.deliveryRatePct}%`,
-      hint: `${kpis.deliveredCount.toLocaleString("en-US")} delivered envelopes`,
+      hint: `${kpis.deliveredCount.toLocaleString("en-US")} delivered orders`,
       icon: Truck,
       accent: "from-teal-300/[0.15] via-white/[0.03] to-transparent",
       delay: 0.12,
@@ -89,7 +89,7 @@ export function MetricsCommandDeck({
       label: "Confirmation rate",
       value:
         a.confirmationRatePct == null ? "—" : `${a.confirmationRatePct}%`,
-      hint: 'Based on affirmative “confirmation” cells',
+      hint: `Uses affirmative cells in your sheet “confirmation” column`,
       icon: BadgePercent,
       accent: "from-indigo-300/[0.14] via-white/[0.03] to-transparent",
       delay: 0.16,

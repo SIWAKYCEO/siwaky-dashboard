@@ -19,6 +19,7 @@ type Props = {
   payload: OrdersPayload | null;
   lastSyncIso: string | null;
   pwaSlot: ReactNode;
+  viewerEmail?: string | null;
 };
 
 export function DashboardShell({
@@ -29,6 +30,7 @@ export function DashboardShell({
   payload,
   lastSyncIso,
   pwaSlot,
+  viewerEmail,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -45,7 +47,7 @@ export function DashboardShell({
         className="pointer-events-none absolute left-0 right-0 top-0 mx-auto h-[min(560px,70vh)] max-w-[100vw] bg-[radial-gradient(ellipse_at_50%_-10%,rgba(201,169,98,0.12),transparent_72%)]"
       />
       <span aria-hidden className="pointer-events-none absolute inset-0 bg-siwaky-bg" />
-      <span aria-hidden className="pointer-events-none absolute inset-0 bg-lux-gradient opacity-[0.9]" />
+      <span aria-hidden className="pointer-events-none absolute inset-0 bg-lux-gradient opacity-[0.72]" />
 
       <div className="relative z-[1] flex min-h-[100dvh] w-full min-w-0 overflow-x-hidden">
         <aside className="hidden shrink-0 xl:block">
@@ -88,6 +90,7 @@ export function DashboardShell({
             onOpenDrawer={() => setDrawerOpen(true)}
             pwaInstall={pwaSlot}
             syncing={refreshing}
+            viewerEmail={viewerEmail}
           />
           <div
             ref={bindScrollRef}

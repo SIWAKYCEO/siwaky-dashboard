@@ -75,15 +75,15 @@ export function FulfillmentGauges({
         iconWrapClass="text-emerald-300/95"
         icon={<Truck className="size-5 stroke-[1.5]" />}
         value={deliveryRatePct}
-        label="Delivery attainment"
-        caption={`Share of rows where "delivered" reads affirmative in your sheet snapshot.`}
+        label="Delivered orders"
+        caption={`Percent of rows marked delivered in your sheet.`}
       />
       <RingGauge
         iconWrapClass="text-sky-200/95"
         icon={<ShieldCheck className="size-5 stroke-[1.5]" />}
         value={confirmationRatePct}
-        label="Confirmation integrity"
-        caption={`Confirmation truthy-rate from the worksheet "confirmation" column.`}
+        label="Confirmed orders"
+        caption={`Percent of rows marked confirmed in your sheet.`}
       />
     </div>
   );

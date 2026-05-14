@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 
 /**
- * Must define its own <html> and <body>; used when the root layout fails.
- * Keep styles minimal (no reliance on globals).
+ * Catches errors in the root `app/layout.tsx` itself — must define full `<html>` / `<body>`.
+ * https://nextjs.org/docs/app/api-reference/file-conventions/error#global-errorjs
  */
-export default function GlobalError({
+export default function GlobalErrorBoundary({
   error,
   reset,
 }: {
@@ -14,13 +14,26 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.error("Root error:", error);
+    // eslint-disable-next-line no-console -- surfaced for dev diagnostics
+    console.error("[app/global-error]", error?.digest ?? "", error);
   }, [error]);
 
+  const message =
+    typeof error?.message === "string" && error.message.trim().length > 0
+      ? error.message
+      : "An unexpected error occurred.";
+
   return (
-    <html lang="en">
-      <body style={{ margin: 0, minHeight: "100vh", backgroundColor: "#28282a", color: "#fafafa" }}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        style={{
+          margin: 0,
+          minHeight: "100vh",
+          backgroundColor: "#28282a",
+          color: "#fafafa",
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -31,14 +44,19 @@ export default function GlobalError({
             gap: "1rem",
             padding: "1.5rem",
             textAlign: "center",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif",
           }}
         >
           <p style={{ fontSize: "1.125rem", fontWeight: 600 }}>Something went wrong</p>
-          <p style={{ fontSize: "0.8125rem", maxWidth: "28rem", opacity: 0.85 }}>{error.message}</p>
+          <p style={{ fontSize: "0.8125rem", maxWidth: "28rem", opacity: 0.85 }}>{message}</p>
+          {error.digest ? (
+            <p style={{ fontSize: "0.6875rem", opacity: 0.45, fontFamily: "ui-monospace, monospace" }}>
+              Digest: {error.digest}
+            </p>
+          ) : null}
           <button
             type="button"
-            onClick={reset}
+            onClick={() => reset()}
             style={{
               marginTop: "0.5rem",
               cursor: "pointer",

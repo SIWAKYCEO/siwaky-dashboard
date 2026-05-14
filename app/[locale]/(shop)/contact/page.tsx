@@ -54,7 +54,7 @@ export default async function ContactPage({ params: { locale } }: Props) {
             <p className="text-xs uppercase tracking-[0.3em] text-brand-goldLight">
               {t("contact.whatsapp_label")}
             </p>
-            <p className="mt-2 text-sm text-white/85">قريباً</p>
+            <p className="mt-2 text-sm text-white/85">{t("contact.whatsappSoon")}</p>
           </div>
           <div className="card-luxury text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-brand-goldLight">EMYRA LTD (UK)</p>

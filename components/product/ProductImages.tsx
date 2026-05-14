@@ -2,12 +2,14 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 
 const GALLERY_SLOTS = 4;
 
 export default function ProductImages() {
+  const t = useTranslations("trust");
   const [active, setActive] = useState(0);
 
   return (
@@ -21,7 +23,7 @@ export default function ProductImages() {
       >
         <LuxuryMediaPlaceholder variant="galleryMain" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent" />
-        <span className="absolute top-4 start-4 badge-gold">حلال معتمد</span>
+        <span className="absolute top-4 start-4 badge-gold">{t("halal")}</span>
       </motion.div>
 
       <div className="mt-4 grid grid-cols-4 gap-3">

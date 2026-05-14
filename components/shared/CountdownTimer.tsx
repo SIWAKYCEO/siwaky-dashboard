@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 /**
@@ -7,6 +8,7 @@ import { useEffect, useState } from "react";
  * doesn't restart the timer (more credible to repeat visitors).
  */
 export default function CountdownTimer({ label }: { label?: string }) {
+  const translate = useTranslations("common");
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function CountdownTimer({ label }: { label?: string }) {
 
   return (
     <div className="inline-flex items-center gap-3 rounded-full bg-brand-dark2 border border-brand-gold/30 px-4 py-2 text-sm">
-      <span className="text-white/70">{label ?? "العرض ينتهي خلال:"}</span>
+      <span className="text-white/70">{label ?? translate("offerEnds")}</span>
       <span className="font-mono tracking-widest text-brand-goldLight">
         {pad(h)}:{pad(m)}:{pad(s)}
       </span>

@@ -10,6 +10,7 @@ import ScarcityBar from "@/components/shared/ScarcityBar";
 
 export default function FinalCTA() {
   const t = useTranslations("finalCta");
+  const thero = useTranslations("hero");
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
@@ -30,7 +31,7 @@ export default function FinalCTA() {
           <h2 className="font-display text-4xl text-white md:text-6xl">{t("title")}</h2>
           <p className="mt-4 text-lg text-white/80">{t("sub")}</p>
           <div className="mt-8 flex flex-col items-center gap-4">
-            <ScarcityBar />
+            <ScarcityBar label={(n) => thero("scarcityCount", { count: n })} />
             <Link href={`/${locale}/product`} className="btn-primary text-lg">
               {t("cta")}
             </Link>

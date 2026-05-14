@@ -188,7 +188,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
                   type="button"
                   onClick={onClose}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/5"
-                  aria-label="إغلاق"
+                  aria-label={t("common.close")}
                 >
                   <X className="size-5" />
                 </button>
@@ -202,7 +202,10 @@ export default function CheckoutPopup({ open, onClose }: Props) {
                   <p className="text-brand-goldLight">{t("checkout.summary")}</p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-white/85">
-                      سواكي — {t(`product.offers.${current.offerId}.title`)}
+                      {t("product.cartItemLine", {
+                        brand: t("common.brandName"),
+                        title: t(`product.offers.${current.offerId}.title`),
+                      })}
                     </span>
                     <span className="font-serif text-base text-white">
                       {current.price * current.quantity} {t("common.currency")}

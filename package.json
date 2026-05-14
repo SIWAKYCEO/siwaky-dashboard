@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
     "dev": "next dev",
+    "dev:all": "concurrently -k -n web,api -c cyan,magenta \"npm run dev\" \"npm run dev --prefix ../backend\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +16,9 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "axios": "^1.7.7",
+    "bcryptjs": "^3.0.3",
     "framer-motion": "^11.11.10",
+    "jose": "^6.2.3",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
     "next-intl": "^3.21.1",
@@ -28,11 +31,13 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.15",
     "jimp": "^1.6.1",

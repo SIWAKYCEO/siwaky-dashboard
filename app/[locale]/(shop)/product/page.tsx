@@ -64,12 +64,7 @@ export default function ProductPage({ params: { locale } }: Props) {
       <ProductJsonLd locale={locale} />
       <ProductViewedTracker />
       <ProductDeployProbe />
-      <div
-        dir="rtl"
-        lang="ar"
-        data-siwaky-pdp-version="3.0"
-        className="bg-[#28282A] pb-28 font-sans text-white md:pb-0"
-      >
+      <div className="bg-[#28282A] pb-28 font-sans text-white md:pb-0" data-siwaky-pdp-version="3.0">
         <ProductHero />
         <ProductBenefits />
         <ProductSectionDivider />

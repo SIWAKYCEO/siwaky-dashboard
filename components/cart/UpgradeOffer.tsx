@@ -49,11 +49,11 @@ export default function UpgradeOffer({ fromOffer }: Props) {
         <div>
           <p className="font-display text-lg text-white">{t(copyKey)}</p>
           <p className="mt-1 text-xs text-emerald-300">
-            وفّر {savingsFor(upgrade)} ر.س
+            {t("upgradeSavings", { amount: savingsFor(upgrade) })}
           </p>
         </div>
         <div className="flex items-center gap-2 text-brand-goldLight">
-          <span className="font-serif text-xl">{offer.price} ر.س</span>
+          <span className="font-serif text-xl">{t("priceFormat", { price: offer.price })}</span>
           <ArrowUpRight className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
       </div>

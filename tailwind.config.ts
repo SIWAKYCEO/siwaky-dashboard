@@ -79,12 +79,18 @@ const config: Config = {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(200%)" },
         },
+        globeHudShimmer: {
+          "0%": { transform: "translateX(-120%)", opacity: "0" },
+          "18%": { opacity: "0.55" },
+          "100%": { transform: "translateX(120%)", opacity: "0" },
+        },
       },
       animation: {
         shimmer: "shimmer 3s linear infinite",
         pulseSoft: "pulseSoft 2s ease-in-out infinite",
         dashGlow: "dashGlow 4s ease-in-out infinite",
         dashScan: "dashScan 2.8s ease-in-out infinite",
+        "globe-hud-shimmer": "globeHudShimmer 4.8s ease-in-out infinite",
       },
     },
   },

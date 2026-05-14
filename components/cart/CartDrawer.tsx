@@ -94,7 +94,7 @@ export default function CartDrawer() {
                   type="button"
                   onClick={close}
                   className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white/5"
-                  aria-label="إغلاق"
+                  aria-label={t("common.close")}
                 >
                   <X className="size-5" />
                 </button>

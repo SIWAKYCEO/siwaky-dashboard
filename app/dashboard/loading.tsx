@@ -1,18 +1,21 @@
+/**
+ * Loading UI for `/dashboard` — shown while the route segment loads or suspends.
+ * https://nextjs.org/docs/app/api-reference/file-conventions/loading
+ */
 export default function DashboardLoading() {
   return (
     <div
-      className="flex min-h-[100vh] flex-col items-center justify-center gap-4 px-6 text-center text-[15px]"
+      className="flex min-h-[100dvh] flex-col items-center justify-center gap-5 px-6 text-center"
       style={{ backgroundColor: "#28282a", color: "#f4f4f5" }}
+      dir="ltr"
     >
       <div
-        className="h-10 w-10 rounded-full border-2 border-transparent border-t-[#c9a962]"
+        className="h-11 w-11 animate-spin rounded-full border-2 border-white/15 border-t-[#c9a962]"
         aria-hidden
-        style={{ animation: "dash-spin 0.9s linear infinite" }}
       />
-      <style>{`@keyframes dash-spin { to { transform: rotate(360deg); } }`}</style>
-      <p className="text-white/80">Caricamento dashboard…</p>
-      <p className="max-w-xs text-[13px] text-white/50">
-        Se resta qui, JavaScript è disattivato o c’è un errore nella console del browser (F12).
+      <p className="text-[15px] font-medium text-white/85">Loading dashboard…</p>
+      <p className="max-w-xs text-[13px] text-white/45">
+        If this never finishes, open the browser console (F12) and check for errors or failed network requests.
       </p>
     </div>
   );

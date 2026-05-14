@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DashboardShell } from "@/components/dashboard/shell/DashboardShell";
 import { CitiesBarChart } from "@/components/dashboard/charts/CitiesBarChart";
@@ -8,18 +8,25 @@ import { ProductsLeaderboard } from "@/components/dashboard/charts/ProductsLeade
 import { RevenueAreaChart } from "@/components/dashboard/charts/RevenueAreaChart";
 import { FulfillmentGauges } from "@/components/dashboard/premium/FulfillmentGauges";
 import { MetricsCommandDeck } from "@/components/dashboard/premium/MetricsCommandDeck";
-import { RecentActivityFeed } from "@/components/dashboard/premium/RecentActivityFeed";
 import { GlassPanel } from "@/components/dashboard/ui/GlassPanel";
 import { SectionLabel } from "@/components/dashboard/ui/SectionLabel";
-import { fetchOrders } from "@/lib/dashboard/api";
 import { buildDashboardAnalytics } from "@/lib/dashboard/analytics";
+import { fetchOrders } from "@/lib/dashboard/api";
+import { buildLiveMapMarkers } from "@/lib/dashboard/geo/orderCoordinates";
+import { fingerprintOrderSnapshot, stableOrderFingerprint } from "@/lib/dashboard/orderFingerprint";
 import { computeOrderKpis, latestOrders } from "@/lib/dashboard/kpi";
 import type { OrdersPayload } from "@/lib/dashboard/types";
+import { useDashboardAlerts } from "@/components/dashboard/providers/DashboardAlertsProvider";
+import { useOrdersPolling } from "@/hooks/useOrdersPolling";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
+import LiveOrdersMap from "@/components/dashboard/maps/LiveOrdersMap";
 import { OrderFeed } from "./OrderFeed";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { PwaInstallButton } from "./PwaInstallButton";
+
+/** Frontend-only polling interval — detects new `/orders` rows without backend changes */
+const ORDER_POLL_INTERVAL_MS = 5000;
 
 function RefreshAura({ pullPx, refreshing }: { pullPx: number; refreshing: boolean }) {
   const progress = Math.min(pullPx / 88, 1);
@@ -45,7 +52,7 @@ function RefreshAura({ pullPx, refreshing }: { pullPx: number; refreshing: boole
           <div className="pointer-events-none absolute inset-[7px] rounded-full border-[2.5px] border-transparent border-t-[#c9a962]/95" />
         </div>
         <span className="text-[10px] font-semibold uppercase tracking-[0.42em] text-white/52">
-          {refreshing ? "Syncing workbook…" : "Release to sync"}
+          {refreshing ? "Refreshing…" : "Release to refresh"}
         </span>
       </div>
     </div>
@@ -53,23 +60,97 @@ function RefreshAura({ pullPx, refreshing }: { pullPx: number; refreshing: boole
 }
 
 export function Dashboard() {
+  const { signalNewOrders } = useDashboardAlerts();
+
   const [payload, setPayload] = useState<OrdersPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastSyncIso, setLastSyncIso] = useState<string | null>(null);
+  const [feedPollingActive, setFeedPollingActive] = useState(false);
+  const [highlightFingerprints, setHighlightFingerprints] = useState<Set<string>>(() => new Set());
+  const [mapPulseFingerprints, setMapPulseFingerprints] = useState<Set<string>>(() => new Set());
+  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
+
+  const baselineEstablishedRef = useRef(false);
+  const priorFingerprintRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/dashboard/auth/me", { credentials: "include" })
+      .then(async (r) => {
+        if (!r.ok) return null;
+        return (await r.json()) as { email?: string };
+      })
+      .then((data) => {
+        if (!cancelled && data?.email) setViewerEmail(data.email);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ingestOrdersSnapshot = useCallback(
+    (data: OrdersPayload) => {
+      setPayload(data);
+      setLastSyncIso(new Date().toISOString());
+      setError(null);
+
+      const fpSet = fingerprintOrderSnapshot(data.orders);
+
+      if (!baselineEstablishedRef.current) {
+        baselineEstablishedRef.current = true;
+        priorFingerprintRef.current = fpSet;
+        setFeedPollingActive(true);
+        return;
+      }
+
+      const prev = priorFingerprintRef.current;
+      const newcomers = data.orders.filter((o) => !prev.has(stableOrderFingerprint(o)));
+      priorFingerprintRef.current = fpSet;
+
+      if (newcomers.length === 0) return;
+
+      signalNewOrders(newcomers);
+
+      const fps = newcomers.map(stableOrderFingerprint);
+      setHighlightFingerprints((h) => {
+        const next = new Set(h);
+        fps.forEach((f) => next.add(f));
+        return next;
+      });
+      setMapPulseFingerprints(new Set(fps));
+
+      window.setTimeout(() => {
+        setHighlightFingerprints((h) => {
+          const next = new Set(h);
+          fps.forEach((f) => next.delete(f));
+          return next;
+        });
+        setMapPulseFingerprints(new Set());
+      }, 8500);
+    },
+    [signalNewOrders],
+  );
 
   const loadOrders = useCallback(async () => {
     setError(null);
     try {
       const data = await fetchOrders();
-      setPayload(data);
-      setLastSyncIso(new Date().toISOString());
+      ingestOrdersSnapshot(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Qualcosa è andato storto");
+      setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ingestOrdersSnapshot]);
+
+  useOrdersPolling({
+    enabled: feedPollingActive && !loading,
+    intervalMs: ORDER_POLL_INTERVAL_MS,
+    fetcher: fetchOrders,
+    onSuccess: ingestOrdersSnapshot,
+  });
 
   useEffect(() => {
     void loadOrders();
@@ -92,6 +173,11 @@ export function Dashboard() {
 
   const feed = useMemo(() => latestOrders(payload?.orders ?? [], 52), [payload]);
 
+  const liveMap = useMemo(
+    () => buildLiveMapMarkers(feed, mapPulseFingerprints, 80),
+    [feed, mapPulseFingerprints],
+  );
+
   const pwaSlot = (
     <span className="hidden sm:flex">
       <PwaInstallButton className="w-auto max-w-none whitespace-nowrap border-white/[0.12] px-4 py-2 text-[10px] tracking-[0.2em] shadow-glass backdrop-blur-xl" />
@@ -111,6 +197,7 @@ export function Dashboard() {
       payload={payload}
       lastSyncIso={lastSyncIso}
       pwaSlot={pwaSlot}
+      viewerEmail={viewerEmail}
     >
       <>
         <div style={{ height: refreshing ? Math.max(48, pullPx) : pullPx }} className="flex justify-center">
@@ -135,17 +222,21 @@ export function Dashboard() {
             </p>
             <p className="mt-5 text-[14px] leading-relaxed text-rose-100/92">{error}</p>
             <p className="mt-7 text-[12px] leading-relaxed text-white/53">
-              FastAPI snapshot should expose{" "}
+              The proxy{" "}
               <code className="rounded-md border border-white/12 bg-black/37 px-1.5 py-0.5 text-white/80">
-                /orders
-              </code>
-              locally on{" "}
-              <code className="rounded-md border border-white/12 bg-black/37 px-1.5 py-0.5 text-white/80">
-                127.0.0.1:8000
+                /api/dashboard/orders
               </code>{" "}
-              with{" "}
+              needs your FastAPI bridge reachable from the Next server. Set{" "}
               <code className="rounded-md border border-white/12 bg-black/37 px-1.5 py-0.5 text-white/75">
-                NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+                DASHBOARD_ORDERS_API_BASE_URL
+              </code>{" "}
+              (recommended) or{" "}
+              <code className="rounded-md border border-white/12 bg-black/37 px-1.5 py-0.5 text-white/75">
+                NEXT_PUBLIC_API_BASE_URL
+              </code>{" "}
+              for local dev — e.g.{" "}
+              <code className="rounded-md border border-white/12 bg-black/37 px-1.5 py-0.5 text-white/80">
+                http://127.0.0.1:8000
               </code>
               .
             </p>
@@ -154,7 +245,7 @@ export function Dashboard() {
               onClick={() => void loadOrders()}
               className="mt-9 w-full rounded-2xl border border-white/[0.14] bg-gradient-to-br from-white/[0.08] via-black/40 to-black/55 px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.24em] text-white shadow-[0_18px_60px_-20px_rgba(0,0,0,.7)] backdrop-blur-md motion-safe:hover:border-[#c9a962]/45"
             >
-              Retry handshake
+              Try again
             </button>
           </GlassPanel>
         ) : null}
@@ -163,12 +254,12 @@ export function Dashboard() {
           <div className="space-y-16 md:space-y-[4.75rem]">
             <section id="pulse" className="space-y-9 scroll-mt-28 xl:scroll-mt-[7rem]">
               <SectionLabel
-                eyebrow="Executive overview"
+                eyebrow="Orders dashboard"
                 title={
                   <>
-                    Signal clarity across{" "}
+                    At-a-glance view across{" "}
                     <span className="bg-gradient-to-r from-[#f5efd9] via-white to-emerald-200/90 bg-clip-text text-transparent">
-                      {analytics.kpis.totalOrders.toLocaleString("en-US")} concierge rows
+                      {analytics.kpis.totalOrders.toLocaleString("en-US")} orders
                     </span>
                   </>
                 }
@@ -178,7 +269,7 @@ export function Dashboard() {
                       <span className="absolute inline-flex size-full rounded-full bg-emerald-400/92 motion-safe:animate-ping motion-reduce:animate-none" />
                       <span className="relative m-auto inline-flex size-[5px] rounded-full bg-emerald-200 shadow-[0_0_14px_-1px_rgba(167,243,208,.9)]" />
                     </span>
-                    KPI fabric v2
+                    Live metrics
                   </span>
                 }
               />
@@ -188,8 +279,8 @@ export function Dashboard() {
           <div className="grid min-w-0 gap-7 lg:grid-cols-12 lg:gap-8">
                 <GlassPanel outerClassName="min-w-0 lg:col-span-7 xl:col-span-7" className="p-7 sm:p-8">
                   <SectionLabel
-                    eyebrow="Revenue radar"
-                    title="Momentum across segmented sheet windows."
+                    eyebrow="Revenue analytics"
+                    title="Revenue trend over recent buckets."
                     action={
                       <span className="rounded-full border border-white/[0.08] bg-black/43 px-3 py-[6px] text-[11px] text-white/60 shadow-inner backdrop-blur-md tabular-nums">
                         Returned {analytics.kpis.returnedCount.toLocaleString("en-US")}
@@ -200,7 +291,7 @@ export function Dashboard() {
                 </GlassPanel>
                 <div className="min-w-0 space-y-4 lg:col-span-5">
                   <p className="px-1 font-dashSans text-[11px] font-semibold uppercase tracking-[0.32em] text-white/54">
-                    Delivery & confirmations
+                    Fulfillment snapshot
                   </p>
                   <FulfillmentGauges
                     deliveryRatePct={analytics.deliveryRatePct}
@@ -208,11 +299,11 @@ export function Dashboard() {
                   />
                   <GlassPanel className="p-7">
                     <p className="text-[13px] leading-relaxed text-siwaky-muted">
-                      Totals reconcile to{" "}
+                      Snapshot totals:{" "}
                       <strong className="font-semibold text-white/92">
-                        {kpisWarm.totalOrders.toLocaleString("en-US")} indexed rows
+                        {kpisWarm.totalOrders.toLocaleString("en-US")} orders
                       </strong>{" "}
-                      feeding{" "}
+                      and{" "}
                       <strong className="tabular-nums text-[#ebe2c9]">
                         {Intl.NumberFormat("en-SA", {
                           style: "currency",
@@ -220,20 +311,46 @@ export function Dashboard() {
                           maximumFractionDigits: 0,
                         }).format(analytics.kpis.totalRevenue)}
                       </strong>{" "}
-                      gross merchandise value.
+                      revenue (sheet-derived).
                     </p>
                   </GlassPanel>
                 </div>
               </div>
             </section>
 
+            <section id="live-view" className="scroll-mt-28 xl:scroll-mt-[7rem] space-y-7">
+              <SectionLabel
+                eyebrow="Live orders"
+                title="GCC-focused live globe · orbit, zoom, Gulf presets"
+                action={
+                  <span className="rounded-full border border-white/[0.08] bg-black/43 px-3 py-[6px] text-[11px] text-white/62 shadow-inner backdrop-blur-md">
+                    Saudi Arabia · UAE · Qatar · Kuwait · Bahrain · Oman
+                  </span>
+                }
+              />
+              <GlassPanel outerClassName="min-w-0 overflow-hidden" className="p-7 sm:p-9">
+                <LiveOrdersMap markers={liveMap.markers} />
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-0.5 text-[12px] text-white/54">
+                  <p>
+                    Showing{" "}
+                    <span className="tabular-nums text-white/78">{liveMap.markers.length}</span> GCC order lights on this
+                    globe for this refresh.
+                  </p>
+                  {liveMap.skippedNonGcc > 0 ? (
+                    <p className="text-white/42">
+                      {liveMap.skippedNonGcc.toLocaleString("en-US")} rows outside GCC bounds — skipped on the globe.
+                    </p>
+                  ) : (
+                    <p className="text-emerald-200/72">All plotted orders land inside Gulf bounds.</p>
+                  )}
+                </div>
+              </GlassPanel>
+            </section>
+
             <section id="regions" className="scroll-mt-28 xl:scroll-mt-[7rem]">
               <GlassPanel outerClassName="min-w-0 overflow-hidden">
                 <div className="p-7 pb-10 sm:p-9">
-                  <SectionLabel
-                    eyebrow="Geospatial intelligence"
-                    title="Fulfillment hotspots by city dominance."
-                  />
+                  <SectionLabel eyebrow="Regional demand" title="Top cities by order volume." />
                   <CitiesBarChart cities={analytics.cities} />
                 </div>
               </GlassPanel>
@@ -242,11 +359,11 @@ export function Dashboard() {
             <section id="catalog" className="scroll-mt-28 xl:scroll-mt-[7rem]">
               <GlassPanel outerClassName="min-w-0" className="p-8 sm:p-10">
                 <SectionLabel
-                  eyebrow="Merchandise OS"
-                  title="SKU-level leaderboard by realized SAR."
+                  eyebrow="Products"
+                  title="Best sellers by revenue (SAR)."
                   action={
                     <span className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/43 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.22em] text-white/72 shadow-inner backdrop-blur-md tabular-nums">
-                      Spotlight on top {Math.min(analytics.products.length, 10)} movers
+                      Top {Math.min(analytics.products.length, 10)} products
                     </span>
                   }
                 />
@@ -254,32 +371,21 @@ export function Dashboard() {
               </GlassPanel>
             </section>
 
-            <section id="live" className="scroll-mt-28 xl:scroll-mt-[7rem] space-y-7">
+            <section id="live" className="scroll-mt-28 xl:scroll-mt-[7rem] space-y-6">
               <SectionLabel
-                eyebrow="Real-time tableau"
-                title="Operational ledger stitched with SKU pipeline."
+                eyebrow="Recent Orders"
+                title="Latest rows from your sheet"
+                action={
+                  <span className="rounded-full border border-white/[0.08] bg-black/43 px-3 py-[6px] text-[11px] text-white/62 shadow-inner backdrop-blur-md tabular-nums">
+                    {feed.length.toLocaleString("en-US")} rows
+                  </span>
+                }
               />
-              <div className="grid min-w-0 gap-10 xl:grid-cols-[minmax(0,.95fr)_minmax(0,1.06fr)]">
-                <GlassPanel outerClassName="min-w-0" className="p-8 sm:p-9">
-                  <div className="mb-10 flex flex-wrap items-start justify-between gap-4 px-1">
-                    <div>
-                      <p className="font-dashSans text-[11px] font-semibold uppercase tracking-[0.32em] text-siwaky-muted">
-                        Event stream
-                      </p>
-                      <p className="mt-2 font-dashDisplay text-lg font-semibold text-white md:text-xl">
-                        Latest interactions
-                      </p>
-                      <p className="mt-3 max-w-sm text-[12px] text-siwaky-muted leading-relaxed">
-                        Pulled chronologically — mirroring concierge desk chatter inside the sheet.
-                      </p>
-                    </div>
-                  </div>
-                  <RecentActivityFeed activity={analytics.activity} />
-                </GlassPanel>
+              <GlassPanel outerClassName="min-w-0 overflow-hidden shadow-glassLg" className="p-8 sm:p-9">
                 <div className="min-w-0">
-                  <OrderFeed orders={feed} />
+                  <OrderFeed orders={feed} embedded highlightFingerprints={highlightFingerprints} />
                 </div>
-              </div>
+              </GlassPanel>
             </section>
           </div>
         ) : null}

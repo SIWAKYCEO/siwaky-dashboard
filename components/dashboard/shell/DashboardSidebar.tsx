@@ -62,10 +62,10 @@ export function DashboardSidebarRail({ onNavigate }: RailProps) {
               </div>
               <div className="min-w-0">
                 <p className="font-dashSans text-[12px] font-semibold uppercase tracking-[0.22em] text-white/62">
-                  Control plane
+                  Private workspace
                 </p>
                 <p className="mt-2 text-[12px] leading-relaxed text-siwaky-muted">
-                  Read-only bridge from your private workbook — perfect for concierge teams.
+                  Built for SIWAKY operators only — upcoming team login will gate alerts, sounds, and live feeds.
                 </p>
               </div>
             </div>
@@ -105,8 +105,10 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
 
 function BrandHeader({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`border-b border-white/[0.065] px-6 ${compact ? "py-5" : "py-9"}`}>
-      <div className="relative flex items-start gap-4">
+    <div
+      className={`relative z-10 overflow-visible border-b border-white/[0.065] px-6 ${compact ? "py-5" : "py-9"}`}
+    >
+      <div className="relative flex flex-col gap-3 overflow-visible">
         {/* eslint-disable-next-line @next/next/no-img-element -- SVG wordmark */}
         <img
           src="/images/logo-siwaky.svg"
@@ -114,15 +116,15 @@ function BrandHeader({ compact = false }: { compact?: boolean }) {
           width={compact ? 120 : 150}
           height={compact ? 30 : 40}
           decoding="async"
-          className={`w-auto shrink-0 object-contain ${compact ? "h-9" : "h-11"}`}
+          className={`w-auto shrink-0 object-contain ${compact ? "h-9 max-w-[148px]" : "h-11 max-w-[188px]"}`}
         />
         <span
           aria-live="polite"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/[0.18] bg-emerald-500/[0.1] px-2.5 py-1 font-dashSans text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+          className="relative z-[1] inline-flex w-fit max-w-full items-center gap-1.5 overflow-visible rounded-full border border-emerald-400/[0.2] bg-emerald-500/[0.11] px-2.5 py-1.5 font-dashSans text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-emerald-400/[0.08]"
         >
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-pulse rounded-full bg-emerald-300 opacity-85 motion-reduce:animate-none" />
-            <span className="relative m-auto size-[5px] rounded-full bg-emerald-100 shadow-[0_0_12px_-1px_rgba(167,243,208,0.9)]" />
+          <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center overflow-visible">
+            <span className="pointer-events-none absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-300/82 opacity-80 motion-safe:animate-pulse motion-reduce:animate-none" />
+            <span className="relative m-auto size-[5px] rounded-full bg-emerald-100 shadow-[0_0_12px_-1px_rgba(167,243,208,0.92)] ring-[2px] ring-emerald-400/35" />
           </span>
           Live ledger
         </span>

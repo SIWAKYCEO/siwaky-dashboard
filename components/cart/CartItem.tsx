@@ -20,7 +20,10 @@ export default function CartItem({ item }: Props) {
       <LuxuryMediaPlaceholder variant="cartThumb" />
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-white">
-          سواكي — {t(`product.offers.${item.offerId}.title`)}
+          {t("product.cartItemLine", {
+            brand: t("common.brandName"),
+            title: t(`product.offers.${item.offerId}.title`),
+          })}
         </p>
         <p className="mt-1 text-xs text-white/60">
           {t(`product.offers.${item.offerId}.detail`)}

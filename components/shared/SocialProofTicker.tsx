@@ -2,33 +2,30 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-
-const NAMES_AR = [
-  "أحمد من الرياض",
-  "سارة من جدة",
-  "خالد من الدمام",
-  "فاطمة من مكة",
-  "محمد من المدينة",
-  "ريم من الرياض",
-  "عبدالله من الطائف",
-  "نورة من الأحساء",
-  "سعد من بريدة",
-  "هند من تبوك",
-];
+import { useLocale, useTranslations } from "next-intl";
 
 export default function SocialProofTicker() {
+  const t = useTranslations("socialTicker");
+  const locale = useLocale();
+  const entries = (t.raw("entries") as string[]) ?? [];
+  const len = entries.length;
   const [index, setIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    setIndex(null);
+  }, [locale]);
+
+  useEffect(() => {
+    if (len === 0) return;
     const initial = setTimeout(() => setIndex(0), 6000);
     const id = setInterval(() => {
-      setIndex((i) => (i == null ? 0 : (i + 1) % NAMES_AR.length));
+      setIndex((i) => (i == null ? 0 : (i + 1) % len));
     }, 9000);
     return () => {
       clearTimeout(initial);
       clearInterval(id);
     };
-  }, []);
+  }, [locale, len]);
 
   if (index == null) return null;
 
@@ -44,7 +41,9 @@ export default function SocialProofTicker() {
           className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-brand-dark2/90 border border-brand-gold/20 px-4 py-2 text-sm text-white/80 shadow-gold backdrop-blur"
         >
           <span className="inline-block size-2 rounded-full bg-brand-gold animate-pulseSoft" />
-          <span>{NAMES_AR[index]} طلب للتو</span>
+          <span>
+            {entries[index] ?? ""} {t("suffix")}
+          </span>
         </motion.div>
       </AnimatePresence>
     </div>

@@ -48,7 +48,12 @@ export default function StickyAddToCart({ offerId }: Props) {
       <div className="border-t-2 border-brand-gold/45 bg-[#28282A] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-[0_-12px_40px_-12px_rgba(40,40,42,0.75)]">
         <div className="flex items-center justify-between gap-3">
           <div className="font-sans text-sm">
-            <p className="text-white/55">{offer.quantity} × سواكي</p>
+            <p className="text-white/55">
+              {t("product.stickyLine", {
+                qty: offer.quantity,
+                brand: t("common.brandName"),
+              })}
+            </p>
             <p className="text-base font-semibold text-white">
               {offer.price} {t("common.currency")}
             </p>

@@ -11,6 +11,7 @@ import ScarcityBar from "@/components/shared/ScarcityBar";
 
 export default function HeroSection() {
   const t = useTranslations();
+  const thero = useTranslations("hero");
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
@@ -81,7 +82,7 @@ export default function HeroSection() {
           </Link>
           <ScarcityBar
             initial={12}
-            label={(n) => `🔴 تبقى ${n} علبة فقط!`}
+            label={(n) => thero("scarcityCount", { count: n })}
           />
         </motion.div>
 

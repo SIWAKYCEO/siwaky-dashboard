@@ -12,6 +12,7 @@ const ORDER: Array<keyof typeof OFFERS> = ["box-1", "box-2", "box-3"];
 
 export default function ProductShowcase() {
   const t = useTranslations();
+  const ttrust = useTranslations("trust");
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
@@ -27,7 +28,7 @@ export default function ProductShowcase() {
         >
           <LuxuryMediaPlaceholder variant="square" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-transparent to-transparent" />
-          <span className="absolute top-4 start-4 badge-gold">حلال معتمد</span>
+          <span className="absolute top-4 start-4 badge-gold">{ttrust("halal")}</span>
         </motion.div>
 
         <motion.div

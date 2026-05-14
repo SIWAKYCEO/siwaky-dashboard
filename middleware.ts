@@ -1,82 +1,99 @@
-import createMiddleware from "next-intl/middleware";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { defaultLocale, locales } from "./i18n";
+import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
+import {
+  isDashboardAuthConfigured,
+  verifyDashboardSessionToken,
+} from "@/lib/dashboard/auth/session";
 
-const intlMiddleware = createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: "always",
-});
+const LOGIN_PATH = "/dashboard/login";
 
-const STATIC_EXT =
-  /\.(?:ico|png|jpe?g|gif|svg|webp|woff2?|ttf|eot|txt|xml|json|webmanifest|map)$/i;
-
-/** PDP must not be cached — stale HTML keeps old chunks / old markup. */
-function applyPdpNoStoreHeaders(request: NextRequest, response: Response) {
-  const pathname = request.nextUrl.pathname.replace(/\/+$/, "") || "/";
-  const isPdp = pathname === "/ar/product" || pathname === "/en/product";
-  if (!isPdp) return;
-
-  response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
-  response.headers.set("Pragma", "no-cache");
-  response.headers.set("CDN-Cache-Control", "no-store");
-
-  const build = process.env.NEXT_PUBLIC_APP_BUILD_ID;
-  if (build) response.headers.set("X-Siwaky-Build", build);
+function isLoginPage(pathname: string): boolean {
+  return pathname === LOGIN_PATH || pathname.startsWith(`${LOGIN_PATH}/`);
 }
 
-/**
- * Never run locale middleware on Next internals — otherwise `/_next/static/*`
- * returns 500 and the app shell cannot load.
- */
-export default function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+function isPublicDashboardApi(pathname: string): boolean {
+  return (
+    pathname === "/api/dashboard/auth/login" ||
+    pathname.startsWith("/api/dashboard/auth/login/") ||
+    pathname === "/api/dashboard/auth/logout" ||
+    pathname.startsWith("/api/dashboard/auth/logout/")
+  );
+}
 
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml" ||
-    pathname === "/manifest.webmanifest" ||
-    STATIC_EXT.test(pathname)
-  ) {
+async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
+  const { pathname } = req.nextUrl;
+
+  const touchesDashboardUi = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  const touchesDashboardApi = pathname.startsWith("/api/dashboard/");
+
+  if (!touchesDashboardUi && !touchesDashboardApi) {
     return NextResponse.next();
   }
 
-  const norm = pathname.replace(/\/+$/, "") || "/";
-
-  /**
-   * Dashboard lives only at `/dashboard` (no `[locale]` segment). Visiting
-   * `/ar/dashboard` or `/en/dashboard` would otherwise 404 — browsers still
-   * send users here from old links / locale-aware mental model.
-   */
-  for (const loc of locales) {
-    const prefix = `/${loc}/dashboard`;
-    if (norm === prefix || norm.startsWith(`${prefix}/`)) {
-      const url = request.nextUrl.clone();
-      url.pathname = norm.slice(`/${loc}`.length) || "/dashboard";
-      return NextResponse.redirect(url, 307);
+  /** Logged-in users should not stay on the login screen */
+  if (touchesDashboardUi && isLoginPage(pathname)) {
+    const token = req.cookies.get(DASHBOARD_SESSION_COOKIE)?.value;
+    const session = await verifyDashboardSessionToken(token);
+    if (session) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-  }
-
-  if (norm === "/dashboard" || norm.startsWith("/dashboard/")) {
     return NextResponse.next();
   }
 
+  if (touchesDashboardApi && isPublicDashboardApi(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (!isDashboardAuthConfigured()) {
+    if (touchesDashboardApi) {
+      return NextResponse.json({ error: "Dashboard auth not configured" }, { status: 503 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = LOGIN_PATH;
+    url.searchParams.set("error", "config");
+    return NextResponse.redirect(url);
+  }
+
+  const token = req.cookies.get(DASHBOARD_SESSION_COOKIE)?.value;
+  const session = await verifyDashboardSessionToken(token);
+
+  if (!session) {
+    if (touchesDashboardApi) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = LOGIN_PATH;
+    url.searchParams.set("from", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-dashboard-email", session.email);
+  requestHeaders.set("x-dashboard-role", session.role);
+
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+}
+
+export async function middleware(req: NextRequest) {
   try {
-    const response = intlMiddleware(request);
-    applyPdpNoStoreHeaders(request, response);
-    return response;
-  } catch (cause) {
-    console.error("[middleware] next-intl failed; passing through:", cause);
-    return NextResponse.next();
+    return await dashboardMiddleware(req);
+  } catch (err) {
+    console.error("[middleware/dashboard]", err);
+    const { pathname } = req.nextUrl;
+    if (pathname.startsWith("/api/dashboard/")) {
+      return NextResponse.json({ error: "Middleware failure" }, { status: 500 });
+    }
+    const url = req.nextUrl.clone();
+    url.pathname = LOGIN_PATH;
+    url.searchParams.set("error", "mw");
+    return NextResponse.redirect(url);
   }
 }
 
-/** Covers `/` and all segments; paths under `/_next/` never match → middleware not invoked. */
 export const config = {
-  matcher: ["/((?!_next/).*)"],
+  matcher: ["/dashboard", "/dashboard/:path*", "/api/dashboard/:path*"],
 };

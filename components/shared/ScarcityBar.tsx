@@ -13,7 +13,7 @@ interface Props {
 
 export default function ScarcityBar({
   initial = 12,
-  label = (n) => `🔴 تبقى ${n} علبة فقط!`,
+  label = (n: number) => `🔴 ${n}`,
   everyMs = 18_000,
   floor = 3,
 }: Props) {

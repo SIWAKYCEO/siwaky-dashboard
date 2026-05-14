@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useLocale } from "next-intl";
 
+import { IMAGE_ALT_EN } from "@/lib/seo/image-alts-en";
 import { IMAGE_ALT_AR } from "@/lib/seo/image-alts-ar";
 
 interface LogoProps {
@@ -20,11 +22,14 @@ const IMG_CLASS = {
 const logoSrc = `/logo.png?v=${encodeURIComponent(process.env.NEXT_PUBLIC_LOGO_REVISION ?? "6")}`;
 
 export default function Logo({ className = "", size = "md" }: LogoProps) {
+  const locale = useLocale();
+  const alt = locale === "en" ? IMAGE_ALT_EN.logo : IMAGE_ALT_AR.logo;
+
   return (
     <span className={`inline-flex shrink-0 select-none items-center bg-transparent ${className}`}>
       <Image
         src={logoSrc}
-        alt={IMAGE_ALT_AR.logo}
+        alt={alt}
         width={512}
         height={160}
         draggable={false}

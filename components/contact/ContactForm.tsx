@@ -28,10 +28,16 @@ export default function ContactForm() {
 
   const onSubmit = async (values: Values) => {
     // Contact form is a "best-effort" mailto fallback for v1.
+    const subject = encodeURIComponent(t("mailtoSubject", { name: values.name }));
     const body = encodeURIComponent(
-      `الاسم: ${values.name}\nالبريد: ${values.email}\nالجوال: ${values.phone}\n\nالرسالة:\n${values.message}`,
+      t("mailtoBody", {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        message: values.message,
+      }),
     );
-    window.location.href = `mailto:siwaky.assistance@gmail.com?subject=استفسار من ${values.name}&body=${body}`;
+    window.location.href = `mailto:siwaky.assistance@gmail.com?subject=${subject}&body=${body}`;
     setSent(true);
     reset();
   };

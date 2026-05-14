@@ -32,15 +32,31 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-brand-goldLight">
               {t("footer.links")}
             </h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li><Link href={`/${locale}`}             className="hover:text-brand-goldLight">{t("nav.home")}</Link></li>
-              <li><Link href={`/${locale}/product`}     className="hover:text-brand-goldLight">{t("nav.product")}</Link></li>
-              <li><Link href={`/${locale}/about`}       className="hover:text-brand-goldLight">{t("nav.about")}</Link></li>
-              <li><Link href={`/${locale}/contact`}     className="hover:text-brand-goldLight">{t("nav.contact")}</Link></li>
+              <li>
+                <Link href={`/${locale}`} className="hover:text-brand-goldLight">
+                  {t("nav.home")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/product`} className="hover:text-brand-goldLight">
+                  {t("nav.product")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/about`} className="hover:text-brand-goldLight">
+                  {t("nav.about")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/contact`} className="hover:text-brand-goldLight">
+                  {t("nav.contact")}
+                </Link>
+              </li>
               <li>
                 <a href="/halal-cert.pdf" target="_blank" rel="noreferrer" className="hover:text-brand-goldLight">
                   {t("footer.certificate")}
@@ -49,7 +65,35 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="md:col-span-4">
+          <nav className="md:col-span-2" aria-label={t("footer.legal")}>
+            <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-brand-goldLight">
+              {t("footer.legal")}
+            </h4>
+            <ul className="space-y-3 text-sm text-white/70">
+              <li>
+                <Link href={`/${locale}/privacy-policy`} className="hover:text-brand-goldLight">
+                  {t("footer.privacy")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/terms`} className="hover:text-brand-goldLight">
+                  {t("footer.terms")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/shipping`} className="hover:text-brand-goldLight">
+                  {t("footer.shipping")}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/returns`} className="hover:text-brand-goldLight">
+                  {t("footer.returns")}
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="md:col-span-3">
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-widest text-brand-goldLight">
               {t("footer.follow")}
             </h4>
@@ -61,7 +105,6 @@ export default function Footer() {
                 aria-label="TikTok"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:border-brand-gold/60 hover:text-brand-goldLight"
               >
-                {/* TikTok glyph */}
                 <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
                   <path
                     fill="currentColor"
@@ -93,12 +136,30 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-white/5 pt-6 text-xs text-white/50 md:flex-row">
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 text-xs text-white/50 md:flex-row">
           <p>{t("footer.rights")}</p>
-          <div className="flex items-center gap-4">
-            <Link href={`/${locale}/about`}       className="hover:text-brand-goldLight">{t("footer.privacy")}</Link>
-            <span className="opacity-40">·</span>
-            <Link href={`/${locale}/about`}       className="hover:text-brand-goldLight">{t("footer.terms")}</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 md:justify-end">
+            <Link href={`/${locale}/privacy-policy`} className="hover:text-brand-goldLight">
+              {t("footer.privacy")}
+            </Link>
+            <span className="opacity-40" aria-hidden>
+              ·
+            </span>
+            <Link href={`/${locale}/terms`} className="hover:text-brand-goldLight">
+              {t("footer.terms")}
+            </Link>
+            <span className="opacity-40" aria-hidden>
+              ·
+            </span>
+            <Link href={`/${locale}/shipping`} className="hover:text-brand-goldLight">
+              {t("footer.shipping")}
+            </Link>
+            <span className="opacity-40" aria-hidden>
+              ·
+            </span>
+            <Link href={`/${locale}/returns`} className="hover:text-brand-goldLight">
+              {t("footer.returns")}
+            </Link>
           </div>
         </div>
       </div>

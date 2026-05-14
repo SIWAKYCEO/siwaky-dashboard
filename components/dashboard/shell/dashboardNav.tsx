@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, MapPin, Package, RadioTower } from "lucide-react";
+import { Globe2, LayoutDashboard, MapPin, Package, RadioTower } from "lucide-react";
 
 export type DashboardNavEntry = {
   id: string;
@@ -11,26 +11,32 @@ export type DashboardNavEntry = {
 export const dashboardNavEntries: DashboardNavEntry[] = [
   {
     id: "pulse",
-    label: "Command pulse",
-    subtitle: "KPI mosaic",
+    label: "Orders dashboard",
+    subtitle: "Overview & KPIs",
     Icon: LayoutDashboard,
   },
   {
+    id: "live-view",
+    label: "Live orders globe",
+    subtitle: "GCC activity",
+    Icon: Globe2,
+  },
+  {
     id: "regions",
-    label: "Geo demand",
-    subtitle: "Urban mix",
+    label: "Orders by city",
+    subtitle: "Regional mix",
     Icon: MapPin,
   },
   {
     id: "catalog",
-    label: "Product OS",
-    subtitle: "Line cards",
+    label: "Products",
+    subtitle: "Best sellers",
     Icon: Package,
   },
   {
     id: "live",
-    label: "Live ledger",
-    subtitle: "Activity + inbox",
+    label: "Activity & orders",
+    subtitle: "Timeline + list",
     Icon: RadioTower,
   },
 ];

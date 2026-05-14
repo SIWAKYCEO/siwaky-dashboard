@@ -129,3 +129,19 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/**
+ * Dashboard (`/dashboard`) — storefront root layout stays RTL/`ar`.
+ * DashboardHtmlLock sets `<html>` to LTR; these rules keep `body` + subtree aligned
+ * so flex, charts, and spacing stay left-to-right.
+ */
+body.dashboard-route {
+  direction: ltr;
+  text-align: start;
+}
+
+.dashboard-shell-root {
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
+}
