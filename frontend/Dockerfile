@@ -18,15 +18,15 @@ RUN BUILD_ID="$(date +%s)" && \
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+RUN chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3001
-# Next standalone binds 0.0.0.0:PORT (reachable from Traefik / other containers)
+ENV NODE_ENV=production
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
