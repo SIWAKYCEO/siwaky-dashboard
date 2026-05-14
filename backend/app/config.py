@@ -24,7 +24,7 @@ def _q_ident(s: str) -> str:
 def _easypanel_builtin_fallback_urls() -> tuple[str, ...]:
     """Default hostnames when nothing else connects (Easypanel / Compose). Safe if extended empty."""
     return (
-        "postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable",
+        "postgres://siwaky:siwaky@frontend_database:5432/siwaky?sslmode=disable",
         "postgres://siwaky:siwaky@postgres:5432/siwaky?sslmode=disable",
         "postgres://siwaky:siwaky@postgresql:5432/siwaky?sslmode=disable",
         "postgres://siwaky:siwaky@db:5432/siwaky?sslmode=disable",
@@ -104,17 +104,18 @@ def _urls_from_discrete_postgres_env() -> list[tuple[str, str]]:
 
 def _collect_labeled_candidates() -> list[tuple[str, str]]:
     """
-    Ordered candidates: DATABASE_URL env first, then alternate env URLs, discrete parts,
-    pydantic `.env`, comma fallbacks, then built-in Easypanel defaults.
+    If `DATABASE_URL` is set in the **runtime process environment**, use only that — no file defaults,
+    pydantic `.env`, or built-in host fallbacks (Easypanel / Docker inject `DATABASE_URL` at runtime).
+    Otherwise: POSTGRES_* URLs, pydantic, DATABASE_URL_FALLBACKS, then built-ins.
     """
+    # Runtime wins: must be the actual OS env var (not only pydantic / .env).
+    runtime_database_url = os.environ.get("DATABASE_URL", "").strip()
+    if runtime_database_url:
+        return [("env:DATABASE_URL", runtime_database_url)]
+
     items: list[tuple[str, str]] = []
 
-    # 1) Highest priority: process env DATABASE_URL (Easypanel internal string, etc.)
-    env_database_url = os.environ.get("DATABASE_URL", "").strip()
-    if env_database_url:
-        items.append(("env:DATABASE_URL", env_database_url))
-
-    # 2) Other common full-URL env keys
+    # 1) Other common full-URL env keys (only when runtime DATABASE_URL is unset)
     for key in ("POSTGRES_URL", "POSTGRES_PRISMA_URL", "SQL_DATABASE_URL"):
         raw = os.environ.get(key, "").strip()
         if raw:

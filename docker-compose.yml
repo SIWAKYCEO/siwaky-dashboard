@@ -27,7 +27,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-production}
       # Default Easypanel internal hostname. Code probes `postgres` / `postgresql` / `db` too, plus
       # optional `DATABASE_URL_FALLBACKS` — see `backend/app/config.py`.
-      DATABASE_URL: ${DATABASE_URL:-postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgres://siwaky:siwaky@frontend_database:5432/siwaky?sslmode=disable}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-}

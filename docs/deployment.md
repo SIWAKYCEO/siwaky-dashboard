@@ -33,7 +33,7 @@ Easypanel will auto-provision Let's Encrypt certs once DNS points to the panel I
 Already installed. Example connection string (adjust user/password if needed):
 
 ```
-postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable
+postgres://siwaky:siwaky@frontend_database:5432/siwaky?sslmode=disable
 ```
 
 The main API backend's `DATABASE_URL` must reach this database. The **dashboard** FastAPI service uses `DEFAULT_DATABASE_URL` in `backend/app/config.py` when env is empty, and ignores obsolete Docker-only hostnames.
@@ -90,7 +90,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 ### Env vars
 
 ```
-DATABASE_URL=postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable
+DATABASE_URL=postgres://siwaky:siwaky@frontend_database:5432/siwaky?sslmode=disable
 FRONTEND_URL=https://siwaky.com
 ENVIRONMENT=production
 PORT=8000
