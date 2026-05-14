@@ -37,6 +37,17 @@ function normalizeUsersJsonRaw(raw: string | undefined): string {
   return raw.replace(/^\uFEFF/, "").trim();
 }
 
+/**
+ * Env UIs often strip the leading `$` from bcrypt hashes (`$2b$12$...` → `2b$12$...`).
+ * bcrypt requires the full `$2b$...` prefix.
+ */
+function normalizePossiblyMangledBcryptHash(hash: string): string {
+  const h = hash.trim();
+  if (h.startsWith("$")) return h;
+  if (/^2[aby]\$\d{2}\$/.test(h)) return `$${h}`;
+  return h;
+}
+
 export function loadDashboardUsers(): DashboardUserRecord[] {
   const raw = normalizeUsersJsonRaw(resolvedDashboardUsersJsonRaw());
   if (!raw) {
@@ -81,35 +92,72 @@ export async function verifyDashboardCredentials(
   password: string,
 ): Promise<{ email: string; role: string } | null> {
   const email = emailRaw.trim().toLowerCase();
+  const rawJson = resolvedDashboardUsersJsonRaw();
   const users = loadDashboardUsers();
   const plaintextMode = plaintextPasswordsAllowedEnv();
 
-  // eslint-disable-next-line no-console -- temporary POST login diagnostics (no passwords)
-  console.log("[dashboard/auth] login-debug receivedEmail=", emailRaw.trim());
-  // eslint-disable-next-line no-console -- temporary POST login diagnostics (no passwords)
-  console.log("[dashboard/auth] login-debug usersLoadedCount=", users.length);
-  // eslint-disable-next-line no-console -- temporary POST login diagnostics (no passwords)
-  console.log("[dashboard/auth] login-debug plaintextMode=", plaintextMode);
+  // eslint-disable-next-line no-console -- login diagnostics (remove after fixing Easypanel hash/env)
+  console.log("[dashboard/auth] login-debug rawJsonLength=", rawJson.length);
+  // eslint-disable-next-line no-console
+  console.log(
+    "[dashboard/auth] login-debug parsedUsersSummary=",
+    JSON.stringify(
+      users.map((u) => ({
+        email: u.email,
+        passwordHashLen: u.passwordHash?.length ?? 0,
+        hashPrefix: u.passwordHash?.slice(0, 8) ?? null,
+        hashStartsWithDollar: u.passwordHash?.startsWith("$") ?? false,
+      })),
+    ),
+  );
+
+  // eslint-disable-next-line no-console -- login diagnostics
+  console.log("[dashboard/auth] login-debug compareRequest", {
+    emailNormalized: email,
+    passwordLength: password.length,
+    usersLoadedCount: users.length,
+    plaintextMode,
+  });
 
   const user = users.find((u) => u.email.trim().toLowerCase() === email);
 
   if (!user || typeof password !== "string") {
-    // eslint-disable-next-line no-console -- temporary POST login diagnostics (no passwords)
-    console.log("[dashboard/auth] login-debug passwordComparePassed=", false);
+    // eslint-disable-next-line no-console
+    console.log("[dashboard/auth] login-debug noUserOrPassword", { userFound: Boolean(user) });
     return null;
   }
 
-  const storedHash =
+  const storedHashRaw =
     typeof user.passwordHash === "string" && user.passwordHash.trim().length > 0
       ? user.passwordHash.trim()
       : undefined;
+  const storedHash = storedHashRaw ? normalizePossiblyMangledBcryptHash(storedHashRaw) : undefined;
+
+  if (storedHashRaw && storedHash && storedHashRaw !== storedHash) {
+    // eslint-disable-next-line no-console
+    console.log("[dashboard/auth] login-debug repairedBcryptPrefix", {
+      beforeLen: storedHashRaw.length,
+      afterLen: storedHash.length,
+    });
+  }
 
   let ok = false;
 
   if (storedHash) {
     try {
+      // bcryptjs.compare(plainText, hash) — hash must include leading `$2b$...`
+      // eslint-disable-next-line no-console
+      console.log("[dashboard/auth] login-debug bcrypt.compare", {
+        plainLength: password.length,
+        hashLength: storedHash.length,
+        hashFirstChars: storedHash.slice(0, 10),
+      });
       ok = await bcrypt.compare(password, storedHash);
-    } catch {
+      // eslint-disable-next-line no-console
+      console.log("[dashboard/auth] login-debug bcrypt.compare result=", ok);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log("[dashboard/auth] login-debug bcrypt.compare threw", e);
       ok = false;
     }
   }
@@ -122,10 +170,9 @@ export async function verifyDashboardCredentials(
     const storedPlain = user.password.replace(/\r\n/g, "\n").trim();
     const attemptPlain = password.replace(/\r\n/g, "\n").trim();
     ok = timingSafeEqualStrings(attemptPlain, storedPlain);
+    // eslint-disable-next-line no-console
+    console.log("[dashboard/auth] login-debug plaintextFallback=", ok);
   }
-
-  // eslint-disable-next-line no-console -- temporary POST login diagnostics (no passwords)
-  console.log("[dashboard/auth] login-debug passwordComparePassed=", ok);
 
   if (!ok) return null;
   return {

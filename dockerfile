@@ -12,7 +12,7 @@ COPY frontend/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 # Fallbacks bake into the Edge bundle + standalone runtime when Easypanel omits `--build-arg` / compose env ($$ → $).
 ARG DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
-ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$l8XVlTD.5i5kJVKYmHxbJ.8cQBChQ/oCAEwdRiqQ8c1xOIDRXSH7C\"}]"
+ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$JgcBQkW2jvlbrkBnI0dWVOXclGsR2qAPQwLCdg6KVkvhYFNpCZTfO\"}]"
 ENV DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET}
 ENV DASHBOARD_USERS_JSON=${DASHBOARD_USERS_JSON}
 RUN rm -rf .next
@@ -25,7 +25,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
-ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$l8XVlTD.5i5kJVKYmHxbJ.8cQBChQ/oCAEwdRiqQ8c1xOIDRXSH7C\"}]"
+ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$JgcBQkW2jvlbrkBnI0dWVOXclGsR2qAPQwLCdg6KVkvhYFNpCZTfO\"}]"
 ENV DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET}
 ENV DASHBOARD_USERS_JSON=${DASHBOARD_USERS_JSON}
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
