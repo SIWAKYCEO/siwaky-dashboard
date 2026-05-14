@@ -1,11 +1,9 @@
 # siwaky-dashboard compose
 #
-# Frontend (Next.js) listens on PORT 3001. Base compose avoids host binds; **`docker-compose.override.yml`**
-# publishes **3001:3001** when Easypanel merges it. Align the panel app port with **3001**.
+# Frontend (Next.js) listens internally on PORT **3001** (`dashboard-frontend` publishes **3001:3001** below).
 #
-# Service name **`dashboard-frontend`** matches Easypanel’s generated merge / routing. The repo ships
-# **`docker-compose.override.yml`** so merges always include a complete `dashboard-frontend` definition
-# (`build`, ports, core env) even if the panel injects partial overrides.
+# Service name **`dashboard-frontend`** matches Easypanel merge / routing. **`docker-compose.override.yml`**
+# can carry extra panel overlays; duplicate port binds are omitted there so merges stay valid.
 # Orphan cleanup: Easypanel reads x-docker-compose-flags.remove_orphans; manual runs can use
 # `./scripts/docker-compose-up.sh` (passes --remove-orphans on the CLI).
 
@@ -35,16 +33,18 @@ services:
     build:
       context: .
       dockerfile: dockerfile
+    ports:
+      - "3001:3001"
     restart: unless-stopped
     depends_on:
       - backend
     environment:
-      NODE_ENV: production
-      PORT: "3001"
-      HOSTNAME: "0.0.0.0"
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
-      DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
-      NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-1898036304185332}
-      NEXT_PUBLIC_TIKTOK_PIXEL_ID: ${NEXT_PUBLIC_TIKTOK_PIXEL_ID:-D722UD3C77UDBCCMEAQG}
-      NEXT_PUBLIC_SNAP_PIXEL_ID: ${NEXT_PUBLIC_SNAP_PIXEL_ID:-}
+      - PORT=3001
+      - HOSTNAME=0.0.0.0
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
+      - DASHBOARD_ORDERS_API_BASE_URL=http://backend:8000
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
+      - NEXT_PUBLIC_META_PIXEL_ID=${NEXT_PUBLIC_META_PIXEL_ID:-1898036304185332}
+      - NEXT_PUBLIC_TIKTOK_PIXEL_ID=${NEXT_PUBLIC_TIKTOK_PIXEL_ID:-D722UD3C77UDBCCMEAQG}
+      - NEXT_PUBLIC_SNAP_PIXEL_ID=${NEXT_PUBLIC_SNAP_PIXEL_ID:-}

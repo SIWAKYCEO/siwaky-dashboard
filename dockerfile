@@ -27,7 +27,7 @@ COPY --from=builder /app/public ./public
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3001
-ENV NODE_ENV=production
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV=production
 CMD ["node", "server.js"]
