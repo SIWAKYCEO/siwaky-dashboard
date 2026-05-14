@@ -24,13 +24,13 @@ services:
     build:
       context: .
       dockerfile: dockerfile
-    # No host ports — Easypanel/Traefik binds the node’s :3000; publishing 3000:3000
-    # here causes “port is already allocated”. Set app port **3000** in the Easypanel UI instead.
+    # No host ports publish — Easypanel proxies to container port below.
     restart: unless-stopped
     depends_on:
       - backend
     environment:
       NODE_ENV: production
+      PORT: "3001"
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
       DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
