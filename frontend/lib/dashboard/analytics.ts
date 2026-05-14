@@ -143,7 +143,7 @@ function buildActivity(orders: OrderRow[]): ActivityItem[] {
   const reversed = [...orders].reverse().slice(0, 22);
   return reversed.map((o, idx) => {
     const accent = statusAccent(o);
-    const titleParts = [o.product?.trim(), o.qty?.trim() ? `×${o.qty.trim()}` : ""].filter(Boolean);
+    const titleParts = [o.product?.trim(), o.quantity?.trim() ? `×${o.quantity.trim()}` : ""].filter(Boolean);
     const sub = [
       o.name?.trim(),
       [o.city?.trim(), o.country?.trim()].filter(Boolean).join(", "),

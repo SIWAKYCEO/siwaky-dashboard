@@ -5,20 +5,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import load_settings
 from app.services.sheets import (
-    extract_orders_from_sheet_rows,
-    fetch_orders_as_rows,
+    fetch_orders_range,
     list_sheet_titles,
+    rows_to_order_dicts,
 )
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
 
-# Local dev defaults + optional comma-separated list from Easypanel, e.g.
-# CORS_ALLOW_ORIGINS=https://your-frontend.easypanel.host,https://siwaky.com
-_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-_extra = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-_allowed_origins = list(_default_origins)
-if _extra:
-    _allowed_origins.extend([o.strip() for o in _extra.split(",") if o.strip()])
+# Required CORS hosts (dashboard ↔ API in Docker / prod).
+_cors_required = (
+    "http://dashboard-frontend:3001",
+    "https://dashboard.siwaky.com",
+)
+_cors_extra = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+_allowed_origins = list(_cors_required)
+if _cors_extra:
+    _allowed_origins.extend([o.strip() for o in _cors_extra.split(",") if o.strip()])
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,7 +38,7 @@ def health():
 
 @app.get("/debug/routes")
 def debug_routes():
-    """Which HTTP routes exist on this process (useful when the dashboard expects `/orders`)."""
+    """Which HTTP routes exist on this process."""
     routes: list[dict[str, object]] = []
     for route in app.routes:
         path = getattr(route, "path", None)
@@ -50,29 +52,31 @@ def debug_routes():
 @app.get("/debug/config")
 def debug_config():
     settings = load_settings()
-    creds = settings.google_credentials_path.expanduser().resolve()
+    json_set = bool(settings.google_service_account_json.strip())
+    sid = settings.google_sheets_spreadsheet_id.strip()
     return {
-        "sheet_tab": settings.sheet_tab.strip(),
-        "spreadsheet_id": settings.spreadsheet_id.strip(),
-        "google_credentials_path_exists": creds.is_file(),
+        "google_service_account_json_configured": json_set,
+        "google_sheets_spreadsheet_id_configured": bool(sid),
+        "sheet_name": "📦 Orders",
     }
 
 
 @app.get("/debug/sheets")
 def debug_sheets():
     settings = load_settings()
-    creds = settings.google_credentials_path.expanduser().resolve()
-    if not creds.is_file():
-        raise HTTPException(
-            status_code=500,
-            detail="Credentials file not found",
-        )
+    if not settings.google_service_account_json.strip():
+        raise HTTPException(status_code=500, detail="GOOGLE_SERVICE_ACCOUNT_JSON is not set")
+    if not settings.google_sheets_spreadsheet_id.strip():
+        raise HTTPException(status_code=500, detail="GOOGLE_SHEETS_SPREADSHEET_ID is not set")
+    try:
+        info = settings.service_account_info()
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    spreadsheet_id = settings.spreadsheet_id.strip()
     try:
         titles = list_sheet_titles(
-            credentials_path=creds,
-            spreadsheet_id=spreadsheet_id,
+            service_account_info=info,
+            spreadsheet_id=settings.google_sheets_spreadsheet_id,
         )
     except Exception as exc:
         raise HTTPException(
@@ -86,26 +90,28 @@ def debug_sheets():
 @app.get("/orders")
 def get_orders():
     """
-    Reads the private Google Sheet using the service account and returns rows as JSON objects
-    keyed by the header row.
+    Read tab **📦 Orders** (skip first 3 rows; data from row 4, columns A–T).
+    Returns a JSON array of order objects.
     """
     settings = load_settings()
-    creds = settings.google_credentials_path.expanduser().resolve()
-    if not creds.is_file():
-        raise HTTPException(
-            status_code=500,
-            detail=f"Credentials file not found: {creds}",
-        )
+    if not settings.google_service_account_json.strip():
+        raise HTTPException(status_code=500, detail="GOOGLE_SERVICE_ACCOUNT_JSON is not set")
+    if not settings.google_sheets_spreadsheet_id.strip():
+        raise HTTPException(status_code=500, detail="GOOGLE_SHEETS_SPREADSHEET_ID is not set")
 
     try:
-        rows = fetch_orders_as_rows(
-            credentials_path=creds,
-            spreadsheet_id=settings.spreadsheet_id.strip(),
-            sheet_tab=settings.sheet_tab.strip(),
+        info = settings.service_account_info()
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    try:
+        rows = fetch_orders_range(
+            service_account_info=info,
+            spreadsheet_id=settings.google_sheets_spreadsheet_id,
         )
-        orders = extract_orders_from_sheet_rows(rows)
+        orders = rows_to_order_dicts(rows)
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-    return {"count": len(orders), "orders": orders}
+    return orders

@@ -108,6 +108,12 @@ export function OrderDetailDrawer({
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
               <div className="px-5 py-6 sm:px-6">
                 <div className="space-y-6">
+                  <DetailSection title="Identity">
+                    <FieldRow label="Order ID" value={rowLabel(order.order_id)} mono />
+                    <FieldRow label="Date" value={rowLabel(order.date)} />
+                    <FieldRow label="Time" value={rowLabel(order.time)} />
+                  </DetailSection>
+
                   <DetailSection title="Customer & location">
                     <FieldRow label="Customer" value={rowLabel(order.name)} />
                     <FieldRow label="Phone" value={rowLabel(order.phone)} mono />
@@ -116,7 +122,7 @@ export function OrderDetailDrawer({
                   </DetailSection>
 
                   <DetailSection title="Line & pricing">
-                    <FieldRow label="Quantity" value={rowLabel(order.qty)} />
+                    <FieldRow label="Quantity" value={rowLabel(order.quantity)} />
                     <FieldRow label="Unit price" value={`${rowLabel(order.price_sar)} SAR`} mono />
                     <FieldRow label="COD fee" value={rowLabel(order.cod_fee)} mono />
                   </DetailSection>
@@ -130,7 +136,13 @@ export function OrderDetailDrawer({
 
                   <DetailSection title="Technical" subtle>
                     <FieldRow label="IP address" value={rowLabel(order.ip_address)} mono />
-                    <FieldRow label="Device" value={rowLabel(order.devic)} />
+                    <FieldRow label="Device" value={rowLabel(order.device)} />
+                  </DetailSection>
+
+                  <DetailSection title="Attribution" subtle>
+                    <FieldRow label="Source" value={rowLabel(order.source)} />
+                    <FieldRow label="Campaign" value={rowLabel(order.campaign)} />
+                    <FieldRow label="Notes" value={rowLabel(order.notes)} />
                   </DetailSection>
                 </div>
               </div>

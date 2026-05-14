@@ -21,17 +21,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    # Set `SIWAKY_*` in a repo-root `.env` (Compose auto-loads it for ${...}) or in the panel.
-    # Mount the service account JSON to match `SIWAKY_GOOGLE_CREDENTIALS_PATH`, e.g.
-    # volumes:
-    #   - ./backend/my-sa.json:/app/credentials/service-account.json:ro
+    # Set `GOOGLE_*` in a repo-root `.env` (Compose variable substitution) or Easypanel env.
+    # `GOOGLE_SERVICE_ACCOUNT_JSON` must be the raw JSON string (often easiest via panel secret, not a file).
     environment:
       PORT: "8000"
       ENVIRONMENT: ${ENVIRONMENT:-production}
-      # Fallbacks so Compose can inject creds path / sheet id from a repo-root `.env` without backend/.env:
-      SIWAKY_GOOGLE_CREDENTIALS_PATH: ${SIWAKY_GOOGLE_CREDENTIALS_PATH:-/app/credentials/service-account.json}
-      SIWAKY_SPREADSHEET_ID: ${SIWAKY_SPREADSHEET_ID:-}
-      SIWAKY_SHEET_TAB: ${SIWAKY_SHEET_TAB:-Sheet1}
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      GOOGLE_SHEETS_SPREADSHEET_ID: ${GOOGLE_SHEETS_SPREADSHEET_ID:-}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-}

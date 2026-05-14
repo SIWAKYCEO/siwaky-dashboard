@@ -173,11 +173,12 @@ function isInGccBox(ll: LatLng): boolean {
 export function liveOrderKey(order: OrderRow, indexFromNewest: number): string {
   const basis = [
     indexFromNewest,
+    norm(order.order_id),
     norm(order.phone),
     norm(order.product),
     norm(order.city),
     norm(order.country),
-    norm(order.qty),
+    norm(order.quantity),
     norm(order.price_sar),
     norm(order.status),
   ].join("|");

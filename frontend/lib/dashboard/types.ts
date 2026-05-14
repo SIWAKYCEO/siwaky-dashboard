@@ -1,11 +1,14 @@
-/** Normalized sheet row keys (FastAPI `/orders`). */
+/** Normalized sheet row keys (FastAPI `GET /orders`). */
 export type OrderRow = {
+  order_id: string;
+  date: string;
+  time: string;
   name: string;
   phone: string;
   city: string;
   country: string;
   product: string;
-  qty: string;
+  quantity: string;
   price_sar: string;
   status: string;
   confirmed: string;
@@ -13,7 +16,10 @@ export type OrderRow = {
   returned: string;
   cod_fee: string;
   ip_address: string;
-  devic: string;
+  device: string;
+  source: string;
+  campaign: string;
+  notes: string;
 };
 
 export type OrdersPayload = {

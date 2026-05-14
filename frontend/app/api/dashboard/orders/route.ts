@@ -81,7 +81,25 @@ export async function GET() {
 
     let data: OrdersPayload;
     try {
-      data = (await res.json()) as OrdersPayload;
+      const raw = (await res.json()) as unknown;
+      if (Array.isArray(raw)) {
+        const orders = raw as OrdersPayload["orders"];
+        data = { count: orders.length, orders };
+      } else if (
+        raw &&
+        typeof raw === "object" &&
+        Array.isArray((raw as OrdersPayload).orders)
+      ) {
+        data = raw as OrdersPayload;
+      } else {
+        return NextResponse.json(
+          {
+            error: "Orders upstream returned unexpected JSON (expected array or { orders })",
+            upstream,
+          },
+          { status: 502 },
+        );
+      }
     } catch {
       return NextResponse.json(
         {
