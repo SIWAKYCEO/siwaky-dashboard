@@ -9,10 +9,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Drop stale .next from COPY layers; BUILD_ID busts `_next/static` URLs.
-# NEXT_PUBLIC_APP_BUILD_ID is inlined into the client bundle so phones / proxies can prove which build ran.
-RUN rm -rf .next && \
-  BUILD_ID="$(date +%s)" && \
+# Never reuse a `.next` from the COPY layer — clean before every production build.
+RUN rm -rf .next
+# Runtime build id for env (CAPI / probes); Next `generateBuildId` uses `Date.now()` in next.config.js.
+RUN BUILD_ID="$(date +%s)" && \
   export BUILD_ID && \
   export NEXT_PUBLIC_APP_BUILD_ID="$BUILD_ID" && \
   npm run build

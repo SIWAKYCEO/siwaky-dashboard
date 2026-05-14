@@ -4,6 +4,9 @@ import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 import ContactForm from "@/components/contact/ContactForm";
 import { buildPageMetadata, mergeLocaleShell } from "@/lib/seo/metadata";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface Props { params: { locale: string }; }
 
 export async function generateMetadata({ params: { locale } }: Props): Promise<Metadata> {

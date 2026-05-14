@@ -4,12 +4,8 @@ const withNextIntl = createNextIntlPlugin("./i18n.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  ...(process.env.BUILD_ID
-    ? {
-        /** Docker passes BUILD_ID="$(date +%s)" so each image gets a distinct Next build id. */
-        generateBuildId: async () => String(process.env.BUILD_ID),
-      }
-    : {}),
+  /** Unique `_next/static` chunk URLs on every build — avoids stale hashed assets after deploy. */
+  generateBuildId: async () => Date.now().toString(),
   async headers() {
     return [
       {
