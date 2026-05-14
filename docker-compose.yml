@@ -48,7 +48,10 @@ services:
     container_name: siwaky_frontend
     restart: unless-stopped
     environment:
+      # Browser → mapped host port when calling the store API from the client
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Next route handlers (/api/dashboard/*) → reach backend by Docker network name
+      DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_META_PIXEL_ID: "1898036304185332"
       NEXT_PUBLIC_TIKTOK_PIXEL_ID: "D722UD3C77UDBCCMEAQG"

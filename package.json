@@ -1,0 +1,7 @@
+{
+  "name": "siwaky",
+  "private": true,
+  "scripts": {
+    "dev:all": "npm run dev:all --prefix frontend"
+  }
+}

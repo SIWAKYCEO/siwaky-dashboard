@@ -44,7 +44,25 @@ cd ../frontend
 cp .env.example .env.local
 npm install
 npm run dev      # http://localhost:3000
+
+# Optional: Next.js + uvicorn together (requires Python deps / uvicorn on PATH)
+# pip install -r ../backend/requirements.txt   # from backend/, ideally in a venv
+npm run dev:all  # web :3000 · API :8000 (uses concurrently)
+
+# Same script from repo root (delegates into frontend/)
+cd ..
+npm run dev:all
 ```
+
+If `/dashboard` shows **“missing required error components”** or endless refresh in dev: stop every stray `next dev` instance, delete `frontend/.next`, run `npm run dev` once again — duplicate dev servers commonly trigger that overlay.
+
+### Dashboard orders (`503` / “upstream unreachable”)
+
+The dashboard loads rows via the Next proxy `GET /api/dashboard/orders`, which forwards to FastAPI **`GET /orders`** (`backend/app/main.py`). A **503** means Next could not open a TCP connection (API not running, wrong URL, or Docker networking).
+
+- **Native dev:** In one terminal run `npm run dev --prefix backend` (listening on `http://127.0.0.1:8000`). In `.env.local` set `DASHBOARD_ORDERS_API_BASE_URL=http://127.0.0.1:8000` and **`restart `next dev`** after editing env.
+- **Check:** `curl http://127.0.0.1:8000/health` should return `{ "status": "ok" }`.
+- **Docker:** The Next container must use **`DASHBOARD_ORDERS_API_BASE_URL=http://backend:8000`**, not `127.0.0.1` (localhost inside the container is the container itself). This repo’s `docker-compose.yml` sets that.
 
 Or run the entire stack at once:
 
