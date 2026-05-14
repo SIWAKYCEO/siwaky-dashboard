@@ -7,11 +7,14 @@ import {
   DASHBOARD_SESSION_COOKIE,
   DASHBOARD_SESSION_MAX_AGE_SEC,
 } from "@/lib/dashboard/auth/constants";
+import { isDashboardSessionCookieSecure } from "@/lib/dashboard/auth/cookie-secure";
 import {
   isDashboardAuthConfigured,
   signDashboardSessionToken,
 } from "@/lib/dashboard/auth/session";
 import { verifyDashboardCredentials } from "@/lib/dashboard/auth/users";
+
+export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -56,7 +59,7 @@ export async function POST(req: Request) {
 
   cookies().set(DASHBOARD_SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isDashboardSessionCookieSecure(),
     sameSite: "lax",
     path: "/",
     maxAge: DASHBOARD_SESSION_MAX_AGE_SEC,

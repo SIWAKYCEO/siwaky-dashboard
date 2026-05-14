@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const token = cookies().get(DASHBOARD_SESSION_COOKIE)?.value;
   const session = await verifyDashboardSessionToken(token);

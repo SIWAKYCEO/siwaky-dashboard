@@ -5,6 +5,8 @@ import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
 import type { OrdersPayload } from "@/lib/dashboard/types";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Proxies FastAPI `/orders` only for authenticated dashboard sessions.
  * Prefer `DASHBOARD_ORDERS_API_BASE_URL` (server-side; Docker: `http://backend:8000`).
