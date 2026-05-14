@@ -1,46 +1,49 @@
 import { SignJWT } from "jose/jwt/sign";
 import { jwtVerify } from "jose/jwt/verify";
 
+import { DASHBOARD_AUTH_SECRET_FALLBACK } from "@/lib/dashboard/auth/env-defaults";
 import { DASHBOARD_SESSION_MAX_AGE_SEC } from "@/lib/dashboard/auth/constants";
+import { loadDashboardUsers } from "@/lib/dashboard/auth/users";
 
 export type DashboardSession = {
   email: string;
   role: string;
 };
 
-function getSecretBytes(): Uint8Array | null {
-  const s = process.env.DASHBOARD_AUTH_SECRET;
-  if (!s || s.length < 32) return null;
-  return new TextEncoder().encode(s);
+/** Prefer env; Easypanel often injects empty strings that override image `ENV`. */
+function resolvedAuthSecret(): string | null {
+  const fromEnv = process.env.DASHBOARD_AUTH_SECRET?.trim();
+  if (fromEnv && fromEnv.length >= 32) return fromEnv;
+  const fb = DASHBOARD_AUTH_SECRET_FALLBACK.trim();
+  return fb.length >= 32 ? fb : null;
 }
 
-/** Align with `loadDashboardUsers()` — BOM / whitespace breaks JSON.parse when absent here. */
-function dashboardUsersEnvPresent(): boolean {
-  const raw = process.env.DASHBOARD_USERS_JSON?.replace(/^\uFEFF/, "").trim();
-  return Boolean(raw);
+function getSecretBytes(): Uint8Array | null {
+  const s = resolvedAuthSecret();
+  if (!s) return null;
+  return new TextEncoder().encode(s);
 }
 
 const loggedPlaces = new Set<string>();
 
 /**
- * Middleware (Edge) only sees vars present at **`next build`**. Node routes resolve runtime env + build.
+ * Middleware (Edge) bundles literals from this module; `DASHBOARD_AUTH_SECRET_FALLBACK` is always available.
  * Prefer `console.log` for clarity; prod keeps `log` because `compiler.removeConsole` excludes it below.
  */
 export function logDashboardAuthDiagnostics(where: string, includeUsersJson = true): void {
   const key = includeUsersJson ? `${where}:full` : `${where}:secret`;
   if (loggedPlaces.has(key)) return;
   loggedPlaces.add(key);
-  console.log("AUTH SECRET:", process.env.DASHBOARD_AUTH_SECRET ? "SET" : "NOT SET");
+  console.log("AUTH SECRET:", resolvedAuthSecret() ? "SET" : "NOT SET");
   if (includeUsersJson) {
-    console.log("USERS_JSON:", dashboardUsersEnvPresent() ? "SET" : "NOT SET");
+    console.log("USERS_JSON:", loadDashboardUsers().length > 0 ? "SET" : "NOT SET");
   }
 }
 
 /** False when secret/users missing — Node routes show login + config hint */
 export function isDashboardAuthConfigured(): boolean {
   logDashboardAuthDiagnostics("isDashboardAuthConfigured", true);
-  const secretOk = getSecretBytes() != null;
-  return secretOk && dashboardUsersEnvPresent();
+  return getSecretBytes() != null && loadDashboardUsers().length > 0;
 }
 
 export async function signDashboardSessionToken(session: DashboardSession): Promise<string | null> {

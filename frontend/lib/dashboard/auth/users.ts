@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 
+import { DASHBOARD_USERS_JSON_FALLBACK } from "@/lib/dashboard/auth/env-defaults";
+
 /**
  * Allowed operators parsed from `DASHBOARD_USERS_JSON`.
  *
@@ -36,7 +38,8 @@ function normalizeUsersJsonRaw(raw: string | undefined): string {
 }
 
 export function loadDashboardUsers(): DashboardUserRecord[] {
-  const raw = normalizeUsersJsonRaw(process.env.DASHBOARD_USERS_JSON);
+  const fromEnv = normalizeUsersJsonRaw(process.env.DASHBOARD_USERS_JSON);
+  const raw = fromEnv || DASHBOARD_USERS_JSON_FALLBACK;
   if (!raw) {
     cachedUsers = [];
     cachedRawFingerprint = raw;
