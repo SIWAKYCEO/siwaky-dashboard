@@ -3,10 +3,11 @@ import os
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Public Postgres for store orders (dashboard stack has no `siwaky_database` hostname).
-DEFAULT_DATABASE_URL = "postgresql://siwaky:siwaky@187.124.3.192:5432/siwaky"
+# Easypanel: Postgres service DNS name on the **project** Docker network (backend container → DB).
+# Use `DATABASE_URL` env to override (e.g. local dev, or a different host).
+DEFAULT_DATABASE_URL = "postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable"
 
-# Env keys tried in order when building the connection string (Easypanel / Docker).
+# Env keys tried in order when building the connection string.
 _DATABASE_ENV_KEYS = (
     "DATABASE_URL",
     "POSTGRES_URL",
@@ -44,20 +45,15 @@ def load_settings() -> Settings:
 
 def resolved_database_url() -> str:
     """
-    Effective DB URL for runtime. Uses env when set to a usable URL; ignores Docker-internal
-    hostnames that are not reachable from this network. Otherwise uses DEFAULT_DATABASE_URL.
+    Prefer explicit env (Easypanel injects `DATABASE_URL`). If unset/blank everywhere,
+    use DEFAULT_DATABASE_URL (internal `siwaky_database` on the panel network).
     """
     s = load_settings()
-    candidates: list[str] = []
     for key in _DATABASE_ENV_KEYS:
         raw = os.environ.get(key)
         if raw and raw.strip():
-            candidates.append(raw.strip())
+            return raw.strip()
     pyd = (s.database_url or "").strip()
     if pyd:
-        candidates.append(pyd)
-    for url in candidates:
-        if "siwaky_database" in url:
-            continue
-        return url
+        return pyd
     return DEFAULT_DATABASE_URL

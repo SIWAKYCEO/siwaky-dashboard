@@ -25,8 +25,8 @@ services:
     environment:
       PORT: "8000"
       ENVIRONMENT: ${ENVIRONMENT:-production}
-      # Default: same public Postgres as `DEFAULT_DATABASE_URL` in `backend/app/config.py`.
-      DATABASE_URL: ${DATABASE_URL:-postgresql://siwaky:siwaky@187.124.3.192:5432/siwaky}
+      # Default: Easypanel Postgres service hostname on the internal Docker network.
+      DATABASE_URL: ${DATABASE_URL:-postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-}
