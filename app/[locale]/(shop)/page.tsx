@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 
 import HeroSection from "@/components/home/HeroSection";
@@ -35,8 +36,19 @@ export async function generateMetadata({ params: { locale } }: Props): Promise<M
 
 export default function HomePage({ params: { locale } }: Props) {
   unstable_setRequestLocale(locale);
+  console.log("SIWAKY BUILD VERSION 3.0");
   return (
     <>
+      <div
+        className="sticky top-0 z-[9999] w-full bg-yellow-400 py-2 text-center text-sm font-bold uppercase tracking-wide text-black"
+        data-siwaky-build="3.0"
+        role="status"
+      >
+        VERSION 3.0
+      </div>
+      <Script id="siwaky-build-version-30" strategy="afterInteractive">
+        {`console.log('SIWAKY BUILD VERSION 3.0');`}
+      </Script>
       <HeroSection />
       <BrandStory />
       <FlavorsSection />
