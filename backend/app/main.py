@@ -77,11 +77,10 @@ def debug_config():
         "database_resolved": bool(resolved_database_url()),
         "database_selected": selected_database_url_redacted(),
         "last_resolution_error": last_database_resolution_error(),
-        "database_env_keys_present": {
-            "DATABASE_URL": bool(os.environ.get("DATABASE_URL", "").strip()),
-            "POSTGRES_URL": bool(os.environ.get("POSTGRES_URL", "").strip()),
-            "POSTGRES_PRISMA_URL": bool(os.environ.get("POSTGRES_PRISMA_URL", "").strip()),
-            "DATABASE_URL_FALLBACKS": bool(os.environ.get("DATABASE_URL_FALLBACKS", "").strip()),
+        "postgres_discrete_env": {
+            "POSTGRES_HOST_or_PGHOST": bool(
+                (os.environ.get("POSTGRES_HOST") or os.environ.get("PGHOST") or "").strip()
+            ),
         },
     }
 
@@ -97,7 +96,7 @@ def get_orders():
         raise HTTPException(
             status_code=500,
             detail=last_database_resolution_error()
-            or "DATABASE_URL — no working Postgres candidate. Set DATABASE_URL to the connection string from your Easypanel Postgres service (same project as the DB), or add DATABASE_URL_FALLBACKS=comma,separated,urls.",
+            or "Impossibile connettersi a PostgreSQL. Imposta DATABASE_URL, oppure POSTGRES_HOST (e opzionalmente POSTGRES_USER/PASSWORD/DB) dalla scheda Database Easypanel, oppure DATABASE_URL_FALLBACKS.",
         )
 
     try:

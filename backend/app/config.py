@@ -1,11 +1,17 @@
 import os
 import threading
 from typing import Optional
+from urllib.parse import quote
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.services.orders_db import ping_database
+
+
+def _q_ident(s: str) -> str:
+    """Encode user/password for postgres:// URI."""
+    return quote(s, safe="")
 
 # Env keys tried first (highest priority).
 _DATABASE_ENV_KEYS = (
@@ -69,12 +75,32 @@ def _redact_database_url(url: str) -> str:
     return url
 
 
+def _urls_from_discrete_postgres_env() -> list[str]:
+    """
+    Easypanel / Docker often expose host, user, password, db separately.
+    Set POSTGRES_HOST (or PGHOST) and optionally POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT.
+    """
+    host = (os.environ.get("POSTGRES_HOST") or os.environ.get("PGHOST") or "").strip()
+    if not host:
+        return []
+    user = (os.environ.get("POSTGRES_USER") or os.environ.get("PGUSER") or "siwaky").strip()
+    password = (os.environ.get("POSTGRES_PASSWORD") or os.environ.get("PGPASSWORD") or "siwaky").strip()
+    db = (os.environ.get("POSTGRES_DB") or os.environ.get("PGDATABASE") or "siwaky").strip()
+    port = (os.environ.get("POSTGRES_PORT") or os.environ.get("PGPORT") or "5432").strip()
+    sslmode = (os.environ.get("POSTGRES_SSLMODE") or os.environ.get("PGSSLMODE") or "disable").strip()
+    u, p = _q_ident(user), _q_ident(password)
+    return [f"postgres://{u}:{p}@{host}:{port}/{db}?sslmode={sslmode}"]
+
+
 def _collect_candidate_urls() -> list[str]:
     urls: list[str] = []
     for key in _DATABASE_ENV_KEYS:
         raw = os.environ.get(key, "").strip()
         if raw:
             urls.append(raw)
+    # Host-only config: try after full URLs (Easypanel may paste internal IP / hostname here).
+    for u in _urls_from_discrete_postgres_env():
+        urls.append(u)
     pyd = (load_settings().database_url or "").strip()
     if pyd:
         urls.append(pyd)
