@@ -4,6 +4,8 @@
 #
 # Service name **`dashboard-frontend`** matches Easypanel merge / routing. **`docker-compose.override.yml`**
 # can carry extra panel overlays; duplicate port binds are omitted there so merges stay valid.
+# Dashboard login (server): define DASHBOARD_AUTH_SECRET (≥32 chars) and DASHBOARD_USERS_JSON in
+# Easypanel / host env or a project `.env`, then restart **`dashboard-frontend`**. See **`frontend/.env.example`**.
 # Orphan cleanup: Easypanel reads x-docker-compose-flags.remove_orphans; manual runs can use
 # `./scripts/docker-compose-up.sh` (passes --remove-orphans on the CLI).
 
@@ -43,6 +45,8 @@ services:
       - HOSTNAME=0.0.0.0
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
+      - DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET:-}
+      - DASHBOARD_USERS_JSON=${DASHBOARD_USERS_JSON:-}
       - DASHBOARD_ORDERS_API_BASE_URL=http://backend:8000
       - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
       - NEXT_PUBLIC_META_PIXEL_ID=${NEXT_PUBLIC_META_PIXEL_ID:-1898036304185332}
