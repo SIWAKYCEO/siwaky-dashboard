@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,12 +12,17 @@ from app.services.sheets import (
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
 
+# Local dev defaults + optional comma-separated list from Easypanel, e.g.
+# CORS_ALLOW_ORIGINS=https://your-frontend.easypanel.host,https://siwaky.com
+_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+_extra = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+_allowed_origins = list(_default_origins)
+if _extra:
+    _allowed_origins.extend([o.strip() for o in _extra.split(",") if o.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
