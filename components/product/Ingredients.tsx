@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
@@ -47,12 +48,23 @@ export default function Ingredients() {
                 className="rounded-2xl border border-[rgba(201,168,76,0.28)] bg-[#28282A] px-6 py-6 shadow-[inset_0_1px_0_rgba(201,168,76,0.06)] md:px-7 md:py-7"
               >
                 <div className="flex gap-4 sm:gap-5">
-                  <LuxuryMediaPlaceholder
-                    variant="ingredientThumb"
-                    tintClass={
-                      visual ? `bg-gradient-to-br ${visual.tint}` : undefined
-                    }
-                  />
+                  {visual ? (
+                    <div className="relative flex h-[5.75rem] w-[5.75rem] shrink-0 overflow-hidden rounded-xl border border-brand-gold/20 sm:h-24 sm:w-24">
+                      <div
+                        aria-hidden
+                        className={`absolute inset-0 bg-gradient-to-br ${visual.tint} opacity-[0.38]`}
+                      />
+                      <Image
+                        src={visual.img}
+                        alt={it.title}
+                        width={208}
+                        height={208}
+                        className="relative z-[1] h-full w-full object-contain p-2"
+                      />
+                    </div>
+                  ) : (
+                    <LuxuryMediaPlaceholder variant="ingredientThumb" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <h3 className="font-display text-xl text-white md:text-[1.35rem]">{it.title}</h3>
                     <p className="mt-2 font-sans text-sm leading-7 text-white/72 md:text-[0.9375rem]">{it.desc}</p>

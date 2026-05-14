@@ -48,6 +48,20 @@ export default function middleware(request: NextRequest) {
 
   const norm = pathname.replace(/\/+$/, "") || "/";
 
+  /**
+   * Dashboard lives only at `/dashboard` (no `[locale]` segment). Visiting
+   * `/ar/dashboard` or `/en/dashboard` would otherwise 404 — browsers still
+   * send users here from old links / locale-aware mental model.
+   */
+  for (const loc of locales) {
+    const prefix = `/${loc}/dashboard`;
+    if (norm === prefix || norm.startsWith(`${prefix}/`)) {
+      const url = request.nextUrl.clone();
+      url.pathname = norm.slice(`/${loc}`.length) || "/dashboard";
+      return NextResponse.redirect(url, 307);
+    }
+  }
+
   if (norm === "/dashboard" || norm.startsWith("/dashboard/")) {
     return NextResponse.next();
   }

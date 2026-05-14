@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import { FLAVOR_VISUALS } from "@/lib/flavors-visual";
 
 export default function FlavorsSection() {
@@ -37,10 +37,13 @@ export default function FlavorsSection() {
                 className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${f.tint} opacity-60`}
               />
               <div className="relative">
-                <div className="flex h-28 items-center justify-center">
-                  <LuxuryMediaPlaceholder
-                    variant="flavorIcon"
-                    tintClass={`bg-gradient-to-br ${f.tint}`}
+                <div className="flex h-28 items-center justify-center px-2">
+                  <Image
+                    src={f.img}
+                    alt={t(`items.${f.key}.name`)}
+                    width={296}
+                    height={296}
+                    className="relative z-[1] h-[7rem] w-[7rem] object-contain p-2 drop-shadow-[0_8px_24px_rgba(0,0,0,.4)] md:h-[7.25rem] md:w-[7.25rem]"
                   />
                 </div>
                 <h3 className="mt-4 font-display text-2xl text-white">
