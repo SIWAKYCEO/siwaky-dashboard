@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isDashboardAuthConfigured } from "@/lib/dashboard/auth/session";
+import { getDashboardOrdersUpstreamBase } from "@/lib/dashboard/orders-upstream";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,7 @@ export const dynamic = "force-dynamic";
  * Does not expose secrets; includes internal reachability to the FastAPI `backend` service.
  */
 export async function GET() {
-  const ordersBase =
-    process.env.DASHBOARD_ORDERS_API_BASE_URL?.replace(/\/$/, "") ?? "http://backend:8000";
+  const ordersBase = getDashboardOrdersUpstreamBase();
   const healthUrl = `${ordersBase}/health`;
 
   let backendInternal: { ok: boolean; status?: number; error?: string; data?: unknown } = {
@@ -35,6 +35,8 @@ export async function GET() {
     nextPublicApiUrl: process.env.NEXT_PUBLIC_API_URL ?? null,
     nextPublicSiteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? null,
     dashboardOrdersApiBase: process.env.DASHBOARD_ORDERS_API_BASE_URL ?? null,
+    nextPublicApiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? null,
+    resolvedOrdersUpstreamBase: ordersBase,
     dashboardAuthConfigured: isDashboardAuthConfigured(),
     backendInternalHealthUrl: healthUrl,
     backendInternalHealth: backendInternal,

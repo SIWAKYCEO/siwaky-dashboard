@@ -3,24 +3,15 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
+import { getDashboardOrdersUpstreamBase } from "@/lib/dashboard/orders-upstream";
 import type { OrdersPayload } from "@/lib/dashboard/types";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Proxies FastAPI `/orders` only for authenticated dashboard sessions.
- * Prefer `DASHBOARD_ORDERS_API_BASE_URL` (server-side; Docker: `http://backend:8000`).
- * Fallbacks align with storefront `NEXT_PUBLIC_API_URL` and legacy `NEXT_PUBLIC_API_BASE_URL`.
+ * See `getDashboardOrdersUpstreamBase` for env resolution.
  */
-function ordersUpstreamBase(): string {
-  const base =
-    process.env.DASHBOARD_ORDERS_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_URL ??
-    "http://127.0.0.1:8000";
-  return base.replace(/\/$/, "");
-}
-
 export async function GET() {
   try {
     const token = cookies().get(DASHBOARD_SESSION_COOKIE)?.value;
@@ -29,7 +20,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const base = ordersUpstreamBase();
+    const base = getDashboardOrdersUpstreamBase();
     const upstream = `${base}/orders`;
 
     let res: Response;

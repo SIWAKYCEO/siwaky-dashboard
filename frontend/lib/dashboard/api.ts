@@ -5,8 +5,9 @@ import type { OrdersPayload } from "@/lib/dashboard/types";
  * Always use the authenticated Next.js proxy — never call FastAPI `/orders` directly from
  * the client (that would bypass session cookies and expose sheet data).
  *
- * Server-side proxy: `app/api/dashboard/orders` → upstream from `DASHBOARD_ORDERS_API_BASE_URL`,
- * then `NEXT_PUBLIC_API_BASE_URL`, then `NEXT_PUBLIC_API_URL`.
+ * Server-side proxy: `app/api/dashboard/orders` → upstream from
+ * `DASHBOARD_ORDERS_API_BASE_URL`, then `NEXT_PUBLIC_API_BASE_URL`, else `http://127.0.0.1:8000`.
+ * (`NEXT_PUBLIC_API_URL` is intentionally not used — it targets the public API, not the FastAPI bridge.)
  *
  * Future: attach bearer tokens from session for multi-tenant APIs; RBAC via JWT `role`.
  */
