@@ -1,0 +1,11 @@
+services:
+  dashboard-frontend:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOSTNAME=0.0.0.0
