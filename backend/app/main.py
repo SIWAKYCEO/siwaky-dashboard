@@ -34,6 +34,19 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/debug/routes")
+def debug_routes():
+    """Which HTTP routes exist on this process (useful when the dashboard expects `/orders`)."""
+    routes: list[dict[str, object]] = []
+    for route in app.routes:
+        path = getattr(route, "path", None)
+        methods = getattr(route, "methods", None)
+        if isinstance(path, str) and methods:
+            m = sorted(x for x in methods if x not in ("HEAD", "OPTIONS"))
+            routes.append({"path": path, "methods": m})
+    return {"routes": routes}
+
+
 @app.get("/debug/config")
 def debug_config():
     settings = load_settings()

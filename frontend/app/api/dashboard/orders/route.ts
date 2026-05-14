@@ -20,8 +20,30 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const base = getDashboardOrdersUpstreamBase();
-    const upstream = `${base}/orders`;
+    const upstreamBase = getDashboardOrdersUpstreamBase();
+    console.log("Fetching from:", upstreamBase + "/orders");
+
+    try {
+      const healthUrl = `${upstreamBase}/health`;
+      const h = await fetch(healthUrl, { cache: "no-store" });
+      const healthText = await h.text();
+      let healthJson: unknown = null;
+      try {
+        healthJson = JSON.parse(healthText) as unknown;
+      } catch {
+        /* not JSON */
+      }
+      console.log("[api/dashboard/orders] health probe (Next.js → FastAPI):", healthUrl, {
+        ok: h.ok,
+        status: h.status,
+        bodyPreview: healthText.slice(0, 240),
+        json: healthJson,
+      });
+    } catch (e) {
+      console.error("[api/dashboard/orders] health probe failed", e);
+    }
+
+    const upstream = `${upstreamBase}/orders`;
 
     let res: Response;
     try {
