@@ -5,7 +5,12 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import load_settings, resolved_database_url
+from app.config import (
+    last_database_resolution_error,
+    load_settings,
+    resolved_database_url,
+    selected_database_url_redacted,
+)
 from app.services.orders_db import fetch_orders_array, ping_database
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
@@ -39,12 +44,16 @@ def health():
     if not url:
         return {
             "status": "degraded",
-            "database": "not_configured",
-            "detail": "Set DATABASE_URL (or POSTGRES_URL) for the backend service.",
+            "database": "error",
+            "detail": last_database_resolution_error() or "Could not connect using any candidate DATABASE_URL.",
         }
     ok, err = ping_database(url)
     if ok:
-        return {"status": "ok", "database": "ok"}
+        out = {"status": "ok", "database": "ok"}
+        redacted = selected_database_url_redacted()
+        if redacted:
+            out["database_host"] = redacted
+        return out
     return {"status": "degraded", "database": "error", "detail": err}
 
 
@@ -64,11 +73,15 @@ def debug_routes():
 @app.get("/debug/config")
 def debug_config():
     load_settings()
-    url = resolved_database_url()
     return {
-        "database_configured": bool(url),
+        "database_resolved": bool(resolved_database_url()),
+        "database_selected": selected_database_url_redacted(),
+        "last_resolution_error": last_database_resolution_error(),
         "database_env_keys_present": {
-            k: bool(os.environ.get(k, "").strip()) for k in ("DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL")
+            "DATABASE_URL": bool(os.environ.get("DATABASE_URL", "").strip()),
+            "POSTGRES_URL": bool(os.environ.get("POSTGRES_URL", "").strip()),
+            "POSTGRES_PRISMA_URL": bool(os.environ.get("POSTGRES_PRISMA_URL", "").strip()),
+            "DATABASE_URL_FALLBACKS": bool(os.environ.get("DATABASE_URL_FALLBACKS", "").strip()),
         },
     }
 
@@ -83,7 +96,8 @@ def get_orders():
     if not url:
         raise HTTPException(
             status_code=500,
-            detail="DATABASE_URL is not set — configure the backend with a Postgres connection string.",
+            detail=last_database_resolution_error()
+            or "DATABASE_URL — no working Postgres candidate. Set DATABASE_URL to the connection string from your Easypanel Postgres service (same project as the DB), or add DATABASE_URL_FALLBACKS=comma,separated,urls.",
         )
 
     try:
