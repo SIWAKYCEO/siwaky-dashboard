@@ -2,9 +2,9 @@
 #
 # Frontend (Next.js) listens internally on PORT **3001** (`dashboard-frontend` publishes **3001:3001** below).
 #
-# **Dashboard JWT / middleware:** `middleware.ts` runs on the Edge Runtime. It only sees secrets that
-# exist when **`next build` runs**. Pass **`DASHBOARD_AUTH_SECRET`** as a **Docker build-arg** (below)
-# and again at **runtime** in `environment` so Node routes match. **`DASHBOARD_USERS_JSON`** is Node-only — runtime env is enough.
+# **`DASHBOARD_AUTH_SECRET` / `DASHBOARD_USERS_JSON`:** fallback values are baked into the image from
+# `dockerfile`; do **not** set them here to blank strings (`${VAR}` with Easypanel unset) or Compose will
+# override the image `ENV`.
 #
 # Service name **`dashboard-frontend`** matches Easypanel merge / routing. **`docker-compose.override.yml`**
 # can carry extra panel overlays; duplicate port binds are omitted there so merges stay valid.
@@ -38,8 +38,6 @@ services:
     build:
       context: .
       dockerfile: dockerfile
-      args:
-        DASHBOARD_AUTH_SECRET: ${DASHBOARD_AUTH_SECRET}
     ports:
       - "3001:3001"
     restart: unless-stopped
@@ -50,8 +48,6 @@ services:
       HOSTNAME: "0.0.0.0"
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
-      DASHBOARD_AUTH_SECRET: ${DASHBOARD_AUTH_SECRET}
-      DASHBOARD_USERS_JSON: ${DASHBOARD_USERS_JSON}
       DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
       NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-1898036304185332}

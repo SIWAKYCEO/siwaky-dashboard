@@ -10,9 +10,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Edge middleware reads this at **`next build`**. Runtime compose must also pass the same secret to the container.
-ARG DASHBOARD_AUTH_SECRET=""
+# Fallbacks bake into the Edge bundle + standalone runtime when Easypanel omits `--build-arg` / compose env ($$ → $).
+ARG DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
+ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$l8XVlTD.5i5kJVKYmHxbJ.8cQBChQ/oCAEwdRiqQ8c1xOIDRXSH7C\"}]"
 ENV DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET}
+ENV DASHBOARD_USERS_JSON=${DASHBOARD_USERS_JSON}
 RUN rm -rf .next
 RUN BUILD_ID="$(date +%s)" && \
   export BUILD_ID && \
@@ -22,6 +24,10 @@ RUN BUILD_ID="$(date +%s)" && \
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
+ARG DASHBOARD_USERS_JSON="[{\"email\":\"siwaky.assistance@gmail.com\",\"role\":\"admin\",\"passwordHash\":\"$$2b$$12$$l8XVlTD.5i5kJVKYmHxbJ.8cQBChQ/oCAEwdRiqQ8c1xOIDRXSH7C\"}]"
+ENV DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET}
+ENV DASHBOARD_USERS_JSON=${DASHBOARD_USERS_JSON}
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 # Standalone output is produced from frontend/ sources (see builder COPY frontend/ .)
 COPY --from=builder /app/.next/standalone ./
