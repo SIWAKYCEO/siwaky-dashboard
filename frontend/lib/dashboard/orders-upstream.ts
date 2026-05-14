@@ -7,10 +7,19 @@
  *
  * For local dev without env: `http://127.0.0.1:8000`. In Docker, set
  * `DASHBOARD_ORDERS_API_BASE_URL=http://backend:8000` (see `docker-compose.yml`).
+ *
+ * Easypanel often injects **empty strings** for unset vars — those must be treated as "unset" or they
+ * override Compose defaults and break the proxy.
  */
+function nonEmptyEnv(value: string | undefined): string | undefined {
+  const t = value?.trim();
+  return t ? t : undefined;
+}
+
 export function getDashboardOrdersUpstreamBase(): string {
   const fromEnv =
-    process.env.DASHBOARD_ORDERS_API_BASE_URL?.trim() || process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+    nonEmptyEnv(process.env.DASHBOARD_ORDERS_API_BASE_URL) ??
+    nonEmptyEnv(process.env.NEXT_PUBLIC_API_BASE_URL);
   if (fromEnv) return fromEnv.replace(/\/$/, "");
   return "http://127.0.0.1:8000";
 }
