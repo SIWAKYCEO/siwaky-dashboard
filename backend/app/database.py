@@ -14,8 +14,7 @@ def _build_url() -> str:
     if not url:
         raise RuntimeError(
             "DATABASE_URL is not set. "
-            "Add it as an environment variable in Easypanel: "
-            "postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable"
+            "Add it as an environment variable in Easypanel (postgresql:// user:pass@host:5432/siwaky)."
         )
     if url.startswith("postgres://"):
         url = "postgresql+psycopg2://" + url[len("postgres://"):]

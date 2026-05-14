@@ -44,7 +44,7 @@
 | --------------------------------------- | -------------------------- | -------------------- |
 | Easypanel (frontend)                    | Next.js standalone build   | `siwaky.com`         |
 | Easypanel (backend)                     | FastAPI/Uvicorn            | `api.siwaky.com`     |
-| Easypanel (postgres `siwaky_database`)  | PostgreSQL 16              | internal             |
+| Hosted PostgreSQL (orders DB)          | PostgreSQL 16              | configurable (`DATABASE_URL`) |
 | MaxMind                                 | GeoIP / fraud detection    | hosted               |
 | Google Sheets                           | Operations / fulfillment   | hosted               |
 

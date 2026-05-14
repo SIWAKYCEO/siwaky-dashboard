@@ -1,7 +1,7 @@
 # SIWAKY — Deployment (Easypanel + GitHub)
 
 > Both services deploy on **Easypanel** via GitHub push-to-deploy.
-> PostgreSQL is already running on Easypanel as `siwaky_database`.
+> Store PostgreSQL: use `DATABASE_URL` (see `backend/app/config.py` for the dashboard API default host).
 
 ---
 
@@ -30,13 +30,13 @@ Easypanel will auto-provision Let's Encrypt certs once DNS points to the panel I
 
 ## 3. PostgreSQL
 
-Already installed. Connection string (internal Docker network):
+Already installed. Example connection string (adjust user/password if needed):
 
 ```
-postgres://SIWAKY:SIWAKY@siwaky_database:5432/siwaky?sslmode=disable
+postgresql://siwaky:siwaky@187.124.3.192:5432/siwaky
 ```
 
-The backend's `DATABASE_URL` should be this string verbatim. The backend container will auto-run `alembic upgrade head` on startup, so no manual SQL is required.
+The main API backend's `DATABASE_URL` must reach this database. The **dashboard** FastAPI service uses `DEFAULT_DATABASE_URL` in `backend/app/config.py` when env is empty, and ignores obsolete Docker-only hostnames.
 
 ## 4. Frontend deploy
 
@@ -90,7 +90,7 @@ NEXT_PUBLIC_WHATSAPP_NUMBER=
 ### Env vars
 
 ```
-DATABASE_URL=postgres://SIWAKY:SIWAKY@siwaky_database:5432/siwaky?sslmode=disable
+DATABASE_URL=postgresql://siwaky:siwaky@187.124.3.192:5432/siwaky
 FRONTEND_URL=https://siwaky.com
 ENVIRONMENT=production
 PORT=8000
@@ -117,7 +117,7 @@ SHEETS_WEBHOOK_SECRET=long-random-string
 ```
 
 ### Networking
-The backend container must be on the same Docker network as `siwaky_database`. In Easypanel, both services are on the project's internal network by default.
+The backend must be able to reach PostgreSQL on the host/port in `DATABASE_URL` (firewall / VPC).
 
 ## 6. Migrations on startup
 
