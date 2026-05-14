@@ -70,9 +70,11 @@ const nextConfig = {
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
-        ? { exclude: ["error", "warn"] }
+        ? { exclude: ["error", "warn", "log"] }
         : false,
   },
+  // Never put `DASHBOARD_AUTH_SECRET` / `DASHBOARD_USERS_JSON` in `env` — Next bundles `env.*` into
+  // CLIENT JavaScript (`process.env[NEXT_PUBLIC_*]` pattern + explicit keys), which would leak secrets.
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "https://api.siwaky.com",
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || "https://siwaky.com",

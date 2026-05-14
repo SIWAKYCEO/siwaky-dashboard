@@ -3,3 +3,5 @@ services:
     build:
       context: .
       dockerfile: dockerfile
+      args:
+        DASHBOARD_AUTH_SECRET: ${DASHBOARD_AUTH_SECRET}

@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-export function DashboardLoginForm() {
+export function DashboardLoginForm({ authConfigured }: { authConfigured: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configError = searchParams.get("error") === "config";
@@ -60,7 +60,7 @@ export function DashboardLoginForm() {
         </p>
       </div>
 
-      {configError ? (
+      {configError || !authConfigured ? (
         <div
           className="rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-100/95"
           role="alert"

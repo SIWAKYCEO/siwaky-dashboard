@@ -20,8 +20,25 @@ function dashboardUsersEnvPresent(): boolean {
   return Boolean(raw);
 }
 
-/** False when secret/users missing — middleware shows login + config hint */
+const loggedPlaces = new Set<string>();
+
+/**
+ * Middleware (Edge) only sees vars present at **`next build`**. Node routes resolve runtime env + build.
+ * Prefer `console.log` for clarity; prod keeps `log` because `compiler.removeConsole` excludes it below.
+ */
+export function logDashboardAuthDiagnostics(where: string, includeUsersJson = true): void {
+  const key = includeUsersJson ? `${where}:full` : `${where}:secret`;
+  if (loggedPlaces.has(key)) return;
+  loggedPlaces.add(key);
+  console.log("AUTH SECRET:", process.env.DASHBOARD_AUTH_SECRET ? "SET" : "NOT SET");
+  if (includeUsersJson) {
+    console.log("USERS_JSON:", dashboardUsersEnvPresent() ? "SET" : "NOT SET");
+  }
+}
+
+/** False when secret/users missing — Node routes show login + config hint */
 export function isDashboardAuthConfigured(): boolean {
+  logDashboardAuthDiagnostics("isDashboardAuthConfigured", true);
   const secretOk = getSecretBytes() != null;
   return secretOk && dashboardUsersEnvPresent();
 }

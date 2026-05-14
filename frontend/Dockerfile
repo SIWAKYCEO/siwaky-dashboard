@@ -10,6 +10,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG DASHBOARD_AUTH_SECRET=""
+ENV DASHBOARD_AUTH_SECRET=${DASHBOARD_AUTH_SECRET}
 RUN rm -rf .next
 RUN BUILD_ID="$(date +%s)" && \
   export BUILD_ID && \

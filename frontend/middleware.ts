@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import {
-  isDashboardAuthConfigured,
+  logDashboardAuthDiagnostics,
   verifyDashboardSessionToken,
 } from "@/lib/dashboard/auth/session";
 
@@ -23,6 +23,7 @@ function isPublicDashboardApi(pathname: string): boolean {
 }
 
 async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
+  logDashboardAuthDiagnostics("middleware-edge", false);
   const { pathname } = req.nextUrl;
 
   const touchesDashboardUi = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -44,16 +45,6 @@ async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
 
   if (touchesDashboardApi && isPublicDashboardApi(pathname)) {
     return NextResponse.next();
-  }
-
-  if (!isDashboardAuthConfigured()) {
-    if (touchesDashboardApi) {
-      return NextResponse.json({ error: "Dashboard auth not configured" }, { status: 503 });
-    }
-    const url = req.nextUrl.clone();
-    url.pathname = LOGIN_PATH;
-    url.searchParams.set("error", "config");
-    return NextResponse.redirect(url);
   }
 
   const token = req.cookies.get(DASHBOARD_SESSION_COOKIE)?.value;
