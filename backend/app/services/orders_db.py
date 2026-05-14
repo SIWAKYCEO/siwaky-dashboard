@@ -139,6 +139,12 @@ def insert_store_order(
                 attempt + 1,
                 exc,
             )
+        except Exception:
+            logger.exception(
+                "[orders_db] SELECT+INSERT aborted (attempt %s) — Postgres error before successful commit",
+                attempt + 1,
+            )
+            raise
 
     raise RuntimeError("could not insert order after retries") from last_violation
 

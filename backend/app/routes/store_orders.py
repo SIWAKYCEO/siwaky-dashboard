@@ -15,6 +15,11 @@ from app.services.phone import normalize_phone
 
 logger = logging.getLogger("siwaky.store_orders")
 
+
+def _phone_tail_digits(phone: str, last: int = 4) -> str:
+    d = "".join(c for c in (phone or "") if c.isdigit())
+    return d[-last:] if len(d) >= last else "…"
+
 router = APIRouter(prefix="/api/orders", tags=["store"])
 
 
@@ -31,6 +36,8 @@ def _client_ip(request: Request) -> str:
 @router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_store_order(payload: OrderCreate, request: Request) -> OrderResponse:
     """Insert a new pending order — no geo / fan-out (dashboard reads raw rows)."""
+    logger.info("[store_orders] POST /api/orders received")
+
     url = resolved_database_url()
     if not url:
         logger.error(
@@ -71,7 +78,21 @@ def create_store_order(payload: OrderCreate, request: Request) -> OrderResponse:
     ip = _client_ip(request)
     ua = request.headers.get("user-agent") or ""
 
+    logger.info(
+        "[store_orders] POST /api/orders validated — beginning INSERT ip=%s offer=%s qty=%s price=%s "
+        "source=%s campaign=%s event_id=%s phone_tail=%s",
+        ip,
+        payload.offer,
+        int(bundle_qty),
+        str(bundle_price),
+        payload.source or "",
+        (payload.campaign or "")[:32],
+        payload.event_id or "",
+        _phone_tail_digits(phone),
+    )
+
     try:
+        logger.info("[store_orders] POST /api/orders calling insert_store_order (PostgreSQL `orders`)")
         order_id, created_at = insert_store_order(
             database_url=url,
             name=name,
@@ -90,12 +111,21 @@ def create_store_order(payload: OrderCreate, request: Request) -> OrderResponse:
             notes=payload.notes,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.error("insert_store_order failed: %s\n%s", exc, traceback.format_exc())
+        logger.error(
+            "[store_orders] POST /api/orders PostgreSQL INSERT FAILED: %s\n%s",
+            exc,
+            traceback.format_exc(),
+        )
         raise HTTPException(
             status_code=500,
             detail={"error": "db_insert_failed", "detail": str(exc)},
         ) from exc
 
+    logger.info(
+        "[store_orders] INSERT SUCCESS order_id=%s status=pending Postgres row committed "
+        "(GET /orders + Next /api/dashboard/orders should reflect after poll)",
+        order_id,
+    )
     return OrderResponse(
         order_id=order_id,
         status="pending",

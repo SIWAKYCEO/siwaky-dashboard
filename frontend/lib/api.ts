@@ -1,5 +1,7 @@
 import axios, { AxiosError } from "axios";
 
+import { checkoutOrderPostAbsoluteUrl, CHECKOUT_ORDER_POST_PATH } from "@/lib/checkout/order-post-url";
+
 export const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "https://api.siwaky.com";
 
@@ -47,19 +49,7 @@ export async function geoCheck() {
   return data;
 }
 
-function checkoutOrdersUrl(): string {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/api/orders`;
-  }
-  const site =
-    typeof process.env.NEXT_PUBLIC_SITE_URL === "string" &&
-    process.env.NEXT_PUBLIC_SITE_URL.trim().length > 0
-      ? process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
-      : "http://localhost:3000";
-  return `${site}/api/orders`;
-}
-
-function axiosErrorPayload(err: AxiosError<{ error?: string; detail?: unknown }>) {
+function axiosErrorPayload(err: AxiosError<{ error?: string; detail?: unknown }>, postUrlForLog: string) {
   const data = err.response?.data as { error?: string; detail?: unknown } | undefined;
   let code =
     typeof data?.error === "string"
@@ -74,33 +64,49 @@ function axiosErrorPayload(err: AxiosError<{ error?: string; detail?: unknown }>
   if (!code && status === 403) code = "geo_blocked";
   if (!code) code = "server_error";
 
-  const urlAttempted = checkoutOrdersUrl();
-  console.warn("[checkout] POST /api/orders failed:", {
+  console.warn("[siwaky/checkout] createOrder POST failed", {
     httpStatus: status,
     axiosCode: err.code,
     message: err.message,
-    backend: data ?? null,
-    urlAttempted,
+    backendJson: data ?? null,
+    postUrl: postUrlForLog,
+    pathUsed: CHECKOUT_ORDER_POST_PATH,
   });
 
   return { code, status };
 }
 
 export async function createOrder(input: OrderCreateInput) {
+  const postUrl = checkoutOrderPostAbsoluteUrl();
+
+  console.log("[siwaky/checkout] createOrder POST start", {
+    postUrl,
+    path: CHECKOUT_ORDER_POST_PATH,
+    offer: input.offer,
+    quantity: input.quantity,
+    price_sar: input.price_sar,
+    overrideActive: typeof process.env.NEXT_PUBLIC_CHECKOUT_POST_URL === "string" &&
+      process.env.NEXT_PUBLIC_CHECKOUT_POST_URL.trim().length > 0,
+  });
+
   try {
-    const resolvedUrl = checkoutOrdersUrl();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (typeof navigator !== "undefined" && navigator.userAgent) {
       headers["User-Agent"] = navigator.userAgent;
     }
-    const { data } = await axios.post<OrderCreateResponse>(resolvedUrl, input, {
+    const { data } = await axios.post<OrderCreateResponse>(postUrl, input, {
       timeout: 15_000,
       headers,
+    });
+    console.log("[siwaky/checkout] createOrder POST success", {
+      postUrl,
+      order_id: data.order_id,
+      status: data.status,
     });
     return { ok: true as const, data };
   } catch (err) {
     const e = err as AxiosError<{ error?: string; detail?: unknown }>;
-    const { code, status } = axiosErrorPayload(e);
+    const { code, status } = axiosErrorPayload(e, postUrl);
     return { ok: false as const, code, status };
   }
 }
