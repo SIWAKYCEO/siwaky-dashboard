@@ -1,3 +1,8 @@
+"""Database URL resolution for the dashboard backend (PostgreSQL)."""
+
+from __future__ import annotations
+
+import logging
 import os
 import threading
 from typing import Optional
@@ -8,29 +13,27 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.services.orders_db import ping_database
 
+logger = logging.getLogger(__name__)
+
 
 def _q_ident(s: str) -> str:
     """Encode user/password for postgres:// URI."""
     return quote(s, safe="")
 
-# Env keys tried first (highest priority).
-_DATABASE_ENV_KEYS = (
-    "DATABASE_URL",
-    "POSTGRES_URL",
-    "POSTGRES_PRISMA_URL",
-    "SQL_DATABASE_URL",
-)
 
-# Tried in order only if no env URL works — different Easypanel / Compose service names.
-_BUILTIN_FALLBACKS: tuple[str, ...] = (
-    "postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable",
-    "postgres://siwaky:siwaky@postgres:5432/siwaky?sslmode=disable",
-    "postgres://siwaky:siwaky@postgresql:5432/siwaky?sslmode=disable",
-    "postgres://siwaky:siwaky@db:5432/siwaky?sslmode=disable",
-)
+def _easypanel_builtin_fallback_urls() -> tuple[str, ...]:
+    """Default hostnames when nothing else connects (Easypanel / Compose). Safe if extended empty."""
+    return (
+        "postgres://siwaky:siwaky@siwaky_database:5432/siwaky?sslmode=disable",
+        "postgres://siwaky:siwaky@postgres:5432/siwaky?sslmode=disable",
+        "postgres://siwaky:siwaky@postgresql:5432/siwaky?sslmode=disable",
+        "postgres://siwaky:siwaky@db:5432/siwaky?sslmode=disable",
+    )
+
 
 _LOCK = threading.Lock()
 _WORKING_URL: Optional[str] = None
+_WORKING_SOURCE: Optional[str] = None
 _RESOLUTION_ERR: Optional[str] = None
 _RESOLVED: bool = False
 
@@ -75,10 +78,16 @@ def _redact_database_url(url: str) -> str:
     return url
 
 
-def _urls_from_discrete_postgres_env() -> list[str]:
+def selected_database_source() -> Optional[str]:
+    """Label for which config path won (after resolution)."""
+    _ensure_resolved()
+    return _WORKING_SOURCE
+
+
+def _urls_from_discrete_postgres_env() -> list[tuple[str, str]]:
     """
-    Easypanel / Docker often expose host, user, password, db separately.
-    Set POSTGRES_HOST (or PGHOST) and optionally POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, POSTGRES_PORT.
+    Easypanel may expose host, user, password, db separately.
+    Returns (label, url) pairs.
     """
     host = (os.environ.get("POSTGRES_HOST") or os.environ.get("PGHOST") or "").strip()
     if not host:
@@ -89,69 +98,116 @@ def _urls_from_discrete_postgres_env() -> list[str]:
     port = (os.environ.get("POSTGRES_PORT") or os.environ.get("PGPORT") or "5432").strip()
     sslmode = (os.environ.get("POSTGRES_SSLMODE") or os.environ.get("PGSSLMODE") or "disable").strip()
     u, p = _q_ident(user), _q_ident(password)
-    return [f"postgres://{u}:{p}@{host}:{port}/{db}?sslmode={sslmode}"]
+    url = f"postgres://{u}:{p}@{host}:{port}/{db}?sslmode={sslmode}"
+    return [("built_from:POSTGRES_HOST", url)]
 
 
-def _collect_candidate_urls() -> list[str]:
-    urls: list[str] = []
-    for key in _DATABASE_ENV_KEYS:
+def _collect_labeled_candidates() -> list[tuple[str, str]]:
+    """
+    Ordered candidates: DATABASE_URL env first, then alternate env URLs, discrete parts,
+    pydantic `.env`, comma fallbacks, then built-in Easypanel defaults.
+    """
+    items: list[tuple[str, str]] = []
+
+    # 1) Highest priority: process env DATABASE_URL (Easypanel internal string, etc.)
+    env_database_url = os.environ.get("DATABASE_URL", "").strip()
+    if env_database_url:
+        items.append(("env:DATABASE_URL", env_database_url))
+
+    # 2) Other common full-URL env keys
+    for key in ("POSTGRES_URL", "POSTGRES_PRISMA_URL", "SQL_DATABASE_URL"):
         raw = os.environ.get(key, "").strip()
         if raw:
-            urls.append(raw)
-    # Host-only config: try after full URLs (Easypanel may paste internal IP / hostname here).
-    for u in _urls_from_discrete_postgres_env():
-        urls.append(u)
+            items.append((f"env:{key}", raw))
+
+    # 3) Discrete POSTGRES_* / PG* → single URL
+    items.extend(_urls_from_discrete_postgres_env())
+
+    # 4) pydantic-settings (e.g. from `.env` in image)
     pyd = (load_settings().database_url or "").strip()
     if pyd:
-        urls.append(pyd)
+        items.append(("pydantic_settings:DATABASE_URL", pyd))
+
+    # 5) Extra comma-separated URLs
     extra = os.environ.get("DATABASE_URL_FALLBACKS", "").strip()
     if extra:
-        urls.extend(u.strip() for u in extra.split(",") if u.strip())
-    urls.extend(_BUILT_IN_FALLBACKS)
+        for i, u in enumerate(x.strip() for x in extra.split(",") if x.strip()):
+            items.append((f"env:DATABASE_URL_FALLBACKS[{i}]", u))
+
+    # 6) Built-ins — via function only (never rely on an undefined module global)
+    try:
+        builtins = _easypanel_builtin_fallback_urls()
+    except Exception:  # pragma: no cover — defensive
+        builtins = ()
+
+    if builtins:
+        for i, url in enumerate(builtins):
+            u = url.strip()
+            if u:
+                items.append((f"builtin_fallback[{i}]", u))
+
+    # Dedupe by URL string, keep first label (preserves DATABASE_URL priority)
     seen: set[str] = set()
-    out: list[str] = []
-    for u in urls:
-        if u and u not in seen:
-            seen.add(u)
-            out.append(u)
+    out: list[tuple[str, str]] = []
+    for label, url in items:
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        out.append((label, url))
     return out
 
 
 def _ensure_resolved() -> None:
-    """Probe candidates once per process; set _WORKING_URL or _RESOLUTION_ERR."""
-    global _WORKING_URL, _RESOLUTION_ERR, _RESOLVED
+    """Probe candidates once per process."""
+    global _WORKING_URL, _WORKING_SOURCE, _RESOLUTION_ERR, _RESOLVED
     if _RESOLVED:
         return
     with _LOCK:
         if _RESOLVED:
             return
-        candidates = _collect_candidate_urls()
+        candidates = _collect_labeled_candidates()
         if not candidates:
-            _RESOLUTION_ERR = "No DATABASE_URL configured and no built-in fallbacks."
+            _WORKING_URL = None
+            _WORKING_SOURCE = None
+            _RESOLUTION_ERR = (
+                "No database URL configured. Set DATABASE_URL or POSTGRES_* / DATABASE_URL_FALLBACKS."
+            )
             _RESOLVED = True
+            logger.warning("[db] %s", _RESOLUTION_ERR)
             return
+
         parts: list[str] = []
-        for url in candidates:
-            ok, err = ping_database(url)
+        for label, url in candidates:
+            try:
+                ok, err = ping_database(url)
+            except Exception as exc:  # do not crash on probe
+                ok, err = False, str(exc)
             if ok:
                 _WORKING_URL = url
+                _WORKING_SOURCE = label
                 _RESOLUTION_ERR = None
                 _RESOLVED = True
+                logger.info(
+                    "[db] connected using source=%s url=%s",
+                    label,
+                    _redact_database_url(url),
+                )
                 return
-            parts.append(f"{_redact_database_url(url)} → {err or 'failed'}")
+            parts.append(f"{label}:{_redact_database_url(url)} → {err or 'failed'}")
+
         _WORKING_URL = None
-        _RESOLUTION_ERR = " | ".join(parts)
+        _WORKING_SOURCE = None
+        _RESOLUTION_ERR = " | ".join(parts) if parts else "all_candidates_failed"
         _RESOLVED = True
+        logger.error("[db] no working candidate: %s", _RESOLUTION_ERR)
 
 
 def resolved_database_url() -> str:
-    """Postgres URL that works from this container (cached after first probe)."""
     _ensure_resolved()
     return _WORKING_URL or ""
 
 
 def last_database_resolution_error() -> Optional[str]:
-    """Populated when no candidate URL could connect."""
     _ensure_resolved()
     return _RESOLUTION_ERR
 

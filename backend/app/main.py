@@ -9,6 +9,7 @@ from app.config import (
     last_database_resolution_error,
     load_settings,
     resolved_database_url,
+    selected_database_source,
     selected_database_url_redacted,
 )
 from app.services.orders_db import fetch_orders_array, ping_database
@@ -53,6 +54,9 @@ def health():
         redacted = selected_database_url_redacted()
         if redacted:
             out["database_host"] = redacted
+        src = selected_database_source()
+        if src:
+            out["database_source"] = src
         return out
     return {"status": "degraded", "database": "error", "detail": err}
 
@@ -76,6 +80,7 @@ def debug_config():
     return {
         "database_resolved": bool(resolved_database_url()),
         "database_selected": selected_database_url_redacted(),
+        "database_source": selected_database_source(),
         "last_resolution_error": last_database_resolution_error(),
         "postgres_discrete_env": {
             "POSTGRES_HOST_or_PGHOST": bool(
