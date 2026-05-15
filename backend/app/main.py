@@ -1,6 +1,6 @@
 import os
 
-# rebuilt 2026-05-14 — dashboard orders: Sheets (default) or PostgreSQL (`ORDERS_PRIMARY_SOURCE`)
+# rebuilt 2026-05-14 — GET /orders reads Google Sheets via Easypanel env (PostgreSQL used elsewhere).
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,14 +13,8 @@ from app.config import (
     selected_database_url_redacted,
 )
 from app.routes import store_orders
-from app.services.orders_db import fetch_orders_array, ping_database
+from app.services.orders_db import ping_database
 from app.services.orders_sheets import fetch_orders_from_google_sheets
-
-
-def _orders_primary_source() -> str:
-    """``google_sheets`` (default) or ``postgres`` — ``ORDERS_PRIMARY_SOURCE`` env."""
-    return (os.environ.get("ORDERS_PRIMARY_SOURCE") or "google_sheets").strip().lower()
-
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
 app.include_router(store_orders.router)
@@ -99,32 +93,22 @@ def debug_config():
                 (os.environ.get("POSTGRES_HOST") or os.environ.get("PGHOST") or "").strip()
             ),
         },
-        "orders_primary_source": _orders_primary_source(),
+        "orders_endpoint_env": ["GOOGLE_SERVICE_ACCOUNT_JSON", "SIWAKY_SPREADSHEET_ID", "SIWAKY_SHEET_TAB"],
+        "orders_endpoint_source": "google_sheets",
     }
 
 
 @app.get("/orders")
 def get_orders():
     """
-    Orders list for the dashboard (JSON array ~ ``OrderRow``).
+    Orders for the dashboard: **Google Sheets** only — reads Easypanel env::
 
-    Defaults to **Google Sheets** (`GOOGLE_SERVICE_ACCOUNT_JSON`, `SIWAKY_SPREADSHEET_ID`, `SIWAKY_SHEET_TAB`).
-    Set ``ORDERS_PRIMARY_SOURCE=postgres`` to use PostgreSQL ``orders`` instead.
+        GOOGLE_SERVICE_ACCOUNT_JSON
+        SIWAKY_SPREADSHEET_ID
+        SIWAKY_SHEET_TAB (defaults to 📦 Orders if unset)
+
+    PostgreSQL reader remains in ``app.services.orders_db.fetch_orders_array`` for a future switch.
     """
-    if _orders_primary_source() == "postgres":
-        url = resolved_database_url()
-        if not url:
-            raise HTTPException(
-                status_code=500,
-                detail=last_database_resolution_error()
-                or "PostgreSQL unreachable. Set DATABASE_URL or use ORDERS_PRIMARY_SOURCE=google_sheets.",
-            )
-        try:
-            return fetch_orders_array(database_url=url)
-        except Exception as e:
-            print(e)
-            raise HTTPException(status_code=500, detail=str(e)) from e
-
     try:
         return fetch_orders_from_google_sheets()
     except ValueError as e:

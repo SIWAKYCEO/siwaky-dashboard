@@ -1,26 +1,36 @@
-"""Load dashboard orders from Google Sheets (same 21-column layout as ``sheets_webhook``)."""
+"""Load dashboard orders from Google Sheets via Easypanel env (direct reads)."""
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
 from datetime import datetime
 from typing import Any
+
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from app.services.sheets_webhook import (
     SHEET_COLUMN_COUNT,
     _escape_sheet_title,
     _first_data_row,
-    _spreadsheet_id,
-    _tab_name,
-    load_service_account_credentials,
+    _normalize_private_key,
 )
 
 logger = logging.getLogger(__name__)
 
+# Explicit Easypanel keys for GET /orders (no legacy fallbacks).
+_ENV_JSON = "GOOGLE_SERVICE_ACCOUNT_JSON"
+_ENV_SID = "SIWAKY_SPREADSHEET_ID"
+_ENV_TAB = "SIWAKY_SHEET_TAB"
+
+_SCOPES = ("https://www.googleapis.com/auth/spreadsheets",)
+
 
 def _strip_sheet_cell(v: Any) -> str:
-    """Trim; drop leading ``'`` used by Sheets for text cells."""
     s = "" if v is None else str(v).strip()
     if s.startswith("'"):
         s = s[1:].strip()
@@ -28,7 +38,6 @@ def _strip_sheet_cell(v: Any) -> str:
 
 
 def _normalize_date_display(s: str) -> str:
-    """Prefer ``YYYY-MM-DD`` for dashboard parity with PostgreSQL ``GET /orders``."""
     t = s.strip()
     if not t:
         return ""
@@ -41,41 +50,69 @@ def _normalize_date_display(s: str) -> str:
 
 
 def _pad_row(cells: list[Any]) -> list[str]:
-    out = [_strip_sheet_cell(cells[i]) if i < len(cells) else "" for i in range(SHEET_COLUMN_COUNT)]
-    return out
+    return [_strip_sheet_cell(cells[i]) if i < len(cells) else "" for i in range(SHEET_COLUMN_COUNT)]
 
 
 def _is_probably_header(row: list[str]) -> bool:
     if len(row) < 4:
         return False
-    h = row[3].strip().lower()
-    return h in {"name", "nome", "الاسم"}
+    return row[3].strip().lower() in {"name", "nome", "الاسم"}
 
 
 def _row_has_data(row: list[str]) -> bool:
     return any(x.strip() for x in row)
 
 
+def _credentials_from_easypanel_json() -> service_account.Credentials:
+    raw = os.environ.get(_ENV_JSON, "").strip()
+    if not raw:
+        raise ValueError(f"{_ENV_JSON} is not set or empty")
+
+    try:
+        info = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{_ENV_JSON} is not valid JSON: {exc}") from exc
+
+    if not isinstance(info, dict):
+        raise ValueError(f"{_ENV_JSON} must decode to a JSON object")
+
+    if isinstance(info.get("private_key"), str) and "\\n" in info["private_key"]:
+        info = dict(info)
+        info["private_key"] = _normalize_private_key(info["private_key"])
+
+    return service_account.Credentials.from_service_account_info(info, scopes=_SCOPES)
+
+
 def fetch_orders_from_google_sheets() -> list[dict[str, str]]:
     """
-    Read order rows from the configured tab and return the same list[dict] shape as
-    ``orders_db.fetch_orders_array`` (dashboard ``OrderRow``).
+    Read order rows using only:
+
+    - ``GOOGLE_SERVICE_ACCOUNT_JSON``
+    - ``SIWAKY_SPREADSHEET_ID``
+    - ``SIWAKY_SHEET_TAB`` (defaults to ``📦 Orders`` if unset)
+
+    Returns the same ``list[dict]`` shape as ``orders_db.fetch_orders_array``.
+    Optional: ``GOOGLE_SHEETS_FIRST_DATA_ROW`` (via ``_first_data_row()``).
     """
-    sid = _spreadsheet_id()
-    tab = _tab_name()
-    creds = load_service_account_credentials()
-
+    sid = os.environ.get(_ENV_SID, "").strip()
     if not sid:
-        raise ValueError("SIWAKY_SPREADSHEET_ID (or legacy GOOGLE_SHEET_ID) is not set")
-    if creds is None:
-        raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON or other Sheets credentials are not configured")
+        raise ValueError(f"{_ENV_SID} is not set or empty")
 
+    tab = os.environ.get(_ENV_TAB, "").strip() or "📦 Orders"
+
+    creds = _credentials_from_easypanel_json()
     first_row = _first_data_row()
     esc = _escape_sheet_title(tab)
     range_a1 = f"'{esc}'!A{first_row}:U"
 
-    from googleapiclient.discovery import build
-    from googleapiclient.errors import HttpError
+    logger.info(
+        "[orders] source=google_sheets credential_env=%s spreadsheet_env=%s tab_env=%s sheet_tab=%s first_data_row=%s",
+        _ENV_JSON,
+        _ENV_SID,
+        _ENV_TAB,
+        tab,
+        first_row,
+    )
 
     try:
         service = build("sheets", "v4", credentials=creds, cache_discovery=False)
@@ -108,23 +145,18 @@ def fetch_orders_from_google_sheets() -> list[dict[str, str]]:
         if not order_id.strip():
             order_id = re.sub(r"\s+", "-", f"{row[1]}-{row[4]}-{row[8]}".strip()) or "unknown"
 
-        date_s = _normalize_date_display(row[1])
-        time_s = row[2]
-        qty_s = row[8]
-        price_s = row[9]
-
         out.append(
             {
                 "order_id": order_id.strip(),
-                "date": date_s,
-                "time": time_s,
+                "date": _normalize_date_display(row[1]),
+                "time": row[2],
                 "name": row[3],
                 "phone": row[4],
                 "city": row[5],
                 "country": row[6],
                 "product": row[7],
-                "quantity": qty_s,
-                "price_sar": price_s,
+                "quantity": row[8],
+                "price_sar": row[9],
                 "status": row[10],
                 "confirmed": row[11],
                 "delivered": row[12],
@@ -141,10 +173,9 @@ def fetch_orders_from_google_sheets() -> list[dict[str, str]]:
     out.reverse()
 
     logger.info(
-        "[orders] source=google_sheets sheet_tab=%s row_count=%s spreadsheet_id=%s first_data_row=%s",
-        tab,
+        "[orders] source=google_sheets row_count=%s sheet_tab=%s spreadsheet_id=%s",
         len(out),
+        tab,
         sid,
-        first_row,
     )
     return out
