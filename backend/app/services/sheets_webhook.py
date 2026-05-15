@@ -1,7 +1,15 @@
 """Send every confirmed order to Google Sheets.
 
-1. **Preferred:** Google Sheets API (Easypanel: ``GOOGLE_SHEET_ID`` + email + ``GOOGLE_PRIVATE_KEY``).
-2. **Fallback:** Apps Script ``doPost`` webhook with browser-like headers.
+Credentials (preferred order):
+
+1. ``GOOGLE_SERVICE_ACCOUNT_JSON`` — parse inline service-account JSON from the environment
+2. ``SIWAKY_GOOGLE_CREDENTIALS_PATH`` — filesystem path to a service-account JSON file
+3. Legacy ``GOOGLE_SERVICE_ACCOUNT_EMAIL`` + ``GOOGLE_PRIVATE_KEY``
+4. Legacy settings JSON + ``GOOGLE_APPLICATION_CREDENTIALS``
+
+Spreadsheet: ``SIWAKY_SPREADSHEET_ID`` + ``SIWAKY_SHEET_TAB`` (then older ``GOOGLE_*`` vars).
+
+Fallback: Apps Script ``doPost`` webhook with browser-like headers.
 """
 
 from __future__ import annotations
@@ -20,10 +28,44 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from app.config import settings
 from app.models.order import Order
 
 logger = logging.getLogger("siwaky.sheets")
+
+
+def _sett_str(attr: str, default: str = "") -> str:
+    """Safely read optional app settings (PostgreSQL/dashboard config may not define every Sheets field)."""
+    try:
+        from app import config as cfg_mod
+
+        s = getattr(cfg_mod, "settings", None)
+        if s is None:
+            return default
+        v = getattr(s, attr, None)
+        if isinstance(v, str):
+            t = v.strip()
+            return t if t else default
+        return default
+    except Exception:
+        return default
+
+
+def _sett_int(attr: str, default: int) -> int:
+    try:
+        from app import config as cfg_mod
+
+        s = getattr(cfg_mod, "settings", None)
+        if s is None:
+            return default
+        v = getattr(s, attr, None)
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str) and v.strip():
+            return int(v.strip())
+        return default
+    except Exception:
+        return default
+
 
 _MAX_REDIRECT_HOPS = 14
 _RESPONSE_LOG_MAX_CHARS = 8000
@@ -93,28 +135,22 @@ def _normalize_private_key(key: str) -> str:
 
 
 def _sheets_secret() -> str:
-    v = (
-        os.environ.get("SHEETS_WEBHOOK_SECRET")
-        or settings.sheets_webhook_secret
-        or ""
-    )
+    v = os.environ.get("SHEETS_WEBHOOK_SECRET") or _sett_str("sheets_webhook_secret") or ""
     return (v.strip() if isinstance(v, str) else "")
 
 
 def _sheets_webhook_url() -> str:
-    return (
-        os.environ.get("SHEETS_WEBHOOK_URL")
-        or settings.sheets_webhook_url
-        or ""
-    ).strip()
+    return (os.environ.get("SHEETS_WEBHOOK_URL") or _sett_str("sheets_webhook_url") or "").strip()
 
 
 def _spreadsheet_id() -> str:
+    """``SIWAKY_SPREADSHEET_ID`` wins over legacy ``GOOGLE_*`` spreadsheet env keys."""
     for candidate in (
+        os.environ.get("SIWAKY_SPREADSHEET_ID"),
         os.environ.get("GOOGLE_SHEET_ID"),
         os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID"),
-        getattr(settings, "google_sheet_id", None) or "",
-        settings.google_sheets_spreadsheet_id,
+        _sett_str("google_sheet_id"),
+        _sett_str("google_sheets_spreadsheet_id"),
     ):
         if isinstance(candidate, str) and candidate.strip():
             return candidate.strip()
@@ -122,40 +158,37 @@ def _spreadsheet_id() -> str:
 
 
 def _tab_name() -> str:
-    v = (
-        os.environ.get("GOOGLE_SHEET_TAB_NAME")
+    raw = (
+        os.environ.get("SIWAKY_SHEET_TAB")
+        or os.environ.get("GOOGLE_SHEET_TAB_NAME")
         or os.environ.get("GOOGLE_SHEETS_TAB_NAME")
-        or settings.google_sheets_tab_name
+        or _sett_str("google_sheets_tab_name", "Sheet1")
     )
-    if isinstance(v, str) and v.strip():
-        return v.strip()
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
     return "Sheet1"
 
 
 def _service_account_email_from_env() -> str:
     return (
-        os.environ.get("GOOGLE_SERVICE_ACCOUNT_EMAIL")
-        or (getattr(settings, "google_service_account_email", None) or "")
-        or ""
+        os.environ.get("GOOGLE_SERVICE_ACCOUNT_EMAIL") or _sett_str("google_service_account_email") or ""
     ).strip()
 
 
 def _private_key_from_env() -> str:
     return _normalize_private_key(
-        os.environ.get("GOOGLE_PRIVATE_KEY") or getattr(settings, "google_private_key", None) or ""
+        os.environ.get("GOOGLE_PRIVATE_KEY") or _sett_str("google_private_key") or ""
     )
 
 
 def _project_id_for_sa() -> str:
     return (
-        os.environ.get("GOOGLE_PROJECT_ID")
-        or (getattr(settings, "google_project_id", None) or "")
-        or "easypanel-sheets"
+        os.environ.get("GOOGLE_PROJECT_ID") or _sett_str("google_project_id") or "easypanel-sheets"
     ).strip()
 
 
 def _site_origin_referer() -> tuple[str, str]:
-    raw = os.environ.get("FRONTEND_URL") or settings.frontend_url or "https://siwaky.com"
+    raw = os.environ.get("FRONTEND_URL") or _sett_str("frontend_url") or "https://siwaky.com"
     p = urlparse(raw.strip())
     if p.scheme and p.netloc:
         origin = f"{p.scheme}://{p.netloc}"
@@ -200,7 +233,7 @@ def _first_data_row() -> int:
                 "GOOGLE_SHEETS_FIRST_DATA_ROW invalid (%r); falling back to settings",
                 raw,
             )
-    return max(1, getattr(settings, "google_sheets_first_data_row", 4))
+    return max(1, _sett_int("google_sheets_first_data_row", 4))
 
 
 def _parse_order_index_cell(v: Any) -> Optional[int]:
@@ -247,13 +280,37 @@ def _column_a_fetch_max_order(
     """
     esc = _escape_sheet_title(tab)
     range_a1 = f"'{esc}'!A{first_data_row}:A"
-    result = (
-        service.spreadsheets()
-        .values()
-        .get(spreadsheetId=spreadsheet_id, range=range_a1, majorDimension="ROWS")
-        .execute()
+
+    from googleapiclient.errors import HttpError
+
+    logger.info(
+        "[sheets] Google Sheets FETCH starting values.get spreadsheet_id=%s tab=%s range=%s",
+        spreadsheet_id,
+        tab,
+        range_a1,
     )
+    try:
+        result = (
+            service.spreadsheets()
+            .values()
+            .get(spreadsheetId=spreadsheet_id, range=range_a1, majorDimension="ROWS")
+            .execute()
+        )
+    except HttpError:
+        logger.error(
+            "[sheets] Google Sheets FETCH FAILURE (values.get) spreadsheet_id=%s tab=%s range=%s",
+            spreadsheet_id,
+            tab,
+            range_a1,
+        )
+        raise
     values = result.get("values") or []
+    logger.info(
+        "[sheets] Google Sheets FETCH SUCCESS spreadsheet_id=%s tab=%s column_a_segments=%s",
+        spreadsheet_id,
+        tab,
+        len(values),
+    )
     max_order = 0
     last_sheet_row_valid = 0
     for i, row in enumerate(values):
@@ -338,18 +395,42 @@ def _copy_row_format_above(
     service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
 
 
-def _credentials_source_label(creds: Any) -> str:
+def _credentials_source_label() -> str:
+    """Which credential path would be used — for logs only (no secret material)."""
+    if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip():
+        return "GOOGLE_SERVICE_ACCOUNT_JSON"
+    siwaky = os.environ.get("SIWAKY_GOOGLE_CREDENTIALS_PATH", "").strip()
+    if siwaky:
+        return f"SIWAKY_GOOGLE_CREDENTIALS_PATH:{siwaky}"
     if _service_account_email_from_env() and _private_key_from_env():
         return "GOOGLE_SERVICE_ACCOUNT_EMAIL+GOOGLE_PRIVATE_KEY"
-    json_raw = (
-        os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or settings.google_service_account_json or ""
-    ).strip()
-    if json_raw:
-        return "GOOGLE_SERVICE_ACCOUNT_JSON"
-    path = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
-    if path and os.path.isfile(path):
-        return f"GOOGLE_APPLICATION_CREDENTIALS:{path}"
+    if _sett_str("google_service_account_json", "").strip():
+        return "settings.google_service_account_json"
+    gac = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
+    if gac and os.path.isfile(gac):
+        return f"GOOGLE_APPLICATION_CREDENTIALS:{gac}"
     return "none"
+
+
+_google_sheets_bootstrap_logged = False
+
+
+def _log_google_sheets_bootstrap_once() -> None:
+    """Emit once-per-process spreadsheet + credential resolution for ops logs."""
+    global _google_sheets_bootstrap_logged
+    if _google_sheets_bootstrap_logged:
+        return
+    _google_sheets_bootstrap_logged = True
+
+    sid = _spreadsheet_id()
+    tab = _tab_name()
+    cred_src = _credentials_source_label()
+    logger.info(
+        "[sheets] Google Sheets bootstrap: spreadsheet_id_loaded=%s sheet_tab_loaded=%s credentials_source=%s",
+        sid or "<unset>",
+        tab,
+        cred_src,
+    )
 
 
 def _service_account_email_for_log(creds: Any) -> str:
@@ -367,14 +448,69 @@ def _service_account_email_for_log(creds: Any) -> str:
 
 def load_service_account_credentials() -> Any:
     """
-    Build Google credentials in this order:
-    1. ``GOOGLE_SERVICE_ACCOUNT_EMAIL`` + ``GOOGLE_PRIVATE_KEY`` (``\\n`` normalized)
-    2. ``GOOGLE_SERVICE_ACCOUNT_JSON`` / settings
-    3. ``GOOGLE_APPLICATION_CREDENTIALS`` file
+    Build Google credentials:
+
+    1. ``GOOGLE_SERVICE_ACCOUNT_JSON`` — inline JSON in environment
+    2. ``SIWAKY_GOOGLE_CREDENTIALS_PATH`` — JSON key file path
+    3. ``GOOGLE_SERVICE_ACCOUNT_EMAIL`` + ``GOOGLE_PRIVATE_KEY``
+    4. Pydantic / ``google_service_account_json`` from settings (.env)
+    5. ``GOOGLE_APPLICATION_CREDENTIALS`` file path
     """
     from google.oauth2 import service_account
 
     scopes = ("https://www.googleapis.com/auth/spreadsheets",)
+
+    def _creds_from_dict(info_in: dict[str, Any], source_label: str) -> Any:
+        info = dict(info_in)
+        if isinstance(info.get("private_key"), str) and "\\n" in info["private_key"]:
+            info["private_key"] = _normalize_private_key(info["private_key"])
+        try:
+            c = service_account.Credentials.from_service_account_info(info, scopes=scopes)
+            logger.info("[sheets] Google credentials loaded successfully (%s)", source_label)
+            return c
+        except Exception as exc:
+            logger.error(
+                "[sheets] Google credentials FAILED to build (%s): %s",
+                source_label,
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    env_json_raw = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+    if env_json_raw:
+        try:
+            parsed = json.loads(env_json_raw)
+        except json.JSONDecodeError as exc:
+            logger.error("[sheets] GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON: %s", exc)
+            return None
+        if not isinstance(parsed, dict):
+            logger.error("[sheets] GOOGLE_SERVICE_ACCOUNT_JSON must be a JSON object")
+            return None
+        logger.info("[sheets] Using credentials source: GOOGLE_SERVICE_ACCOUNT_JSON (environment)")
+        return _creds_from_dict(parsed, "GOOGLE_SERVICE_ACCOUNT_JSON")
+
+    siwaky_path = os.environ.get("SIWAKY_GOOGLE_CREDENTIALS_PATH", "").strip()
+    if siwaky_path:
+        if not os.path.isfile(siwaky_path):
+            logger.error(
+                "[sheets] SIWAKY_GOOGLE_CREDENTIALS_PATH is set but not a readable file: %s",
+                siwaky_path,
+            )
+            return None
+        try:
+            logger.info("[sheets] Using credentials source: SIWAKY_GOOGLE_CREDENTIALS_PATH file")
+            cred = service_account.Credentials.from_service_account_file(siwaky_path, scopes=scopes)
+            logger.info("[sheets] Google credentials loaded successfully (SIWAKY_GOOGLE_CREDENTIALS_PATH)")
+            return cred
+        except Exception as exc:
+            logger.error(
+                "[sheets] FAILED loading SIWAKY_GOOGLE_CREDENTIALS_PATH=%s — %s",
+                siwaky_path,
+                exc,
+                exc_info=True,
+            )
+            return None
 
     email = _service_account_email_from_env()
     pk = _private_key_from_env()
@@ -389,35 +525,38 @@ def load_service_account_credentials() -> Any:
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
         }
+        logger.info("[sheets] Using credentials source: GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY")
+        return _creds_from_dict(info, "GOOGLE_SERVICE_ACCOUNT_EMAIL+GOOGLE_PRIVATE_KEY")
+
+    settings_json = _sett_str("google_service_account_json", "").strip()
+    if settings_json:
         try:
-            return service_account.Credentials.from_service_account_info(info, scopes=scopes)
+            sd = json.loads(settings_json)
+        except json.JSONDecodeError as exc:
+            logger.error("[sheets] settings.google_service_account_json is not valid JSON: %s", exc)
+            return None
+        if not isinstance(sd, dict):
+            return None
+        logger.info("[sheets] Using credentials source: google_service_account_json (.env / settings)")
+        return _creds_from_dict(sd, "settings.google_service_account_json")
+
+    gac = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
+    if gac and os.path.isfile(gac):
+        try:
+            logger.info("[sheets] Using credentials source: GOOGLE_APPLICATION_CREDENTIALS file")
+            cred = service_account.Credentials.from_service_account_file(gac, scopes=scopes)
+            logger.info("[sheets] Google credentials loaded successfully (GOOGLE_APPLICATION_CREDENTIALS)")
+            return cred
         except Exception as exc:
             logger.error(
-                "Failed to build credentials from email+private_key: %s\n%s",
+                "[sheets] FAILED loading GOOGLE_APPLICATION_CREDENTIALS=%s — %s",
+                gac,
                 exc,
-                traceback.format_exc(),
+                exc_info=True,
             )
             return None
 
-    json_raw = (
-        os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or settings.google_service_account_json or ""
-    ).strip()
-    if json_raw:
-        try:
-            info = json.loads(json_raw)
-        except json.JSONDecodeError as exc:
-            logger.error("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON: %s", exc)
-            return None
-        if not isinstance(info, dict):
-            return None
-        if isinstance(info.get("private_key"), str) and "\\n" in info["private_key"]:
-            info = dict(info)
-            info["private_key"] = _normalize_private_key(info["private_key"])
-        return service_account.Credentials.from_service_account_info(info, scopes=scopes)
-
-    path = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
-    if path and os.path.isfile(path):
-        return service_account.Credentials.from_service_account_file(path, scopes=scopes)
+    logger.warning("[sheets] No Google service-account credentials resolved (configure env vars per module doc)")
     return None
 
 
@@ -426,17 +565,23 @@ def sheets_api_configured() -> bool:
 
 
 def log_sheets_config(*, context: str, order_id: str) -> None:
+    _log_google_sheets_bootstrap_once()
     sid = _spreadsheet_id()
     tab = _tab_name()
     creds = load_service_account_credentials()
     email = _service_account_email_for_log(creds)
-    src = _credentials_source_label(creds)
-    pk_set = bool(_private_key_from_env()) or bool(
-        os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or settings.google_service_account_json
+    src = _credentials_source_label()
+    pk_set = bool(_private_key_from_env()) or bool(os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()) or bool(
+        _sett_str("google_service_account_json", "").strip()
+    )
+    ga_path = (os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or "").strip()
+    siwaky_cred_path = (os.environ.get("SIWAKY_GOOGLE_CREDENTIALS_PATH") or "").strip()
+    has_json_key_file = bool(
+        (ga_path and os.path.isfile(ga_path)) or (siwaky_cred_path and os.path.isfile(siwaky_cred_path))
     )
     logger.info(
-        "sheets CONFIG [%s] order=%s sheet_id=%s tab=%s service_account_email=%s cred_source=%s "
-        "private_key_material=%s",
+        "sheets CONFIG [%s] order=%s spreadsheet_id=%s sheet_tab=%s service_account_email=%s "
+        "credentials_source_hint=%s has_inline_or_settings_private_key_material=%s has_sa_json_file=%s",
         context,
         order_id,
         sid or "<missing>",
@@ -444,9 +589,8 @@ def log_sheets_config(*, context: str, order_id: str) -> None:
         email,
         src,
         "yes" if pk_set else "no",
+        "yes" if has_json_key_file else "no",
     )
-
-
 def sheets_exception_payload(exc: Exception) -> dict[str, Any]:
     """Serializable details for API responses + logs (never includes private key)."""
     out: dict[str, Any] = {
@@ -530,10 +674,11 @@ def append_row_values_sync(order_id: str, row_values: list[Any]) -> dict[str, An
 
     if not sid or not creds:
         msg = (
-            f"Sheets API not configured: sheet_id={'set' if sid else 'MISSING'}, "
-            f"credentials={'ok' if creds else 'MISSING'} — "
-            "set GOOGLE_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY "
-            "(share Sheet as Editor with the service account email)."
+            f"Sheets API not configured: spreadsheet_id={'set' if sid else 'MISSING'}, "
+            f"credentials={'ok' if creds else 'MISSING'} — set SIWAKY_SPREADSHEET_ID + SIWAKY_SHEET_TAB, "
+            "GOOGLE_SERVICE_ACCOUNT_JSON (recommended) or SIWAKY_GOOGLE_CREDENTIALS_PATH, "
+            "or legacy GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY "
+            "(share the Sheet as Editor with the service account email)."
         )
         logger.error("sheets %s", msg)
         raise RuntimeError(msg)
@@ -604,8 +749,22 @@ def append_row_values_sync(order_id: str, row_values: list[Any]) -> dict[str, An
             .execute()
         )
     except HttpError as exc:
+        logger.error(
+            "[sheets] Google Sheets APPEND FAILURE (values.append) order=%s spreadsheet_id=%s tab=%s range=%s",
+            order_id,
+            sid,
+            tab,
+            range_a1,
+        )
         _log_http_error(order_id=order_id, exc=exc)
         raise
+
+    logger.info(
+        "[sheets] Google Sheets APPEND SUCCESS order=%s spreadsheet_id=%s tab=%s — response details follow",
+        order_id,
+        sid,
+        tab,
+    )
 
     logger.info(
         "sheets API RESPONSE order=%s sheet_id=%s body=%s",
@@ -1072,8 +1231,9 @@ async def send_order(order: Order, *, country: Optional[str] = None) -> None:
     if not webhook_url:
         if not sheets_api_configured():
             logger.warning(
-                "sheets SKIPPED order=%s: set GOOGLE_SHEET_ID + GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY "
-                "or SHEETS_WEBHOOK_URL",
+                "sheets SKIPPED order=%s: configure SIWAKY_SPREADSHEET_ID + SIWAKY_SHEET_TAB + "
+                "GOOGLE_SERVICE_ACCOUNT_JSON or SIWAKY_GOOGLE_CREDENTIALS_PATH (or legacy EMAIL+KEY); "
+                "or set SHEETS_WEBHOOK_URL.",
                 order.order_id,
             )
         return
