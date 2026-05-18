@@ -52,17 +52,34 @@ const nextConfig = {
     ];
   },
   async headers() {
+    /** HTML / negotiated responses must revalidate immediately after deploy — never CDN-stale shells. */
+    const noStoreDocument = [
+      { key: "Cache-Control", value: "private, no-cache, no-store, max-age=0, must-revalidate" },
+      { key: "Pragma", value: "no-cache" },
+      { key: "CDN-Cache-Control", value: "no-store" },
+    ];
+
     return [
+      // Hashed build output — safe to cache aggressively (different filename each deploy thanks to generateBuildId).
+      {
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       {
         source: "/logo.png",
         headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
       },
       {
-        source: "/:locale(ar|en)/product",
-        headers: [
-          { key: "Cache-Control", value: "private, no-store, max-age=0, must-revalidate" },
-          { key: "CDN-Cache-Control", value: "no-store" },
-        ],
+        source: "/images/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }],
+      },
+      { source: "/", headers: noStoreDocument },
+      { source: "/ar/:path*", headers: noStoreDocument },
+      { source: "/en/:path*", headers: noStoreDocument },
+      { source: "/dashboard/:path*", headers: noStoreDocument },
+      {
+        source: "/api/dashboard/:path*",
+        headers: noStoreDocument,
       },
     ];
   },

@@ -1,0 +1,41 @@
+# Purges Cloudflare edge cache after deploy-driving pushes so storefront HTML/layout updates ship immediately.
+# Requires GitHub Secrets: CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_TOKEN (Zone · Cache Purge · Purge).
+# See docs/cloudflare-cache.md for Dashboard Cache Rules.
+
+name: Purge Cloudflare cache
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloudflare-purge-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Purge everything (zones API)
+        env:
+          ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ZONE_ID:-}" || -z "${TOKEN:-}" ]]; then
+            echo "::warning::Skipping purge: CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN is not configured in repo secrets."
+            exit 0
+          fi
+
+          RESPONSE="$(curl --fail-with-body -sS \
+            -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' )"
+
+          echo "$RESPONSE" | jq -e '.success == true' >/dev/null 2>&1 || {
+            echo "::error::Cloudflare purge failed: ${RESPONSE}"
+            exit 1
+          }
+
+          echo "Cloudflare purge completed successfully."
