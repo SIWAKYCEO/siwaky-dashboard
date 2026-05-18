@@ -177,7 +177,7 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   const decodedBufferRef = useRef<AudioBuffer | null>(null);
   const pendingChimeRef = useRef(false);
   const toastTimersRef = useRef<Map<string, number>>(new Map());
-  const soundUnlockDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const soundUnlockDismissTimerRef = useRef<number | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
   const audioUnlockedRef = useRef(audioUnlocked);
   soundEnabledRef.current = soundEnabled;

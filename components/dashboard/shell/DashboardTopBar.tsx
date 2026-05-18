@@ -205,7 +205,7 @@ export function DashboardTopBar({
         return;
       }
       const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      await reg.ready;
+      await navigator.serviceWorker.ready;
       const vapidRes = await fetch("/api/dashboard/push/vapid");
       if (!vapidRes.ok) {
         let msg = `VAPID error (${vapidRes.status})`;
@@ -227,7 +227,7 @@ export function DashboardTopBar({
       if (sub) await sub.unsubscribe();
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
       });
       const save = await fetch("/api/dashboard/push/subscribe", {
         method: "POST",
