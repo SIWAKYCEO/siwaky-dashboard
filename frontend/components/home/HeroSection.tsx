@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
 import ScarcityBar from "@/components/shared/ScarcityBar";
-import { SITE_PRODUCT_IMAGE_PATH } from "@/lib/seo/site";
+import productPhoto from "@/lib/media/product-photo";
 
 export default function HeroSection() {
   const t = useTranslations();
@@ -20,7 +20,7 @@ export default function HeroSection() {
     <section className="relative min-h-[92vh] w-full overflow-hidden">
       <div className="absolute inset-0" aria-hidden>
         <Image
-          src={SITE_PRODUCT_IMAGE_PATH}
+          src={productPhoto}
           alt=""
           fill
           priority

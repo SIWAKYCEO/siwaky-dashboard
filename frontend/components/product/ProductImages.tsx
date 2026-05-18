@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { SITE_PRODUCT_IMAGE_PATH } from "@/lib/seo/site";
+import productPhoto from "@/lib/media/product-photo";
 
 const GALLERY_SLOTS = 4;
 
@@ -26,7 +26,7 @@ export default function ProductImages() {
         className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 shadow-gold"
       >
         <Image
-          src={SITE_PRODUCT_IMAGE_PATH}
+          src={productPhoto}
           alt={photoAlt}
           fill
           priority
@@ -49,7 +49,7 @@ export default function ProductImages() {
             aria-label={`${photoAlt} — ${i + 1}`}
           >
             <Image
-              src={SITE_PRODUCT_IMAGE_PATH}
+              src={productPhoto}
               alt=""
               fill
               sizes="(max-width: 768px) 22vw, 12vw"
