@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Storefront: run from frontend/ root (this repo/submodule).
+# Uses SIWAKYCEO/frontend only — do NOT push storefront from siwaky-dashboard root.
+
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+MSG="${1-}"
+if [[ -z "$MSG" ]]; then
+  echo "Usage: $0 \"commit message\"" >&2
+  exit 1
+fi
+
+git remote set-url origin https://github.com/SIWAKYCEO/frontend.git
+git add -A
+git commit -m "$MSG"
+git push origin main

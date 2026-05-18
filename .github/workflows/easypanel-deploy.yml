@@ -1,0 +1,23 @@
+# Triggers Easypanel rebuild after each push to main.
+# Requires outbound HTTP access from GitHub-hosted runners.
+name: Easypanel deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Easypanel deploy webhook
+        env:
+          EASYPANEL_DEPLOY_HOOK: http://187.124.3.192:3000/api/deploy/f6ce36f9acb49ad356795526fe4fa8055e8c33acbec6ad6d
+        run: |
+          curl -fsS -m 120 -X POST "${EASYPANEL_DEPLOY_HOOK}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            --data-binary '{}'
