@@ -9,6 +9,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN test -f public/images/product.jpg || (echo "FATAL: missing public/images/product.jpg" && exit 1)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
 ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com

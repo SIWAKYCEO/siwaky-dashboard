@@ -6,6 +6,17 @@ const withNextIntl = createNextIntlPlugin("./i18n.ts");
 const nextConfig = {
   /** Unique `_next/static` chunk URLs on every build — avoids stale hashed assets after deploy. */
   generateBuildId: async () => Date.now().toString(),
+  /**
+   * `beforeFiles` runs before filesystem/public — guarantees `/images/product.jpg` hits our
+   * route handler (fixes 404s when CDN / standalone mis-serves `public/`).
+   */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/images/product.jpg", destination: "/api/product-photo" },
+      ],
+    };
+  },
   async redirects() {
     const d = "/ar";
     return [
