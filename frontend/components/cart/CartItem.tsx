@@ -1,11 +1,12 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 import type { CartItem as Item } from "@/store/cartStore";
 import { useCartStore } from "@/store/cartStore";
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
+import { SITE_PRODUCT_IMAGE_PATH } from "@/lib/seo/site";
 
 interface Props {
   item: Item;
@@ -17,7 +18,15 @@ export default function CartItem({ item }: Props) {
 
   return (
     <div className="flex items-center gap-3 py-4">
-      <LuxuryMediaPlaceholder variant="cartThumb" />
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-white/10">
+        <Image
+          src={SITE_PRODUCT_IMAGE_PATH}
+          alt={t("product.photoAlt")}
+          fill
+          sizes="64px"
+          className="object-cover object-center"
+        />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-white">
           {t("product.cartItemLine", {

@@ -5,11 +5,14 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+
+import { usePathname } from "next/navigation";
 
 import { lineRevenue, formatSar } from "@/lib/dashboard/kpi";
 import type { OrderRow } from "@/lib/dashboard/types";
@@ -20,6 +23,9 @@ import { OrderToastStack, type OrderToastRecord } from "@/components/dashboard/n
 export const ORDER_ALERT_SOUND_SRC = "/sounds/kaching.mp3";
 /** @deprecated use ORDER_ALERT_SOUND_SRC */
 export const ORDER_ARRIVAL_SOUND_SRC = ORDER_ALERT_SOUND_SRC;
+
+/** User finished the “Enable notification sound” banner; exact key requested for the unlock CTA. */
+export const DASHBOARD_AUDIO_ENABLED_LS_KEY = "audioEnabled";
 
 /** `<audio>` output is 0–1 (browser cap). */
 const ORDER_CHIME_HTML_VOLUME = 1;
@@ -147,6 +153,23 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(initialSoundEnv);
   const [toastEnabled, setToastEnabledState] = useState(true);
 
+  const pathname = usePathname();
+  const isDashboardLoginPage =
+    pathname === "/dashboard/login" || pathname === "/dashboard/login/";
+
+  const [soundBannerAcknowledged, setSoundBannerAcknowledged] = useState(false);
+  const [soundBannerGrace, setSoundBannerGrace] = useState(false);
+
+  useLayoutEffect(() => {
+    try {
+      if (window.localStorage.getItem(DASHBOARD_AUDIO_ENABLED_LS_KEY) === "true") {
+        setSoundBannerAcknowledged(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const [toasts, setToasts] = useState<OrderToastRecord[]>([]);
 
   const htmlAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -154,6 +177,7 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   const decodedBufferRef = useRef<AudioBuffer | null>(null);
   const pendingChimeRef = useRef(false);
   const toastTimersRef = useRef<Map<string, number>>(new Map());
+  const soundUnlockDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const soundEnabledRef = useRef(soundEnabled);
   const audioUnlockedRef = useRef(audioUnlocked);
   soundEnabledRef.current = soundEnabled;
@@ -391,6 +415,33 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
   }, [flushPendingChime]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    if (u.searchParams.get("dashPushChime") !== "1") return;
+    u.searchParams.delete("dashPushChime");
+    window.history.replaceState({}, "", `${u.pathname}${u.search}${u.hash}`);
+    void (async () => {
+      await primeDashboardAudio();
+      await playOrderChime();
+    })();
+  }, [playOrderChime, primeDashboardAudio]);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    const onMsg = (ev: MessageEvent) => {
+      const t = (ev.data as { type?: string } | null)?.type;
+      if (t === "SIWAKY_DASH_PLAY_KACHING") {
+        void (async () => {
+          await primeDashboardAudio();
+          await playOrderChime();
+        })();
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, [playOrderChime, primeDashboardAudio]);
+
+  useEffect(() => {
     const tryPrimeUntilUnlocked = () => {
       if (audioUnlockedRef.current) return;
       void primeDashboardAudio();
@@ -461,6 +512,15 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
 
   useEffect(
     () => () => {
+      const t = soundUnlockDismissTimerRef.current;
+      if (t != null) window.clearTimeout(t);
+      soundUnlockDismissTimerRef.current = null;
+    },
+    [],
+  );
+
+  useEffect(
+    () => () => {
       for (const t of toastTimersRef.current.values()) window.clearTimeout(t);
       toastTimersRef.current.clear();
     },
@@ -469,10 +529,28 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
 
   const needsSoundInteraction = soundEnabled && !audioUnlocked;
 
+  const showSoundUnlockBanner =
+    !isDashboardLoginPage &&
+    !soundBannerAcknowledged &&
+    (needsSoundInteraction || soundBannerGrace);
+
   const onBannerEnable = useCallback(() => {
     void (async () => {
+      try {
+        window.localStorage.setItem(DASHBOARD_AUDIO_ENABLED_LS_KEY, "true");
+      } catch {
+        /* ignore */
+      }
+      setSoundBannerGrace(true);
       await primeDashboardAudio();
       await playOrderChime();
+      const prev = soundUnlockDismissTimerRef.current;
+      if (prev != null) window.clearTimeout(prev);
+      soundUnlockDismissTimerRef.current = window.setTimeout(() => {
+        soundUnlockDismissTimerRef.current = null;
+        setSoundBannerGrace(false);
+        setSoundBannerAcknowledged(true);
+      }, 5000);
     })();
   }, [primeDashboardAudio, playOrderChime]);
 
@@ -508,7 +586,7 @@ export function DashboardAlertsProvider({ children }: { children: ReactNode }) {
     <DashboardAlertsContext.Provider value={value}>
       {children}
       <OrderToastStack items={toasts} onDismiss={dismissToast} />
-      <SoundUnlockBanner visible={needsSoundInteraction} onEnable={onBannerEnable} />
+      <SoundUnlockBanner visible={showSoundUnlockBanner} onEnable={onBannerEnable} />
     </DashboardAlertsContext.Provider>
   );
 }

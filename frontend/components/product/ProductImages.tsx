@@ -1,16 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
+import { SITE_PRODUCT_IMAGE_PATH } from "@/lib/seo/site";
 
 const GALLERY_SLOTS = 4;
 
 export default function ProductImages() {
-  const t = useTranslations("trust");
+  const tTrust = useTranslations("trust");
+  const tProduct = useTranslations("product");
   const [active, setActive] = useState(0);
+
+  const photoAlt = tProduct("photoAlt");
 
   return (
     <div>
@@ -19,11 +23,18 @@ export default function ProductImages() {
         initial={{ opacity: 0.2 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.35 }}
-        className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold"
+        className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 shadow-gold"
       >
-        <LuxuryMediaPlaceholder variant="galleryMain" />
+        <Image
+          src={SITE_PRODUCT_IMAGE_PATH}
+          alt={photoAlt}
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover object-center"
+        />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent" />
-        <span className="absolute top-4 start-4 badge-gold">{t("halal")}</span>
+        <span className="absolute top-4 start-4 badge-gold">{tTrust("halal")}</span>
       </motion.div>
 
       <div className="mt-4 grid grid-cols-4 gap-3">
@@ -35,9 +46,15 @@ export default function ProductImages() {
             className={`relative aspect-square overflow-hidden rounded-xl border transition-all ${
               i === active ? "border-brand-gold shadow-gold" : "border-white/5 hover:border-brand-gold/50"
             }`}
-            aria-label={`Product photo ${i + 1}`}
+            aria-label={`${photoAlt} — ${i + 1}`}
           >
-            <LuxuryMediaPlaceholder variant="galleryThumb" />
+            <Image
+              src={SITE_PRODUCT_IMAGE_PATH}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 22vw, 12vw"
+              className="object-cover object-center"
+            />
           </button>
         ))}
       </div>

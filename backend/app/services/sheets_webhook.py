@@ -591,6 +591,8 @@ def log_sheets_config(*, context: str, order_id: str) -> None:
         "yes" if pk_set else "no",
         "yes" if has_json_key_file else "no",
     )
+
+
 def sheets_exception_payload(exc: Exception) -> dict[str, Any]:
     """Serializable details for API responses + logs (never includes private key)."""
     out: dict[str, Any] = {

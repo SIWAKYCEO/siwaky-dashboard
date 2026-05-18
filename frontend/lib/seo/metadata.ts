@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SITE_KEYWORDS_AR, SITE_KEYWORDS_EN, SITE_URL } from "@/lib/seo/site";
+import { SITE_KEYWORDS_AR, SITE_KEYWORDS_EN, SITE_PRODUCT_IMAGE_PATH, SITE_URL } from "@/lib/seo/site";
 
 /** Normalised path segment without locale: "", "/product", "/about", … */
 export function normalisePath(path: string): string {
@@ -30,13 +30,13 @@ export function localeShellMetadata(locale: string): Metadata {
       alternateLocale: locale === "ar" ? ["en_US"] : ["ar_SA"],
       images: [
         {
-          url: "/og.jpg",
+          url: SITE_PRODUCT_IMAGE_PATH,
           width: 1200,
-          height: 630,
+          height: 1200,
           alt:
             locale === "ar"
-              ? "سواكي — سواك طبيعي فاخر بأربع نكهات"
-              : "SIWAKY — premium natural miswak in four flavors",
+              ? "علبة سواكي الفاخرة مع أعواد السواك الطبيعية"
+              : "SIWAKY premium miswak box with natural sticks",
         },
       ],
     },
@@ -132,13 +132,13 @@ export function buildPageMetadata(opts: PageMetadataInput): Metadata {
       siteName: "SIWAKY",
       images: [
         {
-          url: `${SITE_URL}/og.jpg`,
+          url: `${SITE_URL}${SITE_PRODUCT_IMAGE_PATH}`,
           width: 1200,
-          height: 630,
+          height: 1200,
           alt:
             opts.locale === "ar"
-              ? "سواكي — سواك طبيعي فاخر بأربع نكهات"
-              : "SIWAKY — premium natural miswak in four flavors",
+              ? "علبة سواكي الفاخرة مع أعواد السواك الطبيعية"
+              : "SIWAKY premium miswak box with natural sticks",
         },
       ],
     },
@@ -146,7 +146,7 @@ export function buildPageMetadata(opts: PageMetadataInput): Metadata {
       card: "summary_large_image",
       title: twTitle,
       description: twDesc,
-      images: [`${SITE_URL}/og.jpg`],
+      images: [`${SITE_URL}${SITE_PRODUCT_IMAGE_PATH}`],
     },
   };
 }

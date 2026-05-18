@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import ScarcityBar from "@/components/shared/ScarcityBar";
+import { SITE_PRODUCT_IMAGE_PATH } from "@/lib/seo/site";
 
 export default function HeroSection() {
   const t = useTranslations();
@@ -17,13 +18,18 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-[92vh] w-full overflow-hidden">
-      <div className="absolute inset-0">
-        <LuxuryMediaPlaceholder variant="hero" />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(40,40,42,0.55)_0%,rgba(40,40,42,0.85)_60%,#28282A_100%)]"
+      <div className="absolute inset-0" aria-hidden>
+        <Image
+          src={SITE_PRODUCT_IMAGE_PATH}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
         />
+        <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)]" />
       </div>
+
       {/* Decorative gold radial */}
       <div
         aria-hidden

@@ -5,3 +5,7 @@ __pycache__/
 .Python
 # Never commit service account keys
 *-*.json
+
+# Web Push JSON stores (subscriptions, seen order IDs)
+data/push_subscriptions.json
+data/push_seen_order_ids.json

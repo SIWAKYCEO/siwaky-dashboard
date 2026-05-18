@@ -158,6 +158,7 @@
     "cartItemLine": "{brand} — {title}",
     "selectOffer": "Choose your offer",
     "scarcity": "🔴 Only 8 boxes left at this price",
+    "photoAlt": "Open SIWAKY premium miswak box showing natural miswak sticks",
     "offers": {
       "box-1": { "title": "One box",    "detail": "12 sticks · 4 flavors",              "badge": "" },
       "box-2": { "title": "Two boxes",  "detail": "24 sticks · save 191 SAR",           "badge": "🔥 Best seller" },

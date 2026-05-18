@@ -1,11 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Bell, BellOff, LogOut, Menu, RefreshCw, Volume2, VolumeX } from "lucide-react";
+import { Bell, BellOff, LogOut, Menu, RefreshCw, Smartphone, Volume2, VolumeX } from "lucide-react";
 
 import { useDashboardAlerts } from "@/components/dashboard/providers/DashboardAlertsProvider";
+import {
+  isIosLike,
+  isIosSafari,
+  isStandaloneDisplayMode,
+  supportsScreenWakeLock,
+  urlBase64ToUint8Array,
+} from "@/lib/dashboard/web-push";
 import type { OrdersPayload } from "@/lib/dashboard/types";
 
 type Props = {
@@ -55,6 +62,198 @@ export function DashboardTopBar({
     previewOrderChime,
   } = useDashboardAlerts();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushOn, setPushOn] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+  const [showIosHint, setShowIosHint] = useState(false);
+  const [pushCapable, setPushCapable] = useState(false);
+  const [iosStandaloneOk, setIosStandaloneOk] = useState(true);
+  const wakeSentinelRef = useRef<{ release: () => Promise<void> } | null>(null);
+  const [clientReady, setClientReady] = useState(false);
+
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setShowIosHint(isIosSafari());
+    setPushCapable(
+      typeof window !== "undefined" &&
+        "serviceWorker" in navigator &&
+        "PushManager" in window &&
+        "Notification" in window,
+    );
+    if (typeof window !== "undefined" && isIosLike()) {
+      setIosStandaloneOk(isStandaloneDisplayMode());
+    } else {
+      setIosStandaloneOk(true);
+    }
+    void (async () => {
+      if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const existing = await reg?.pushManager.getSubscription();
+        if (!cancelled && existing) setPushOn(true);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pushOn || !supportsScreenWakeLock()) return;
+
+    let cancelled = false;
+
+    async function acquire() {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const wn = navigator as Navigator & {
+          wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+        };
+        if (!wn.wakeLock?.request) return;
+        const sentinel = await wn.wakeLock.request("screen");
+        if (cancelled) {
+          await sentinel.release();
+          return;
+        }
+        wakeSentinelRef.current = sentinel;
+      } catch {
+        /* policy / unsupported */
+      }
+    }
+
+    void acquire();
+
+    const onVis = () => {
+      if (document.visibilityState === "visible") void acquire();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+      const s = wakeSentinelRef.current;
+      wakeSentinelRef.current = null;
+      void s?.release().catch(() => {});
+    };
+  }, [pushOn]);
+
+  async function runPostEnableChecks(reg: ServiceWorkerRegistration, sub: PushSubscription) {
+    try {
+      await reg.showNotification("🌿 SIWAKY", {
+        body: "Prova locale — se non vedi nulla, controlla i permessi nelle impostazioni del telefono.",
+        icon: "/icons/icon-192x192.png",
+        tag: "siwaky-local-test",
+      });
+    } catch {
+      /* ignore */
+    }
+    try {
+      const tr = await fetch("/api/dashboard/push/test", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!tr.ok) {
+        let msg = `Test server (${tr.status})`;
+        try {
+          const j = (await tr.json()) as { error?: string; detail?: string };
+          msg = j.detail || j.error || msg;
+        } catch {
+          /* ignore */
+        }
+        setPushError(msg);
+      } else {
+        setPushError(null);
+      }
+    } catch (e) {
+      setPushError(e instanceof Error ? e.message : "Test push failed");
+    }
+  }
+
+  async function retestNotifications() {
+    if (!pushCapable || !pushOn) return;
+    setPushBusy(true);
+    setPushError(null);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        setPushError("Iscrizione push assente — riattiva le notifiche.");
+        return;
+      }
+      await runPostEnableChecks(reg, sub);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function enableNotifications() {
+    if (!pushCapable) return;
+    setPushBusy(true);
+    setPushError(null);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setPushError("Notification permission denied");
+        return;
+      }
+      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      await reg.ready;
+      const vapidRes = await fetch("/api/dashboard/push/vapid");
+      if (!vapidRes.ok) {
+        let msg = `VAPID error (${vapidRes.status})`;
+        try {
+          const j = (await vapidRes.json()) as { error?: string; detail?: string };
+          msg = j.detail || j.error || msg;
+        } catch {
+          /* ignore */
+        }
+        setPushError(msg);
+        return;
+      }
+      const { publicKey } = (await vapidRes.json()) as { publicKey: string };
+      if (!publicKey) {
+        setPushError("Missing public key from server");
+        return;
+      }
+      let sub = await reg.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const save = await fetch("/api/dashboard/push/subscribe", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!save.ok) {
+        let msg = `Subscribe save failed (${save.status})`;
+        try {
+          const j = (await save.json()) as { error?: string; detail?: string };
+          msg = j.detail || j.error || msg;
+        } catch {
+          /* ignore */
+        }
+        setPushError(msg);
+        return;
+      }
+      setPushOn(true);
+      void runPostEnableChecks(reg, sub);
+    } catch (e) {
+      setPushError(e instanceof Error ? e.message : "Push setup failed");
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   async function logout() {
     setLoggingOut(true);
@@ -131,6 +330,70 @@ export function DashboardTopBar({
                 </span>
               ) : null}
               {pwaInstall}
+              {pushCapable ? (
+                <div className="flex max-w-[15rem] flex-col gap-1 sm:max-w-none">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void enableNotifications()}
+                      disabled={pushBusy || pushOn}
+                      className="relative inline-flex min-h-[42px] items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-black/42 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.18em] text-white/82 shadow-inner backdrop-blur-md motion-safe:hover:border-[#c9a962]/38 disabled:cursor-not-allowed disabled:opacity-55"
+                      aria-pressed={pushOn}
+                      title={
+                        pushOn
+                          ? "Web push is enabled for this device"
+                          : "Receive order alerts even when the dashboard is closed (HTTPS + supported browser)"
+                      }
+                    >
+                      <Smartphone className="size-[17px] text-sky-200/95" aria-hidden strokeWidth={1.65} />
+                      <span className="relative hidden sm:inline">
+                        {pushOn ? "Push on" : pushBusy ? "…" : "Enable notifications"}
+                      </span>
+                    </button>
+                    {pushOn ? (
+                      <button
+                        type="button"
+                        onClick={() => void retestNotifications()}
+                        disabled={pushBusy}
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-2xl border border-sky-400/25 bg-sky-950/35 px-2.5 py-2 font-dashSans text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-100/90 shadow-inner backdrop-blur-md disabled:opacity-45"
+                        title="Notifica di prova (locale + dal server)"
+                      >
+                        <span className="hidden sm:inline">Prova notifica</span>
+                        <span className="sm:hidden">Prova</span>
+                      </button>
+                    ) : null}
+                  </div>
+                  {clientReady && isIosLike() && !iosStandaloneOk ? (
+                    <p
+                      className="rounded-lg border border-amber-500/25 bg-amber-950/25 px-2 py-1.5 font-dashSans text-[9px] leading-snug text-amber-100/85"
+                      dir="ltr"
+                    >
+                      Su iPhone le notifiche push arrivano solo se apri il sito dall’icona nella Home (Aggiungi a
+                      schermata Home). Nella scheda Safari di solito non funzionano. Non serve lasciare l’app sempre
+                      aperta: le notifiche partono dal server quando arriva un ordine nuovo.
+                    </p>
+                  ) : null}
+                  {pushOn && supportsScreenWakeLock() ? (
+                    <p className="px-0.5 font-dashSans text-[8px] leading-snug text-white/38" dir="ltr">
+                      Schermo resta acceso mentre sei in questo tab (opzionale). Per gli ordini, conta il server —
+                      chiudi pure il dashboard.
+                    </p>
+                  ) : null}
+                  {showIosHint ? (
+                    <p
+                      className="px-0.5 text-center font-dashSans text-[9px] leading-snug text-white/45 sm:text-left"
+                      dir="rtl"
+                    >
+                      افتح Safari → شارك → أضف للشاشة الرئيسية
+                    </p>
+                  ) : null}
+                  {pushError ? (
+                    <span className="px-0.5 text-left text-[9px] text-rose-300/90" title={pushError}>
+                      {pushError.length > 72 ? `${pushError.slice(0, 72)}…` : pushError}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setToastEnabled(!toastEnabled)}

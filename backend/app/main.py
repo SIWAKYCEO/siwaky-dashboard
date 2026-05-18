@@ -1,3 +1,4 @@
+import logging
 import os
 
 # rebuilt 2026-05-14 — GET /orders reads Google Sheets via Easypanel env (PostgreSQL used elsewhere).
@@ -12,12 +13,16 @@ from app.config import (
     selected_database_source,
     selected_database_url_redacted,
 )
-from app.routes import store_orders
+from app.routes import push, store_orders
 from app.services.orders_db import ping_database
 from app.services.orders_sheets import fetch_orders_from_google_sheets
+from app.services.push_notify import process_orders_for_push
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="SIWAKY Dashboard API", version="0.1.0")
 app.include_router(store_orders.router)
+app.include_router(push.router)
 
 # Required CORS hosts (dashboard ↔ API in Docker / prod).
 _cors_required = (
@@ -108,10 +113,19 @@ def get_orders():
         SIWAKY_SHEET_TAB (defaults to 📦 Orders if unset)
 
     PostgreSQL reader remains in ``app.services.orders_db.fetch_orders_array`` for a future switch.
+
+    After a successful read, new ``order_id`` values trigger Web Push to registered subscribers.
     """
     try:
-        return fetch_orders_from_google_sheets()
+        orders = fetch_orders_from_google_sheets()
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+    try:
+        process_orders_for_push(orders)
+    except Exception:
+        logger.exception("[push] process_orders_for_push failed — orders still returned")
+
+    return orders
