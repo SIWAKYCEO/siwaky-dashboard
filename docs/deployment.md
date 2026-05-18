@@ -7,16 +7,32 @@
 
 ## 1. Repository
 
-Single mono-repo with two services:
+Two GitHub repositories:
+- **Storefront:** `https://github.com/SIWAKYCEO/frontend` (submodule at `frontend/` here). Commit and push storefront work **only** from that repo.
+- **Dashboard + API:** `https://github.com/SIWAKYCEO/siwaky-dashboard` (this monorepo).
+
+Clone with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/SIWAKYCEO/siwaky-dashboard.git
+```
+
+If you already cloned without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+Layout:
 
 ```
 siwaky/
-├── frontend/   ← Easypanel app: "siwaky-frontend"   → siwaky.com
-├── backend/    ← Easypanel app: "siwaky-backend"    → api.siwaky.com
+├── frontend/   ← git submodule → SIWAKYCEO/frontend  (siwaky.com build source)
+├── backend/    ← FastAPI (api.siwaky.com)
 └── docker-compose.yml  (local dev only)
 ```
 
-Push to `main` triggers both deployments.
+Easypanel **store app** must use **`SIWAKYCEO/frontend`** (`main`). Pushes there trigger the Easypanel deploy webhook. This monorepo’s `frontend/` submodule pointer advances when you intentionally update integrated dashboard/backend work—not for standalone shop tweaks.
 
 ## 2. DNS
 
