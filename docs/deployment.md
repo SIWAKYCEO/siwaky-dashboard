@@ -46,8 +46,8 @@ There is **no** Easypanel config file in git; open **Easypanel → siwaky-fronte
 
 | Where `git push` goes | Repository URL in Easypanel | Root directory / **Subdirectory** | Dockerfile path (typical) |
 |-----------------------|-----------------------------|-----------------------------------|-----------------------------|
-| **Monorepo** with top-level `frontend/` (this workspace layout in `docs/deployment.md`) | Mono-repo HTTPS/SSH URL | **`frontend`** (subdirectory = build context) | `Dockerfile` (file inside that folder) |
-| **Frontend-only** repo (only Next.js app at repo root; no nested `frontend/` folder) | That repo URL | **`/`** or leave blank — **never** `frontend/` | `Dockerfile` or `dockerfile` at repo root |
+| **Monorepo** with top-level `frontend/` (this workspace layout in `docs/deployment.md`) | Mono-repo HTTPS/SSH URL | **`frontend`** (subdirectory = build context) | **`dockerfile`** (lowercase; Linux/Easypanel is case-sensitive) |
+| **Frontend-only** repo (only Next.js app at repo root; no nested `frontend/` folder) | That repo URL | **`/`** or leave blank — **never** `frontend/` | **`dockerfile`** at repo root (`SIWAKYCEO/frontend` uses this path) |
 
 **Common bug:** GitHub app is **`SIWAKYCEO/frontend`** but Easypanel still uses subdirectory **`frontend/`** as if it were the mono-repo → builds pull the wrong tree or never update.
 
@@ -62,8 +62,8 @@ Only **`frontend/app/[locale]/(shop)/product/page.tsx`** defines the PDP. The `(
 ### App settings (Easypanel)
 - **Type:** App (Docker)
 - **Source:** GitHub → branch `main`
-  - **Monorepo:** subdirectory / root path **`frontend`**, Dockerfile **`Dockerfile`** (inside context).
-  - **Frontend-only repo:** subdirectory **`/`** (repo root), Dockerfile **`Dockerfile`** at root.
+  - **Monorepo:** subdirectory / root path **`frontend`**, Dockerfile path **`dockerfile`** (inside context).
+  - **Frontend-only repo:** subdirectory **`/`** (repo root), Dockerfile path **`dockerfile`** at repo root.
 - **Port:** `3000`
 - **Domain:** `siwaky.com` (+ `www.siwaky.com` redirect)
 
@@ -146,7 +146,7 @@ dev: git push origin main
      │
      ├─► GitHub webhook → Easypanel
      │       │
-     │       ├─► siwaky-frontend: rebuild image (frontend/Dockerfile) → rolling deploy
+     │       ├─► siwaky-frontend: rebuild image (`frontend/dockerfile` in mono repo, or repo-root `dockerfile` for `SIWAKYCEO/frontend`) → rolling deploy
      │       └─► siwaky-backend:  rebuild image (backend/Dockerfile)  → rolling deploy
      │
      └─► (no manual step required)
