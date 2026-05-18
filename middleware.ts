@@ -6,6 +6,18 @@ import {
   logDashboardAuthDiagnostics,
   verifyDashboardSessionToken,
 } from "@/lib/dashboard/auth/session";
+import {
+  dashboardPublicOrigin,
+  isDashboardApiPath,
+  isDashboardHostname,
+  isDashboardPath,
+  isLegacyShopPath,
+  isShopLocalePath,
+  isStorefrontHostname,
+  requestHostname,
+  storefrontHomePath,
+  storefrontPublicOrigin,
+} from "@/lib/host-routing";
 
 const LOGIN_PATH = "/dashboard/login";
 
@@ -22,18 +34,56 @@ function isPublicDashboardApi(pathname: string): boolean {
   );
 }
 
-async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
+/**
+ * siwaky.com / www → shop only. dashboard.siwaky.com → dashboard only.
+ * Same Next.js process can serve both domains; separation is by Host header.
+ */
+function hostSeparationMiddleware(req: NextRequest): NextResponse | null {
+  const hostname = requestHostname(req);
+  const { pathname, search } = req.nextUrl;
+
+  if (isStorefrontHostname(hostname)) {
+    if (pathname === "/" || pathname === "") {
+      return NextResponse.redirect(new URL(storefrontHomePath(), req.url));
+    }
+    if (isDashboardPath(pathname)) {
+      const target = new URL(pathname + search, dashboardPublicOrigin());
+      return NextResponse.redirect(target, 308);
+    }
+    if (isDashboardApiPath(pathname)) {
+      return NextResponse.json(
+        { error: "dashboard_api_wrong_host", detail: "Use dashboard.siwaky.com for operator APIs." },
+        { status: 404 },
+      );
+    }
+    return null;
+  }
+
+  if (isDashboardHostname(hostname)) {
+    if (pathname === "/" || pathname === "") {
+      return NextResponse.redirect(new URL("/dashboard", req.url), 308);
+    }
+    if (isShopLocalePath(pathname) || isLegacyShopPath(pathname)) {
+      const target = new URL(pathname + search, storefrontPublicOrigin());
+      return NextResponse.redirect(target, 308);
+    }
+    return null;
+  }
+
+  return null;
+}
+
+async function dashboardAuthMiddleware(req: NextRequest): Promise<NextResponse> {
   logDashboardAuthDiagnostics("middleware-edge");
   const { pathname } = req.nextUrl;
 
-  const touchesDashboardUi = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
-  const touchesDashboardApi = pathname.startsWith("/api/dashboard/");
+  const touchesDashboardUi = isDashboardPath(pathname);
+  const touchesDashboardApi = isDashboardApiPath(pathname);
 
   if (!touchesDashboardUi && !touchesDashboardApi) {
     return NextResponse.next();
   }
 
-  /** Logged-in users should not stay on the login screen */
   if (touchesDashboardUi && isLoginPage(pathname)) {
     const token = req.cookies.get(DASHBOARD_SESSION_COOKIE)?.value;
     const session = await verifyDashboardSessionToken(token);
@@ -71,20 +121,51 @@ async function dashboardMiddleware(req: NextRequest): Promise<NextResponse> {
 
 export async function middleware(req: NextRequest) {
   try {
-    return await dashboardMiddleware(req);
-  } catch (err) {
-    console.error("[middleware/dashboard]", err);
+    const hostGuard = hostSeparationMiddleware(req);
+    if (hostGuard) return hostGuard;
+
     const { pathname } = req.nextUrl;
-    if (pathname.startsWith("/api/dashboard/")) {
+    const touchesDashboard =
+      isDashboardPath(pathname) || isDashboardApiPath(pathname);
+
+    if (touchesDashboard) {
+      return await dashboardAuthMiddleware(req);
+    }
+
+    return NextResponse.next();
+  } catch (err) {
+    console.error("[middleware]", err);
+    const { pathname } = req.nextUrl;
+    if (isDashboardApiPath(pathname)) {
       return NextResponse.json({ error: "Middleware failure" }, { status: 500 });
     }
-    const url = req.nextUrl.clone();
-    url.pathname = LOGIN_PATH;
-    url.searchParams.set("error", "mw");
-    return NextResponse.redirect(url);
+    if (isDashboardPath(pathname)) {
+      const url = req.nextUrl.clone();
+      url.pathname = LOGIN_PATH;
+      url.searchParams.set("error", "mw");
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
 }
 
 export const config = {
-  matcher: ["/dashboard", "/dashboard/:path*", "/api/dashboard/:path*"],
+  matcher: [
+    "/",
+    "/dashboard",
+    "/dashboard/:path*",
+    "/api/dashboard/:path*",
+    "/ar",
+    "/en",
+    "/ar/:path*",
+    "/en/:path*",
+    "/product",
+    "/about",
+    "/contact",
+    "/privacy-policy",
+    "/terms",
+    "/shipping",
+    "/returns",
+    "/thank-you",
+  ],
 };
