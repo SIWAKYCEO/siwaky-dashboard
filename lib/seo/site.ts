@@ -2,6 +2,9 @@
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://siwaky.com").replace(/\/$/, "");
 
+/** Primary product photography — hero, PDP gallery, cart thumb, Open Graph / Twitter cards. */
+export const SITE_PRODUCT_IMAGE_PATH = "/images/product.jpg" as const;
+
 export const COMPANY_LEGAL = "EMYRA LTD (UK)";
 export const COMPANY_COUNTRY = "GB";
 

@@ -107,6 +107,15 @@ export default function CheckoutPopup({ open, onClose }: Props) {
     const bundle = OFFERS[cartItem.offerId];
     const eventId = uuid();
 
+    console.log("[siwaky/checkout] checkout form submit start — calling createOrder (POST /api/orders)", {
+      origin:
+        typeof window !== "undefined" ? window.location.href : "(no window)",
+      offer: cartItem.offerId,
+      quantity: bundle.quantity,
+      price_sar: bundle.price,
+      event_id_hint: eventId,
+    });
+
     const res = await createOrder({
       name: values.name,
       phone: values.phone,

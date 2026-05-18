@@ -12,7 +12,6 @@ import { GlassPanel } from "@/components/dashboard/ui/GlassPanel";
 import { SectionLabel } from "@/components/dashboard/ui/SectionLabel";
 import { buildDashboardAnalytics } from "@/lib/dashboard/analytics";
 import { fetchOrders } from "@/lib/dashboard/api";
-import { buildLiveMapMarkers } from "@/lib/dashboard/geo/orderCoordinates";
 import { fingerprintOrderSnapshot, stableOrderFingerprint } from "@/lib/dashboard/orderFingerprint";
 import { computeOrderKpis, latestOrders } from "@/lib/dashboard/kpi";
 import type { OrdersPayload } from "@/lib/dashboard/types";
@@ -25,8 +24,8 @@ import { OrderFeed } from "./OrderFeed";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { PwaInstallButton } from "./PwaInstallButton";
 
-/** Frontend-only polling interval — detects new `/orders` rows without backend changes */
-const ORDER_POLL_INTERVAL_MS = 5000;
+/** Dashboard poll interval — aligns with Live Orders Map real-time UX (Shopify cadence feel). */
+const ORDER_POLL_INTERVAL_MS = 30000;
 
 function RefreshAura({ pullPx, refreshing }: { pullPx: number; refreshing: boolean }) {
   const progress = Math.min(pullPx / 88, 1);
@@ -173,11 +172,6 @@ export function Dashboard() {
 
   const feed = useMemo(() => latestOrders(payload?.orders ?? [], 52), [payload]);
 
-  const liveMap = useMemo(
-    () => buildLiveMapMarkers(feed, mapPulseFingerprints, 80),
-    [feed, mapPulseFingerprints],
-  );
-
   const pwaSlot = (
     <span className="hidden sm:flex">
       <PwaInstallButton className="w-auto max-w-none whitespace-nowrap border-white/[0.12] px-4 py-2 text-[10px] tracking-[0.2em] shadow-glass backdrop-blur-xl" />
@@ -321,7 +315,7 @@ export function Dashboard() {
             <section id="live-view" className="scroll-mt-28 xl:scroll-mt-[7rem] space-y-7">
               <SectionLabel
                 eyebrow="Live orders"
-                title="GCC-focused live globe · orbit, zoom, Gulf presets"
+                title="Live Gulf map — orders as they arrive"
                 action={
                   <span className="rounded-full border border-white/[0.08] bg-black/43 px-3 py-[6px] text-[11px] text-white/62 shadow-inner backdrop-blur-md">
                     Saudi Arabia · UAE · Qatar · Kuwait · Bahrain · Oman
@@ -329,21 +323,7 @@ export function Dashboard() {
                 }
               />
               <GlassPanel outerClassName="min-w-0 overflow-hidden" className="p-7 sm:p-9">
-                <LiveOrdersMap markers={liveMap.markers} />
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-4 px-0.5 text-[12px] text-white/54">
-                  <p>
-                    Showing{" "}
-                    <span className="tabular-nums text-white/78">{liveMap.markers.length}</span> GCC order lights on this
-                    globe for this refresh.
-                  </p>
-                  {liveMap.skippedNonGcc > 0 ? (
-                    <p className="text-white/42">
-                      {liveMap.skippedNonGcc.toLocaleString("en-US")} rows outside GCC bounds — skipped on the globe.
-                    </p>
-                  ) : (
-                    <p className="text-emerald-200/72">All plotted orders land inside Gulf bounds.</p>
-                  )}
-                </div>
+                <LiveOrdersMap orders={payload.orders} pulseOrderFingerprints={mapPulseFingerprints} />
               </GlassPanel>
             </section>
 

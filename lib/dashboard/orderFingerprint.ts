@@ -21,11 +21,14 @@ function simpleHash(seed: string): number {
 /** Stable row identity for polling diffs (does not depend on list index). */
 export function stableOrderFingerprint(order: OrderRow): string {
   const basis = [
+    norm(order.order_id),
+    norm(order.date),
+    norm(order.time),
     norm(order.phone),
     norm(order.product),
     norm(order.city),
     norm(order.country),
-    norm(order.qty),
+    norm(order.quantity),
     norm(order.price_sar),
     norm(order.status),
     norm(order.name),
@@ -34,7 +37,10 @@ export function stableOrderFingerprint(order: OrderRow): string {
     norm(order.returned),
     norm(order.cod_fee),
     norm(order.ip_address),
-    norm(order.devic),
+    norm(order.device),
+    norm(order.source),
+    norm(order.campaign),
+    norm(order.notes),
   ].join("|");
   return `fp${simpleHash(basis)}`;
 }

@@ -47,7 +47,7 @@ export function OrderFeed({
           const rev = lineRevenue(order);
           const fp = stableOrderFingerprint(order);
           const rowHighlight = highlightFingerprints?.has(fp) ?? false;
-          const titleParts = [order.product?.trim(), quantityLabel(order.qty)].filter(Boolean);
+          const titleParts = [order.product?.trim(), quantityLabel(order.quantity)].filter(Boolean);
           const subtitleParts = [
             order.name?.trim(),
             [order.city?.trim(), order.country?.trim()].filter(Boolean).join(", "),

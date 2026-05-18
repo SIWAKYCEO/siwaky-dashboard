@@ -15,7 +15,7 @@ function parseNumberLoose(raw: string): number {
 }
 
 export function lineRevenue(order: OrderRow): number {
-  const qty = Math.max(0, parseNumberLoose(order.qty));
+  const qty = Math.max(0, parseNumberLoose(order.quantity));
   const price = Math.max(0, parseNumberLoose(order.price_sar));
   return qty * price;
 }

@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { defaultLocale } from "@/i18n";
-
-/** Shop lives under `[locale]` — bare `/` must not 404. */
+/** siwaky-dashboard deploy: land on the orders app; shop remains under `/[locale]/...`. */
 export default function RootPage() {
-  redirect(`/${defaultLocale}`);
+  redirect("/dashboard");
 }
