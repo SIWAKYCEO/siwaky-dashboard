@@ -1,12 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
+import productPhoto from "@/lib/media/product-photo";
 
 export default function BrandStory() {
   const t = useTranslations("story");
+  const tRoot = useTranslations();
 
   return (
     <section className="section-padding bg-brand-dark">
@@ -16,7 +18,7 @@ export default function BrandStory() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7 }}
-          className="order-2 md:order-1"
+          className="order-1"
         >
           <span className="text-xs uppercase tracking-[0.4em] text-brand-goldLight">
             {t("kicker")}
@@ -33,11 +35,19 @@ export default function BrandStory() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8 }}
-          className="order-1 md:order-2"
+          className="order-2"
         >
           <div className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold">
-            <LuxuryMediaPlaceholder variant="story" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent" />
+            <div className="relative aspect-[4/5] w-full">
+              <Image
+                src={productPhoto}
+                alt={tRoot("product.photoAlt")}
+                fill
+                sizes="(max-width: 768px) 100vw, 42vw"
+                className="object-cover object-center"
+              />
+            </div>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/75 via-transparent to-transparent" />
           </div>
         </motion.div>
       </div>

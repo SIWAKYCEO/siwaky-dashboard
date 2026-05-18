@@ -1,14 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
 import ScarcityBar from "@/components/shared/ScarcityBar";
-import productPhoto from "@/lib/media/product-photo";
 
 export default function HeroSection() {
   const t = useTranslations();
@@ -17,18 +15,9 @@ export default function HeroSection() {
   const locale = params?.locale ?? "ar";
 
   return (
-    <section className="relative min-h-[92vh] w-full overflow-hidden">
-      <div className="absolute inset-0" aria-hidden>
-        <Image
-          src={productPhoto}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)]" />
-      </div>
+    <section className="relative min-h-[92vh] w-full overflow-hidden bg-brand-dark">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#15171c] via-brand-dark to-[#0f1115]" aria-hidden />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_12%,rgba(201,168,76,0.12),transparent_55%)]" aria-hidden />
 
       {/* Decorative gold radial */}
       <div
