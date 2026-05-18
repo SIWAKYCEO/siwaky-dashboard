@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --black: #000000;
+  --dark: #28282A;
+  --dark-2: #1A1A1A;
+  --white: #FFFFFF;
+  --off-white: #F8F6F0;
+  --gold: #C9A84C;
+  --gold-light: #F0DFA0;
+  --gold-dark: #A07830;
+  --danger: #DC2626;
+}
+
+html, body { height: 100%; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--dark);
+  color: var(--white);
+  font-feature-settings: "ss01", "kern";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* --- Typography helpers ---------------------------------------------------*/
+@layer base {
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  ::selection { background: var(--gold); color: var(--dark); }
+}
+
+/* --- Reusable utilities ---------------------------------------------------*/
+@layer components {
+  .container-luxury { @apply mx-auto max-w-6xl px-5 sm:px-6 lg:px-8; }
+
+  .section-padding { @apply py-16 md:py-24; }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-brand-gold px-7 py-4 font-semibold tracking-wide text-brand-dark
+           shadow-gold transition-all duration-300
+           hover:bg-brand-goldLight hover:shadow-goldStrong
+           focus-visible:outline-2 focus-visible:outline-brand-goldLight focus-visible:outline-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-brand-gold/60 px-6 py-3 text-brand-gold
+           transition-colors duration-200 hover:bg-brand-gold/10
+           focus-visible:outline-2 focus-visible:outline-brand-gold focus-visible:outline-offset-2;
+  }
+
+  .glass-dark {
+    background: rgba(26, 26, 26, 0.72);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+  }
+
+  .card-luxury {
+    @apply relative rounded-2xl bg-brand-dark2 p-6 transition-all duration-300
+           border border-white/5 hover:border-brand-gold/60
+           hover:-translate-y-1 hover:shadow-gold;
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  .divider-gold {
+    @apply mx-auto h-px w-40 bg-gradient-to-r from-transparent via-brand-gold to-transparent;
+  }
+
+  .scarcity-pill {
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-danger/15
+           border border-brand-danger/40 px-3 py-1.5 text-sm font-medium text-red-300
+           animate-pulseSoft;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center gap-1 rounded-full
+           bg-brand-gold/15 border border-brand-gold/40
+           px-2.5 py-1 text-xs font-medium text-brand-goldLight;
+  }
+
+  .input-luxury {
+    @apply w-full rounded-xl bg-brand-dark2/80 border border-white/10
+           px-4 py-3.5 text-base text-white placeholder-white/40
+           transition-all duration-200
+           focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/30 focus:outline-none;
+  }
+
+  /* Decorative geometric divider */
+  .ornament {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+}
+
+/* --- Hide scrollbars where we want clean carousels -----------------------*/
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Respect reduced motion -----------------------------------------------*/
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/**
+ * Dashboard (`/dashboard`) — storefront root layout stays RTL/`ar`.
+ * DashboardHtmlLock sets `<html>` to LTR; these rules keep `body` + subtree aligned
+ * so flex, charts, and spacing stay left-to-right.
+ */
+body.dashboard-route {
+  direction: ltr;
+  text-align: start;
+}
+
+.dashboard-shell-root {
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
+}

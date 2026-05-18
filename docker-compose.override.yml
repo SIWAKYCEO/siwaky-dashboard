@@ -1,5 +1,5 @@
 services:
   dashboard-frontend:
     build:
-      context: .
-      dockerfile: dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile

@@ -2,9 +2,10 @@
 #
 # Frontend (Next.js) listens internally on PORT **3001** (`dashboard-frontend` publishes **3001:3001** below).
 #
-# **`DASHBOARD_AUTH_SECRET` / `DASHBOARD_ADMIN_*`:** fallback values are baked into the image from
-# `dockerfile`; do **not** set them here to blank strings (`${VAR}` with Easypanel unset) or Compose will
-# override the image `ENV`.
+# **`DASHBOARD_AUTH_SECRET` / `DASHBOARD_ADMIN_*`:** fallback values are baked into **`frontend/Dockerfile`**;
+# do **not** set them here to blank strings (`${VAR}` with Easypanel unset) or Compose will override the image `ENV`.
+#
+# Easypanel: build path **`frontend`**, Dockerfile **`Dockerfile`** (inside that folder).
 #
 # Service name **`dashboard-frontend`** matches Easypanel merge / routing. **`docker-compose.override.yml`**
 # can carry extra panel overlays; duplicate port binds are omitted there so merges stay valid.
@@ -43,8 +44,8 @@ services:
 
   dashboard-frontend:
     build:
-      context: .
-      dockerfile: dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3001:3001"
     restart: unless-stopped
@@ -57,6 +58,9 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.siwaky.com}
       DASHBOARD_ORDERS_API_BASE_URL: http://backend:8000
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://siwaky.com}
+      DASHBOARD_HOST: ${DASHBOARD_HOST:-dashboard.siwaky.com}
+      DASHBOARD_PUBLIC_ORIGIN: ${DASHBOARD_PUBLIC_ORIGIN:-https://dashboard.siwaky.com}
+      STOREFRONT_HOSTS: ${STOREFRONT_HOSTS:-siwaky.com,www.siwaky.com}
       NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-1898036304185332}
       NEXT_PUBLIC_TIKTOK_PIXEL_ID: ${NEXT_PUBLIC_TIKTOK_PIXEL_ID:-D722UD3C77UDBCCMEAQG}
       NEXT_PUBLIC_SNAP_PIXEL_ID: ${NEXT_PUBLIC_SNAP_PIXEL_ID:-}

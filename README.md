@@ -1,8 +1,8 @@
-# SIWAKY — Luxury Natural Oral Care
+# SIWAKY — Orders dashboard (dashboard.siwaky.com)
 
-> Premium DTC store for SIWAKY (EMYRA LTD, UK) — luxury miswak for KSA & GCC.
+> **This repository is the operator dashboard only.** The public storefront lives in a separate project (`SIWAKYCEO/frontend` / siwaky.com).
 
-**Live:** [siwaky.com](https://siwaky.com) · **API:** [api.siwaky.com](https://api.siwaky.com) · **Contact:** siwaky.assistance@gmail.com
+**Dashboard:** [dashboard.siwaky.com](https://dashboard.siwaky.com) · **Contact:** siwaky.assistance@gmail.com
 
 ---
 
@@ -10,24 +10,20 @@
 
 | Layer        | Tech                                                |
 | ------------ | --------------------------------------------------- |
-| Frontend     | Next.js 14 (App Router) · TypeScript · Tailwind     |
-| i18n         | `next-intl` — Arabic (RTL) primary, English secondary |
-| State        | Zustand (cart)                                       |
-| Animation    | Framer Motion                                        |
-| Backend      | FastAPI · SQLAlchemy · Alembic · Pydantic           |
-| Database     | PostgreSQL                                           |
-| Geo / Fraud  | MaxMind GeoIP2                                       |
-| Sheets sync  | Google Apps Script webhook                          |
-| Deploy       | Docker → Easypanel (push-to-deploy via GitHub)      |
+| Dashboard UI | Next.js 14 (App Router) · TypeScript · Tailwind     |
+| Charts / map | Recharts · react-simple-maps · Framer Motion        |
+| Backend      | FastAPI (orders bridge, Google Sheets, Web Push)     |
+| Database     | PostgreSQL (shared infra; optional for this service) |
+| Deploy       | Docker → Easypanel · **build context `frontend/`**   |
 
 ## Project layout
 
 ```
-siwaky/
-├── frontend/        # Next.js 14 (siwaky.com)
-├── backend/         # FastAPI (api.siwaky.com)
+siwaky-dashboard/
+├── frontend/        # Next.js — dashboard.siwaky.com only (Dockerfile in this folder)
+├── backend/         # FastAPI orders / push API
 ├── sheets/          # Google Apps Script + setup docs
-├── docs/            # Architecture, design system, CRO, pixels, deploy
+├── docs/            # Architecture notes
 └── docker-compose.yml
 ```
 

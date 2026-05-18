@@ -1,17 +1,17 @@
-# Root build for Easypanel — context is repo root; app lives in frontend/
+# Easypanel: build context = **frontend/** (this directory), Dockerfile path = Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm ci
 
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY frontend/ .
-RUN test -f public/images/product.jpg || (echo "FATAL: missing public/images/product.jpg" && exit 1)
+COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Internal dashboard: single admin + JWT secret (`#` in password requires quoting).
+# Build-time fallbacks only — override in Easypanel/env for production.
 ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
 ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
 ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
@@ -28,7 +28,6 @@ ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
 ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
 ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-# Standalone output is produced from frontend/ sources (see builder COPY frontend/ .)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
