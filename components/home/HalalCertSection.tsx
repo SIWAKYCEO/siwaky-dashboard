@@ -35,8 +35,7 @@ export default function HalalCertSection() {
 
           <a
             href="/halal-cert.pdf"
-            target="_blank"
-            rel="noreferrer"
+            download="SIWAKY_Halal_Certificate.pdf"
             className="btn-ghost-gold mt-8"
           >
             <Download className="size-4" />

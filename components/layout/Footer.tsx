@@ -34,8 +34,7 @@ export default function Footer() {
             {/* Halal cert badge */}
             <a
               href="/halal-cert.pdf"
-              target="_blank"
-              rel="noreferrer"
+              download="SIWAKY_Halal_Certificate.pdf"
               className="mt-6 inline-flex items-center gap-2.5 rounded-xl border border-brand-gold/40 bg-brand-gold/8 px-4 py-2.5 text-sm text-brand-goldLight transition-all duration-200 hover:border-brand-gold/70 hover:bg-brand-gold/15 hover:shadow-gold"
             >
               <Award className="size-4 shrink-0 text-brand-gold" />
@@ -69,7 +68,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="/halal-cert.pdf" target="_blank" rel="noreferrer" className="hover:text-brand-goldLight">
+                <a href="/halal-cert.pdf" download="SIWAKY_Halal_Certificate.pdf" className="hover:text-brand-goldLight">
                   {t("footer.certificate")}
                 </a>
               </li>
