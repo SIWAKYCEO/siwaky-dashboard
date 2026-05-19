@@ -131,9 +131,16 @@ export default function CartDrawer() {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-emerald-300">{t("cart.shipping")}</p>
-                    <button type="button" onClick={handleCheckout} className="btn-primary mt-4 w-full text-base">
-                      {t("cart.checkout")} ←
-                    </button>
+                    {locale === "en" ? (
+                      <div className="mt-4 rounded-xl border border-brand-gold/20 bg-brand-dark2/80 py-4 text-center">
+                        <p className="font-display text-lg text-brand-goldLight">Coming Soon</p>
+                        <p className="mt-1 text-xs text-white/50">International checkout launching soon</p>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={handleCheckout} className="btn-primary mt-4 w-full text-base">
+                        {t("cart.checkout")} ←
+                      </button>
+                    )}
                     <p className="mt-3 text-center text-[11px] text-white/50">{t("cart.trust")}</p>
                   </footer>
                 </>
