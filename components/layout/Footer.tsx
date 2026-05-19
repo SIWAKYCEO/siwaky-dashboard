@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Instagram, Mail } from "lucide-react";
+import { Award, Facebook, Instagram, Mail } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -124,7 +124,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://www.instagram.com/siwaky"
+                href="https://www.instagram.com/siwakyworld?igsh=MXRjMzJlajA2cjM5ag%3D%3D"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
@@ -133,15 +133,13 @@ export default function Footer() {
                 <Instagram className="size-5" />
               </a>
               <a
-                href="https://www.snapchat.com/add/siwaky"
+                href="https://www.facebook.com/profile.php?id=61578656887420"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="Snapchat"
+                aria-label="Facebook"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:border-brand-gold/60 hover:text-brand-goldLight"
               >
-                <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-                  <path fill="currentColor" d="M12 2c3.6 0 6 2.7 6 6.2 0 1-.2 2.4-.4 3.5.5.6 1.3.8 2 .8.7 0 .5 1.1.5 1.1s-1.5.8-3.2 1.2c-.2 1-.7 2.4-.7 2.4-.2.4-.6.5-1 .3-.5-.2-1-.4-1.5-.4-1.4 0-2.4.9-3.7.9s-2.3-.9-3.7-.9c-.5 0-1 .2-1.5.4-.4.2-.8.1-1-.3 0 0-.5-1.4-.7-2.4C2.5 14.4 1 13.6 1 13.6s-.2-1.1.5-1.1c.7 0 1.5-.2 2-.8C3.3 10.6 3 9.2 3 8.2 3 4.7 5.5 2 9.1 2H12Z"/>
-                </svg>
+                <Facebook className="size-5" />
               </a>
             </div>
           </div>
