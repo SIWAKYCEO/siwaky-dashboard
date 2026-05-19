@@ -69,6 +69,7 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
     if (loading || state !== "idle") return;
 
     if (!ctx?.phone) {
+      console.warn("[upsell] sessionStorage ctx missing — cannot submit");
       setErr("تعذّر تحديد بيانات طلبك — يرجى التواصل معنا عبر واتساب");
       return;
     }
@@ -78,26 +79,36 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
 
     const upsellSource = offerId === "box-1" ? "upsell-box1" : "upsell-box2";
 
-    const res = await createOrder({
+    const payload = {
       name: ctx.name,
       phone: ctx.phone,
-      offer: "box-1",
+      offer: "box-1" as const,
       quantity: 1,
       price_sar: cfg.price,
+      product: "SIWAKY Box x1 — Upsell",
       source: upsellSource,
       campaign: "thankyou-page-upsell",
       sku: "SIWAKY12",
       notes: `Upsell aggiunto dalla thank you page — ordine originale: ${originalOrderId ?? "sconosciuto"}`,
       event_id: uuid(),
+    };
+
+    console.log("[upsell] Submitting payload:", {
+      ...payload,
+      phone: ctx.phone.slice(0, 3) + "****",
     });
+
+    const res = await createOrder(payload);
 
     setLoading(false);
 
     if (res.ok) {
+      console.log("[upsell] Order created successfully:", res.data.order_id);
       try { sessionStorage.removeItem("siwaky-upsell-ctx"); } catch { /* ignore */ }
       setState("success");
     } else {
-      setErr("حدث خطأ، يرجى المحاولة مرة أخرى أو تواصل معنا");
+      console.error("[upsell] Order failed — code:", res.code, "status:", res.status);
+      setErr(`حدث خطأ (${res.code}) — يرجى المحاولة مرة أخرى`);
     }
   };
 

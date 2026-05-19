@@ -31,6 +31,7 @@ export interface OrderCreateInput {
   offer: "box-1" | "box-2" | "box-3";
   quantity: number;
   price_sar: number;
+  product?: string;
   source?: string;
   campaign?: string;
   event_id?: string;

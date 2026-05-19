@@ -155,6 +155,9 @@ export default function ThankYouContent() {
           </motion.div>
         </div>
 
+        {/* ── Upsell ──────────────────────────────────────── */}
+        <UpsellCard offerId={offerId} originalOrderId={orderId} />
+
         {/* ── Order summary ───────────────────────────────── */}
         <motion.div
           className="mx-auto mt-14 max-w-lg"
@@ -219,9 +222,6 @@ export default function ThankYouContent() {
             </div>
           </div>
         </motion.div>
-
-        {/* ── Upsell ──────────────────────────────────────── */}
-        <UpsellCard offerId={offerId} originalOrderId={orderId} />
 
         {/* ── What happens next ───────────────────────────── */}
         <motion.div
