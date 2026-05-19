@@ -1,7 +1,10 @@
 import Link from "next/link";
 
+import { dashboardPublicOrigin } from "@/lib/host-routing";
+
 /** Root `not-found` — rendered inside `app/layout.tsx` (no `<html>` / `<body>` wrapper). */
 export default function NotFound() {
+  const dashboardLogin = `${dashboardPublicOrigin()}/dashboard/login`;
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-brand-dark px-6 py-16 text-white">
       <div className="text-center">
@@ -14,12 +17,12 @@ export default function NotFound() {
           <Link href="/ar" className="btn-ghost-gold inline-flex">
             العودة للرئيسية
           </Link>
-          <Link
-            href="/dashboard/login"
+          <a
+            href={dashboardLogin}
             className="inline-flex rounded-full border border-white/15 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-white/78 hover:bg-white/[0.06]"
           >
             Dashboard sign-in
-          </Link>
+          </a>
         </div>
       </div>
     </div>

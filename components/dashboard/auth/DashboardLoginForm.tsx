@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-export function DashboardLoginForm() {
+export function DashboardLoginForm({ authConfigured }: { authConfigured: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configError = searchParams.get("error") === "config";
@@ -60,16 +60,16 @@ export function DashboardLoginForm() {
         </p>
       </div>
 
-      {configError ? (
+      {configError || !authConfigured ? (
         <div
           className="rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-[13px] text-amber-100/95"
           role="alert"
         >
           Dashboard auth is not configured. Set{" "}
           <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_AUTH_SECRET</code>{" "}
-          and{" "}
-          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_USERS_JSON</code>{" "}
-          on the server, then restart Next.js.
+          (32+ characters for JWT signing), then restart Next.js. Optional:{" "}
+          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_ADMIN_EMAIL</code>,{" "}
+          <code className="rounded bg-black/35 px-1.5 py-0.5 text-[12px]">DASHBOARD_ADMIN_PASSWORD</code>.
         </div>
       ) : null}
 

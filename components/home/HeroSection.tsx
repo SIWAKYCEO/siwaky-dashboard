@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import ScarcityBar from "@/components/shared/ScarcityBar";
 
 export default function HeroSection() {
@@ -16,14 +15,10 @@ export default function HeroSection() {
   const locale = params?.locale ?? "ar";
 
   return (
-    <section className="relative min-h-[92vh] w-full overflow-hidden">
-      <div className="absolute inset-0">
-        <LuxuryMediaPlaceholder variant="hero" />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(40,40,42,0.55)_0%,rgba(40,40,42,0.85)_60%,#28282A_100%)]"
-        />
-      </div>
+    <section className="relative min-h-[92vh] w-full overflow-hidden bg-brand-dark">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#15171c] via-brand-dark to-[#0f1115]" aria-hidden />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_12%,rgba(201,168,76,0.12),transparent_55%)]" aria-hidden />
+
       {/* Decorative gold radial */}
       <div
         aria-hidden

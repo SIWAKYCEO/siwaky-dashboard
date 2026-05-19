@@ -1,6 +1,7 @@
 import { SignJWT } from "jose/jwt/sign";
 import { jwtVerify } from "jose/jwt/verify";
 
+import { DASHBOARD_AUTH_SECRET_FALLBACK } from "@/lib/dashboard/auth/env-defaults";
 import { DASHBOARD_SESSION_MAX_AGE_SEC } from "@/lib/dashboard/auth/constants";
 
 export type DashboardSession = {
@@ -8,22 +9,37 @@ export type DashboardSession = {
   role: string;
 };
 
+/** Prefer env; Easypanel often injects empty strings that override image `ENV`. */
+function resolvedAuthSecret(): string | null {
+  const fromEnv = process.env.DASHBOARD_AUTH_SECRET?.trim();
+  if (fromEnv && fromEnv.length >= 32) return fromEnv;
+  const fb = DASHBOARD_AUTH_SECRET_FALLBACK.trim();
+  return fb.length >= 32 ? fb : null;
+}
+
 function getSecretBytes(): Uint8Array | null {
-  const s = process.env.DASHBOARD_AUTH_SECRET;
-  if (!s || s.length < 32) return null;
+  const s = resolvedAuthSecret();
+  if (!s) return null;
   return new TextEncoder().encode(s);
 }
 
-/** Align with `loadDashboardUsers()` — BOM / whitespace breaks JSON.parse when absent here. */
-function dashboardUsersEnvPresent(): boolean {
-  const raw = process.env.DASHBOARD_USERS_JSON?.replace(/^\uFEFF/, "").trim();
-  return Boolean(raw);
+const loggedPlaces = new Set<string>();
+
+/**
+ * Middleware (Edge) bundles literals from this module; `DASHBOARD_AUTH_SECRET_FALLBACK` is always available.
+ * Prefer `console.log` for clarity; prod keeps `log` because `compiler.removeConsole` excludes it below.
+ */
+export function logDashboardAuthDiagnostics(where: string): void {
+  const key = where;
+  if (loggedPlaces.has(key)) return;
+  loggedPlaces.add(key);
+  console.log(`[dashboard-auth:${where}] AUTH SECRET:`, resolvedAuthSecret() ? "SET" : "NOT SET");
 }
 
-/** False when secret/users missing — middleware shows login + config hint */
+/** JWT signing requires a 32+ char secret; admin email/password are checked only on the login API route. */
 export function isDashboardAuthConfigured(): boolean {
-  const secretOk = getSecretBytes() != null;
-  return secretOk && dashboardUsersEnvPresent();
+  logDashboardAuthDiagnostics("isDashboardAuthConfigured");
+  return getSecretBytes() != null;
 }
 
 export async function signDashboardSessionToken(session: DashboardSession): Promise<string | null> {

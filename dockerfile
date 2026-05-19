@@ -1,3 +1,4 @@
+# Build context: ./frontend (see docker-compose.yml)
 # syntax=docker/dockerfile:1.7
 FROM node:20-alpine AS deps
 WORKDIR /app
@@ -8,10 +9,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN test -f public/images/product.jpg || (echo "FATAL: missing public/images/product.jpg" && exit 1)
 ENV NEXT_TELEMETRY_DISABLED=1
-# Never reuse a `.next` from the COPY layer — clean before every production build.
+ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
+ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
+ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
 RUN rm -rf .next
-# Runtime build id for env (CAPI / probes); Next `generateBuildId` uses `Date.now()` in next.config.js.
 RUN BUILD_ID="$(date +%s)" && \
   export BUILD_ID && \
   export NEXT_PUBLIC_APP_BUILD_ID="$BUILD_ID" && \
@@ -19,14 +22,18 @@ RUN BUILD_ID="$(date +%s)" && \
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DASHBOARD_AUTH_SECRET=siwaky2026dashboard_secret_key_very_long_32chars
+ENV DASHBOARD_ADMIN_EMAIL=siwaky.assistance@gmail.com
+ENV DASHBOARD_ADMIN_PASSWORD="Siwaky#0317"
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+RUN chown -R nextjs:nodejs /app
 USER nextjs
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 3001
+ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV=production
 CMD ["node", "server.js"]

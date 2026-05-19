@@ -1,4 +1,4 @@
-import { COMPANY_COUNTRY, COMPANY_LEGAL, SITE_URL } from "@/lib/seo/site";
+import { COMPANY_COUNTRY, COMPANY_LEGAL, SITE_PRODUCT_IMAGE_PATH, SITE_URL } from "@/lib/seo/site";
 
 export function organizationSchema() {
   return {
@@ -72,7 +72,7 @@ export function productSchema(locale: string) {
     "@type": "Product",
     name,
     description,
-    image: [`${SITE_URL}/og.jpg`],
+    image: [`${SITE_URL}${SITE_PRODUCT_IMAGE_PATH}`],
     brand: { "@type": "Brand", name: "SIWAKY" },
     sku: "SIWAKY-BOX",
     offers,

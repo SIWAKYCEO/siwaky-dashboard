@@ -5,35 +5,21 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import LuxuryMediaPlaceholder from "@/components/shared/LuxuryMediaPlaceholder";
 import { OFFERS } from "@/lib/offers";
 
 const ORDER: Array<keyof typeof OFFERS> = ["box-1", "box-2", "box-3"];
 
 export default function ProductShowcase() {
   const t = useTranslations();
-  const ttrust = useTranslations("trust");
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
   return (
     <section className="section-padding bg-brand-dark">
-      <div className="container-luxury grid items-center gap-12 md:grid-cols-2">
+      <div className="container-luxury mx-auto max-w-3xl">
         <motion.div
-          initial={{ opacity: 0, x: -24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7 }}
-          className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold"
-        >
-          <LuxuryMediaPlaceholder variant="square" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-transparent to-transparent" />
-          <span className="absolute top-4 start-4 badge-gold">{ttrust("halal")}</span>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 24 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7 }}
         >

@@ -17,8 +17,8 @@ export const dashboardNavEntries: DashboardNavEntry[] = [
   },
   {
     id: "live-view",
-    label: "Live orders globe",
-    subtitle: "GCC activity",
+    label: "Live Gulf map",
+    subtitle: "Orders in real time",
     Icon: Globe2,
   },
   {
