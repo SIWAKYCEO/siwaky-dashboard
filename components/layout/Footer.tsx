@@ -110,7 +110,7 @@ export default function Footer() {
             </h4>
             <div className="flex items-center gap-3">
               <a
-                href="https://www.tiktok.com/@siwaky"
+                href="https://www.tiktok.com/@siwaky.com?_r=1&_t=ZN-96UQGARtPWw"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok"
