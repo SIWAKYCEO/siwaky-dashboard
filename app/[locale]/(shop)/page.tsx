@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
+import nextDynamic from "next/dynamic";
 import { getTranslations, unstable_setRequestLocale } from "next-intl/server";
 
 import HeroSection from "@/components/home/HeroSection";
-import BrandStory from "@/components/home/BrandStory";
-import FlavorsSection from "@/components/home/FlavorsSection";
-import ProductShowcase from "@/components/home/ProductShowcase";
-import SunnahSection from "@/components/home/SunnahSection";
-import StatsSection from "@/components/home/StatsSection";
-import HalalCertSection from "@/components/home/HalalCertSection";
-import TestimonialsSection from "@/components/home/TestimonialsSection";
-import FinalCTA from "@/components/home/FinalCTA";
 import { buildPageMetadata, mergeLocaleShell } from "@/lib/seo/metadata";
+
+// Below-fold sections — code-split to reduce initial JS payload
+const BrandStory          = nextDynamic(() => import("@/components/home/BrandStory"));
+const FlavorsSection      = nextDynamic(() => import("@/components/home/FlavorsSection"));
+const ProductShowcase     = nextDynamic(() => import("@/components/home/ProductShowcase"));
+const SunnahSection       = nextDynamic(() => import("@/components/home/SunnahSection"));
+const StatsSection        = nextDynamic(() => import("@/components/home/StatsSection"));
+const HalalCertSection    = nextDynamic(() => import("@/components/home/HalalCertSection"));
+const TestimonialsSection = nextDynamic(() => import("@/components/home/TestimonialsSection"));
+const FinalCTA            = nextDynamic(() => import("@/components/home/FinalCTA"));
 
 /** Always fresh HTML after deploy — avoid Next full-route / CDN serving stale homepage shells. */
 export const dynamic = "force-dynamic";

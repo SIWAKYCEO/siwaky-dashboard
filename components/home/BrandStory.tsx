@@ -18,6 +18,7 @@ export default function BrandStory() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7 }}
+          style={{ willChange: "transform" }}
           className="order-1"
         >
           <span className="text-xs uppercase tracking-[0.4em] text-brand-goldLight">
@@ -31,10 +32,11 @@ export default function BrandStory() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8 }}
+          style={{ willChange: "transform" }}
           className="order-2"
         >
           <div className="relative overflow-hidden rounded-2xl border border-white/5 shadow-gold">
@@ -43,6 +45,7 @@ export default function BrandStory() {
                 src={productPhoto}
                 alt={tRoot("product.photoAlt")}
                 fill
+                loading="lazy"
                 sizes="(max-width: 768px) 100vw, 42vw"
                 className="object-cover object-center"
               />

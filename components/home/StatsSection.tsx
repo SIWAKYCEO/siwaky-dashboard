@@ -4,6 +4,8 @@ import { motion, useInView, useMotionValue, useTransform, animate } from "framer
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 
+import { useMobileReducedMotion } from "@/hooks/useMobileReducedMotion";
+
 const STATS: { key: string; value: number; suffix: string; decimals?: number }[] = [
   { key: "ordersDelivered", value: 5000, suffix: "+" },
   { key: "rating",          value: 4.9,  suffix: "★", decimals: 1 },
@@ -11,18 +13,19 @@ const STATS: { key: string; value: number; suffix: string; decimals?: number }[]
   { key: "flavors",         value: 4,    suffix: "" },
 ];
 
-function Counter({ to, decimals = 0 }: { to: number; decimals?: number }) {
+function Counter({ to, decimals = 0, reducedMotion }: { to: number; decimals?: number; reducedMotion: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
   const mv = useMotionValue(0);
   const rounded = useTransform(mv, (v) => v.toFixed(decimals));
 
   useEffect(() => {
+    if (reducedMotion) { mv.set(to); return; }
     if (inView) {
       const controls = animate(mv, to, { duration: 1.6, ease: "easeOut" });
       return controls.stop;
     }
-  }, [inView, mv, to]);
+  }, [inView, mv, to, reducedMotion]);
 
   return (
     <motion.span ref={ref}>
@@ -33,6 +36,8 @@ function Counter({ to, decimals = 0 }: { to: number; decimals?: number }) {
 
 export default function StatsSection() {
   const t = useTranslations("stats");
+  const reducedMotion = useMobileReducedMotion();
+
   return (
     <motion.section
       className="border-y border-white/5 bg-brand-dark2 py-14"
@@ -48,10 +53,10 @@ export default function StatsSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+            transition={{ duration: 0.5, delay: reducedMotion ? 0 : i * 0.1, ease: "easeOut" }}
           >
             <p className="font-display text-4xl text-brand-goldLight md:text-5xl">
-              <Counter to={s.value} decimals={s.decimals ?? 0} />
+              <Counter to={s.value} decimals={s.decimals ?? 0} reducedMotion={reducedMotion} />
               <span className="ms-1">{s.suffix}</span>
             </p>
             <p className="mt-2 text-sm text-white/70">{t(s.key)}</p>

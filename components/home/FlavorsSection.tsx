@@ -5,10 +5,12 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FLAVOR_VISUALS } from "@/lib/flavors-visual";
+import { useMobileReducedMotion } from "@/hooks/useMobileReducedMotion";
 
 export default function FlavorsSection() {
   const t = useTranslations("flavors");
   const locale = useLocale();
+  const reducedMotion = useMobileReducedMotion();
 
   return (
     <section className="section-padding bg-brand-dark">
@@ -36,7 +38,7 @@ export default function FlavorsSection() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
+              transition={{ duration: 0.5, delay: reducedMotion ? 0 : i * 0.08 }}
               className="card-luxury overflow-hidden"
             >
               <div
@@ -50,6 +52,8 @@ export default function FlavorsSection() {
                     alt={t(`items.${f.key}.name`)}
                     width={296}
                     height={296}
+                    loading="lazy"
+                    sizes="(max-width: 640px) 40vw, (max-width: 1024px) 25vw, 200px"
                     className="relative z-[1] h-[7rem] w-[7rem] object-contain p-2 drop-shadow-[0_8px_24px_rgba(0,0,0,.4)] md:h-[7.25rem] md:w-[7.25rem]"
                   />
                 </div>

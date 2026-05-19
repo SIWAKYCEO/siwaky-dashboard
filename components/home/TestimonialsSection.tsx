@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useMobileReducedMotion } from "@/hooks/useMobileReducedMotion";
+
 interface Item {
   name: string;
   city: string;
@@ -13,6 +15,7 @@ interface Item {
 export default function TestimonialsSection() {
   const t = useTranslations("testimonials");
   const items = t.raw("items") as Item[];
+  const reducedMotion = useMobileReducedMotion();
 
   return (
     <section className="section-padding bg-brand-dark2">
@@ -40,7 +43,7 @@ export default function TestimonialsSection() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
+              transition={{ duration: 0.5, delay: reducedMotion ? 0 : (i % 3) * 0.08 }}
               className="card-luxury"
             >
               <div className="flex items-center gap-1 text-brand-gold">

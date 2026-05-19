@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
+import { useMobileReducedMotion } from "@/hooks/useMobileReducedMotion";
 
 const PARTICLES = [
   { x: "8%",  y: "18%", size: 5, dur: 9.5,  delay: 0.0 },
@@ -24,9 +25,11 @@ export default function HeroSection() {
   const t = useTranslations();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
+  const reducedMotion = useMobileReducedMotion();
 
   const headline = t("hero.headline");
   const words = headline.split(" ");
+  const visibleParticles = reducedMotion ? PARTICLES.slice(0, 3) : PARTICLES;
 
   return (
     <section className="relative min-h-[92vh] w-full overflow-hidden bg-brand-dark">
@@ -36,24 +39,23 @@ export default function HeroSection() {
       <div aria-hidden className="absolute -left-32 -top-32 size-[480px] rounded-full bg-brand-gold/10 blur-3xl" />
       <div aria-hidden className="absolute -right-24 bottom-0 size-[420px] rounded-full bg-brand-goldDark/15 blur-3xl" />
 
-      {/* Floating gold particles */}
-      {PARTICLES.map((p, i) => (
+      {/* Floating gold particles — 3 on mobile, 10 on desktop */}
+      {visibleParticles.map((p, i) => (
         <motion.div
           key={i}
           aria-hidden
           className="pointer-events-none absolute rounded-full bg-brand-gold"
-          style={{ left: p.x, top: p.y, width: p.size, height: p.size }}
-          animate={{
-            y: [0, -22, 10, -14, 0],
-            x: [0, 9, -6, 5, 0],
-            opacity: [0.15, 0.4, 0.12, 0.3, 0.15],
-          }}
-          transition={{
-            duration: p.dur,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          style={{ left: p.x, top: p.y, width: p.size, height: p.size, willChange: "transform" }}
+          animate={
+            reducedMotion
+              ? { opacity: 0.2 }
+              : { y: [0, -22, 10, -14, 0], x: [0, 9, -6, 5, 0], opacity: [0.15, 0.4, 0.12, 0.3, 0.15] }
+          }
+          transition={
+            reducedMotion
+              ? { duration: 0 }
+              : { duration: p.dur, delay: p.delay, repeat: Infinity, ease: "easeInOut" }
+          }
         />
       ))}
 
@@ -67,20 +69,31 @@ export default function HeroSection() {
           SIWAKY
         </motion.span>
 
-        {/* Staggered headline */}
-        <h1 className="font-display text-4xl leading-[1.2] text-white sm:text-6xl md:text-7xl">
-          {words.map((word, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: "easeOut" }}
-              className="inline-block me-[0.25em]"
-            >
-              {word}
-            </motion.span>
-          ))}
-        </h1>
+        {/* Headline — single fade on mobile, per-word stagger on desktop */}
+        {reducedMotion ? (
+          <motion.h1
+            className="font-display text-4xl leading-[1.2] text-white sm:text-6xl md:text-7xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+          >
+            {headline}
+          </motion.h1>
+        ) : (
+          <h1 className="font-display text-4xl leading-[1.2] text-white sm:text-6xl md:text-7xl">
+            {words.map((word, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.08, ease: "easeOut" }}
+                className="inline-block me-[0.25em]"
+              >
+                {word}
+              </motion.span>
+            ))}
+          </h1>
+        )}
 
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -106,9 +119,10 @@ export default function HeroSection() {
           transition={{ duration: 0.7, delay: 0.55 }}
           className="mt-10 flex flex-col items-center gap-4"
         >
-          {/* Pulsing CTA */}
+          {/* Pulsing CTA — disabled on mobile */}
           <motion.div
-            animate={{ scale: [1, 1.045, 1] }}
+            style={{ willChange: "transform" }}
+            animate={reducedMotion ? {} : { scale: [1, 1.045, 1] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.4 }}
           >
             <Link href={`/${locale}/product`} className="btn-primary text-lg">

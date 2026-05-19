@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { BookOpen, Leaf, Award } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useMobileReducedMotion } from "@/hooks/useMobileReducedMotion";
+
 const ITEMS = [
   { key: "sunnah",  Icon: BookOpen },
   { key: "natural", Icon: Leaf },
@@ -12,6 +14,7 @@ const ITEMS = [
 
 export default function SunnahSection() {
   const t = useTranslations("sunnah");
+  const reducedMotion = useMobileReducedMotion();
 
   return (
     <section className="section-padding relative overflow-hidden bg-brand-black">
@@ -51,7 +54,8 @@ export default function SunnahSection() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
+              transition={{ duration: 0.5, delay: reducedMotion ? 0 : i * 0.1 }}
+              style={{ willChange: "transform" }}
               className="card-luxury text-start"
             >
               <Icon className="size-7 text-brand-gold" />
