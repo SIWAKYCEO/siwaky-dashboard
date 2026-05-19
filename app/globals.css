@@ -44,7 +44,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-full
            bg-brand-gold px-7 py-4 font-semibold tracking-wide text-brand-dark
            shadow-gold transition-all duration-300
-           hover:bg-brand-goldLight hover:shadow-goldStrong
+           hover:bg-brand-goldLight hover:shadow-goldStrong hover:scale-[1.02]
            focus-visible:outline-2 focus-visible:outline-brand-goldLight focus-visible:outline-offset-2
            disabled:cursor-not-allowed disabled:opacity-50;
   }

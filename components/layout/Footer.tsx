@@ -1,6 +1,6 @@
 "use client";
 
-import { Instagram, Mail } from "lucide-react";
+import { Award, Instagram, Mail } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -30,6 +30,17 @@ export default function Footer() {
                 siwaky.assistance@gmail.com
               </a>
             </div>
+
+            {/* Halal cert badge */}
+            <a
+              href="/halal-cert.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex items-center gap-2.5 rounded-xl border border-brand-gold/40 bg-brand-gold/8 px-4 py-2.5 text-sm text-brand-goldLight transition-all duration-200 hover:border-brand-gold/70 hover:bg-brand-gold/15 hover:shadow-gold"
+            >
+              <Award className="size-4 shrink-0 text-brand-gold" />
+              <span>{t("footer.certificate")}</span>
+            </a>
           </div>
 
           <div className="md:col-span-2">

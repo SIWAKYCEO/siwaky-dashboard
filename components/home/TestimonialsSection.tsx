@@ -17,15 +17,21 @@ export default function TestimonialsSection() {
   return (
     <section className="section-padding bg-brand-dark2">
       <div className="container-luxury">
-        <div className="text-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <span className="ornament text-xs uppercase tracking-[0.4em] text-brand-goldLight">
-            Reviews
+            {t("kicker")}
           </span>
           <h2 className="mt-4 font-display text-3xl text-white md:text-5xl">
             {t("title")}
           </h2>
           <p className="mt-3 text-white/70">{t("sub")}</p>
-        </div>
+        </motion.div>
 
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {items.map((item, i) => (

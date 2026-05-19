@@ -33,11 +33,13 @@ export default function OfferSelector({ value, onChange }: Props) {
               key={id}
               type="button"
               onClick={() => onChange(id)}
+              whileHover={!active ? { y: -4, boxShadow: "0 8px 30px -8px rgba(201,168,76,0.35)" } : {}}
               whileTap={{ scale: 0.99 }}
+              transition={{ duration: 0.2 }}
               className={`relative w-full overflow-hidden rounded-2xl border p-4 text-start transition-all duration-200
                 ${active
                   ? "border-brand-gold bg-brand-gold/10 shadow-gold"
-                  : "border-white/10 bg-[#28282A]/95 hover:border-brand-gold/40"}`}
+                  : "border-white/10 bg-[#28282A]/95 hover:border-brand-gold/50"}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">

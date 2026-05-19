@@ -5,7 +5,7 @@ import { Menu, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Logo from "@/components/shared/Logo";
 import { useCartStore } from "@/store/cartStore";
@@ -24,16 +24,30 @@ export default function Header() {
   const locale = params?.locale ?? "ar";
   const openCart = useCartStore((s) => s.open);
   const totalQty = useCartStore((s) => s.totalQty());
+  const addCount = useCartStore((s) => s.addCount);
   const thankYouRoute = pathname?.includes("/thank-you");
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartBounce, setCartBounce] = useState(false);
+  const prevAddCount = useRef(addCount);
 
+  /* scroll detection */
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  /* cart bounce on new item */
+  useEffect(() => {
+    if (addCount > prevAddCount.current) {
+      setCartBounce(true);
+      const t = setTimeout(() => setCartBounce(false), 650);
+      prevAddCount.current = addCount;
+      return () => clearTimeout(t);
+    }
+  }, [addCount]);
 
   /* close drawers on navigation */
   useEffect(() => {
@@ -50,20 +64,18 @@ export default function Header() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
-          scrolled ? "glass-dark" : "bg-transparent"
+        className={`sticky top-0 z-40 w-full transition-all duration-500 ${
+          scrolled
+            ? "glass-dark shadow-[0_4px_30px_rgba(0,0,0,0.4)]"
+            : "bg-transparent backdrop-blur-none"
         }`}
       >
-        <div className="container-luxury flex h-16 items-center justify-between md:h-20">
-          <Link href={`/${locale}`} aria-label="SIWAKY home" className="shrink-0">
-            <Logo size="lg" />
-          </Link>
+        <div className="container-luxury relative flex h-16 items-center justify-between md:h-20">
 
-          {/* desktop nav */}
+          {/* ── Left: desktop nav ── */}
           <nav className="hidden gap-8 md:flex">
             {NAV.map((item) => {
               const href = `/${locale}${item.href}`;
@@ -73,53 +85,98 @@ export default function Header() {
                 <Link
                   key={item.key}
                   href={href}
-                  className={`relative text-base transition-colors ${
+                  className={`group relative pb-1 text-base transition-colors ${
                     active ? "text-brand-goldLight" : "text-white/80 hover:text-white"
                   }`}
                 >
                   {t(item.key)}
+                  {/* active indicator */}
                   {active && (
                     <span className="absolute -bottom-1.5 start-0 end-0 mx-auto block h-px w-8 bg-brand-gold" />
+                  )}
+                  {/* hover underline slides from left */}
+                  {!active && (
+                    <span className="absolute -bottom-1 left-0 h-px w-0 bg-brand-gold transition-all duration-300 group-hover:w-full" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
-            {/* desktop flag switcher */}
-          <div className="hidden md:flex items-center gap-1.5">
-            {[
-              { loc: "ar", flag: "🇸🇦" },
-              { loc: "en", flag: "🇬🇧" },
-            ].map(({ loc, flag }) => {
-              const isActive = locale === loc;
-              const href = pathname?.replace(`/${locale}`, `/${loc}`) || `/${loc}`;
-              return (
-                <Link
-                  key={loc}
-                  href={href}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition-all duration-200 ${
-                    isActive
-                      ? "ring-2 ring-brand-gold ring-offset-1 ring-offset-brand-dark scale-110"
-                      : "opacity-50 hover:opacity-90 hover:scale-105"
-                  }`}
-                  aria-label={loc === "ar" ? "العربية" : "English"}
-                >
-                  {flag}
-                </Link>
-              );
-            })}
+          {/* ── Mobile left: hamburger ── */}
+          <button
+            type="button"
+            aria-label={t("menu")}
+            onClick={() => setMobileOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight md:hidden"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {mobileOpen ? (
+                <motion.span key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.18 }}>
+                  <X className="size-5" />
+                </motion.span>
+              ) : (
+                <motion.span key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.18 }}>
+                  <Menu className="size-5" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+
+          {/* ── Center: Logo (absolute) ── */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Link href={`/${locale}`} aria-label="SIWAKY home" className="group block shrink-0">
+              <motion.div
+                animate={{
+                  filter: [
+                    "drop-shadow(0 0 0px rgba(201,168,76,0))",
+                    "drop-shadow(0 0 18px rgba(201,168,76,0.85))",
+                    "drop-shadow(0 0 0px rgba(201,168,76,0))",
+                  ],
+                }}
+                transition={{ duration: 1.4, delay: 0.4, ease: "easeOut", times: [0, 0.4, 1] }}
+              >
+                <Logo size="2xl" shimmer />
+              </motion.div>
+            </Link>
           </div>
 
-            <button
+          {/* ── Right: language switcher + cart ── */}
+          <div className="flex items-center gap-2">
+            {/* desktop flag switcher */}
+            <div className="hidden md:flex items-center gap-1.5">
+              {[
+                { loc: "ar", flag: "🇸🇦" },
+                { loc: "en", flag: "🇬🇧" },
+              ].map(({ loc, flag }) => {
+                const isActive = locale === loc;
+                const href = pathname?.replace(`/${locale}`, `/${loc}`) || `/${loc}`;
+                return (
+                  <Link
+                    key={loc}
+                    href={href}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-lg transition-all duration-200 ${
+                      isActive
+                        ? "ring-2 ring-brand-gold ring-offset-1 ring-offset-brand-dark scale-110"
+                        : "opacity-50 hover:opacity-90 hover:scale-105"
+                    }`}
+                    aria-label={loc === "ar" ? "العربية" : "English"}
+                  >
+                    {flag}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* cart button with bounce */}
+            <motion.button
               type="button"
-              onClick={() => {
-                if (!thankYouRoute) openCart();
-              }}
+              onClick={() => { if (!thankYouRoute) openCart(); }}
               disabled={thankYouRoute}
               aria-disabled={thankYouRoute}
               aria-label={t("cart")}
+              animate={cartBounce ? { scale: [1, 1.35, 0.88, 1.15, 1] } : { scale: 1 }}
+              transition={{ duration: 0.55, ease: "easeInOut" }}
               className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border text-white/90 transition-colors ${
                 thankYouRoute
                   ? "cursor-not-allowed border-white/[0.06] opacity-35"
@@ -132,47 +189,15 @@ export default function Header() {
                   {totalQty}
                 </span>
               )}
-            </button>
-
-            <button
-              type="button"
-              aria-label={t("menu")}
-              onClick={() => setMobileOpen((v) => !v)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/90 transition-colors hover:border-brand-gold/60 hover:text-brand-goldLight md:hidden"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {mobileOpen ? (
-                  <motion.span
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <X className="size-5" />
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.18 }}
-                  >
-                    <Menu className="size-5" />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
+            </motion.button>
           </div>
         </div>
       </header>
 
-      {/* ── Mobile drawer portal ─────────────────────────── */}
+      {/* ── Mobile drawer ─────────────────────────── */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -184,7 +209,6 @@ export default function Header() {
               aria-hidden
             />
 
-            {/* drawer panel — slides from the left */}
             <motion.div
               key="drawer"
               initial={{ x: "-100%" }}
@@ -194,7 +218,6 @@ export default function Header() {
               className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#0a0a0a] shadow-2xl md:hidden"
               style={{ borderRight: "1px solid rgba(212,175,55,0.15)" }}
             >
-              {/* drawer header */}
               <div className="flex h-16 items-center justify-between px-6 border-b border-white/5">
                 <Logo size="sm" />
                 <button
@@ -207,10 +230,8 @@ export default function Header() {
                 </button>
               </div>
 
-              {/* gold divider */}
               <div className="h-px bg-gradient-to-r from-brand-gold/40 via-brand-goldLight/20 to-transparent" />
 
-              {/* nav links */}
               <nav className="flex flex-col gap-1 px-4 py-6">
                 {NAV.map((item, i) => {
                   const href = `/${locale}${item.href}`;
@@ -241,10 +262,8 @@ export default function Header() {
                 })}
               </nav>
 
-              {/* spacer */}
               <div className="flex-1" />
 
-              {/* language switcher at bottom */}
               <div className="px-4 pb-8 pt-4 border-t border-white/5">
                 <motion.div
                   initial={{ opacity: 0 }}

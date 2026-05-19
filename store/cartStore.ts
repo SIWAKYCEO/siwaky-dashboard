@@ -54,6 +54,8 @@ interface CartState {
   openCheckout: () => void;
   closeCheckout: () => void;
 
+  addCount: number;
+
   addOffer: (offerId: OfferId) => void;
   setOffer: (offerId: OfferId) => void;     // single-product store: replace, not append
   removeOffer: (offerId: OfferId) => void;
@@ -77,6 +79,7 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       isCheckoutOpen: false,
+      addCount: 0,
 
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
@@ -87,10 +90,11 @@ export const useCartStore = create<CartState>()(
 
       addOffer: (offerId) => {
         const o = OFFERS[offerId];
-        set({
+        set((s) => ({
           items: [{ offerId, quantity: 1, price: o.price }],
           isOpen: true,
-        });
+          addCount: s.addCount + 1,
+        }));
       },
 
       setOffer: (offerId) => {

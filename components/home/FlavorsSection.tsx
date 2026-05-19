@@ -13,7 +13,13 @@ export default function FlavorsSection() {
   return (
     <section className="section-padding bg-brand-dark">
       <div className="container-luxury">
-        <div className="text-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <span className="ornament text-xs uppercase tracking-[0.4em] text-brand-goldLight">
             {t("sectionKicker")}
           </span>
@@ -21,7 +27,7 @@ export default function FlavorsSection() {
             {t("title")}
           </h2>
           <p className="mt-3 text-white/70">{t("sub")}</p>
-        </div>
+        </motion.div>
 
         <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
           {FLAVOR_VISUALS.map((f, i) => (

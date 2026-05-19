@@ -23,7 +23,7 @@ export default function ProductImages() {
         initial={{ opacity: 0.2 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.35 }}
-        className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 shadow-gold"
+        className="group relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 shadow-gold"
       >
         <Image
           src={productPhoto}
@@ -31,7 +31,7 @@ export default function ProductImages() {
           fill
           priority
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover object-center"
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent" />
         <span className="absolute top-4 start-4 badge-gold">{tTrust("halal")}</span>

@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 import CartDrawer from "@/components/cart/CartDrawer";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import PageTransition from "@/components/shared/PageTransition";
+import ScrollProgress from "@/components/shared/ScrollProgress";
 import SocialProofTicker from "@/components/shared/SocialProofTicker";
+import SplashScreen from "@/components/shared/SplashScreen";
 import WhatsappFab from "@/components/shared/WhatsappFab";
 
-/** “Live order” toast — reads like a dev indicator; hidden in production unless opted in. */
 function showSocialProofTicker(): boolean {
   if (process.env.NEXT_PUBLIC_SHOW_SOCIAL_PROOF_TICKER === "true") return true;
   if (process.env.NEXT_PUBLIC_SHOW_SOCIAL_PROOF_TICKER === "false") return false;
@@ -15,7 +17,6 @@ function showSocialProofTicker(): boolean {
 
 type Props = {
   children: ReactNode;
-  /** Thank-you checkout completion: omit cart shell entirely (fixes stray empty-drawer SSR/hydrate). */
   showCart?: boolean;
 };
 
@@ -23,8 +24,12 @@ export default function SiteChrome({ children, showCart = true }: Props) {
   const withCart = showCart !== false;
   return (
     <>
+      <SplashScreen />
+      <ScrollProgress />
       <Header />
-      <main className="relative z-20">{children}</main>
+      <main className="relative z-20">
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer />
       {withCart ? <CartDrawer /> : null}
       {showSocialProofTicker() ? <SocialProofTicker /> : null}
