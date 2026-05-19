@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Award, Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import HalalCertDownload from "@/components/shared/HalalCertDownload";
+
 export default function HalalCertSection() {
   const t = useTranslations("halal");
   return (
@@ -33,14 +35,10 @@ export default function HalalCertSection() {
             </div>
           </div>
 
-          <a
-            href="/halal-cert.pdf"
-            download="SIWAKY_Halal_Certificate.pdf"
-            className="btn-ghost-gold mt-8"
-          >
+          <HalalCertDownload className="btn-ghost-gold mt-8">
             <Download className="size-4" />
             {t("download")}
-          </a>
+          </HalalCertDownload>
         </motion.div>
       </div>
     </section>
