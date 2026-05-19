@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import TrustBadges from "@/components/shared/TrustBadges";
-import ScarcityBar from "@/components/shared/ScarcityBar";
 
 const PARTICLES = [
   { x: "8%",  y: "18%", size: 5, dur: 9.5,  delay: 0.0 },
@@ -23,7 +22,6 @@ const PARTICLES = [
 
 export default function HeroSection() {
   const t = useTranslations();
-  const thero = useTranslations("hero");
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
 
@@ -117,10 +115,6 @@ export default function HeroSection() {
               {t("hero.cta")}
             </Link>
           </motion.div>
-          <ScarcityBar
-            initial={12}
-            label={(n) => thero("scarcityCount", { count: n })}
-          />
         </motion.div>
 
         <motion.div
