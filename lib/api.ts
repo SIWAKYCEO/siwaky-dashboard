@@ -28,15 +28,16 @@ export interface GeoCheckResponse {
 export interface OrderCreateInput {
   name: string;
   phone: string;
+  city?: string;
   offer: "box-1" | "box-2" | "box-3";
   quantity: number;
   price_sar: number;
   product?: string;
+  sku?: string;
   source?: string;
   campaign?: string;
   event_id?: string;
   notes?: string;
-  sku?: string;
 }
 
 export interface OrderCreateResponse {

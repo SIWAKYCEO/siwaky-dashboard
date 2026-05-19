@@ -82,13 +82,14 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
     const payload = {
       name: ctx.name,
       phone: ctx.phone,
+      city: "",
       offer: "box-1" as const,
-      quantity: 1,
       price_sar: cfg.price,
+      quantity: 1,
       product: "SIWAKY Box x1 — Upsell",
+      sku: "SIWAKY12",
       source: upsellSource,
       campaign: "thankyou-page-upsell",
-      sku: "SIWAKY12",
       notes: `Upsell aggiunto dalla thank you page — ordine originale: ${originalOrderId ?? "sconosciuto"}`,
       event_id: uuid(),
     };
