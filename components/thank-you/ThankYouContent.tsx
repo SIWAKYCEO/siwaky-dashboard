@@ -15,6 +15,7 @@ import { useCartStore } from "@/store/cartStore";
 import GoldConfetti from "./GoldConfetti";
 import GoldParticles from "./GoldParticles";
 import PremiumCheckmark from "./PremiumCheckmark";
+import UpsellCard from "./UpsellCard";
 
 function parseOfferId(raw: string | null): OfferId | undefined {
   if (raw === "box-1" || raw === "box-2" || raw === "box-3") return raw;
@@ -218,6 +219,9 @@ export default function ThankYouContent() {
             </div>
           </div>
         </motion.div>
+
+        {/* ── Upsell ──────────────────────────────────────── */}
+        <UpsellCard offerId={offerId} />
 
         {/* ── What happens next ───────────────────────────── */}
         <motion.div

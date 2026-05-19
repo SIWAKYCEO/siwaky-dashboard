@@ -35,6 +35,7 @@ export interface OrderCreateInput {
   campaign?: string;
   event_id?: string;
   notes?: string;
+  sku?: string;
 }
 
 export interface OrderCreateResponse {

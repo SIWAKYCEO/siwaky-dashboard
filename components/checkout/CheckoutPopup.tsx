@@ -125,6 +125,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
       source,
       campaign,
       event_id: eventId,
+      sku: "SIWAKY12",
     });
 
     if (!res.ok) {
@@ -157,6 +158,16 @@ export default function CheckoutPopup({ open, onClose }: Props) {
 
     document.body.style.overflow = "";
     useCartStore.getState().clearCart();
+
+    // Save name + phone for post-purchase upsell on thank-you page
+    try {
+      sessionStorage.setItem(
+        "siwaky-upsell-ctx",
+        JSON.stringify({ name: values.name, phone: values.phone }),
+      );
+    } catch {
+      // sessionStorage unavailable — upsell will still show but won't be able to submit
+    }
 
     const dest = `/${locale}/thank-you?order=${encodeURIComponent(res.data.order_id)}&qty=${q}&total=${tot}&offer=${offerEnc}`;
     if (typeof window !== "undefined") {
