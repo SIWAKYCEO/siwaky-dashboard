@@ -20,9 +20,10 @@ function fmt(s: number) {
 
 interface Props {
   offerId: OfferId | undefined;
+  originalOrderId?: string | null;
 }
 
-export default function UpsellCard({ offerId }: Props) {
+export default function UpsellCard({ offerId, originalOrderId }: Props) {
   const cfg = offerId && offerId in UPSELL ? UPSELL[offerId as keyof typeof UPSELL] : null;
 
   const [state, setState] = useState<"idle" | "success" | "gone">("idle");
@@ -75,15 +76,18 @@ export default function UpsellCard({ offerId }: Props) {
     setLoading(true);
     setErr(null);
 
+    const upsellSource = offerId === "box-1" ? "upsell-box1" : "upsell-box2";
+
     const res = await createOrder({
       name: ctx.name,
       phone: ctx.phone,
       offer: "box-1",
       quantity: 1,
       price_sar: cfg.price,
-      source: "upsell",
+      source: upsellSource,
+      campaign: "thankyou-page-upsell",
       sku: "SIWAKY12",
-      notes: "Upsell order — SIWAKY Box x1",
+      notes: `Upsell aggiunto dalla thank you page — ordine originale: ${originalOrderId ?? "sconosciuto"}`,
       event_id: uuid(),
     });
 
