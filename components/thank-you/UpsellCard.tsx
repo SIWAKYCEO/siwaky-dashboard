@@ -78,12 +78,13 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
     setErr(null);
 
     const upsellSource = offerId === "box-1" ? "upsell-box1" : "upsell-box2";
+    const upsellOfferId = offerId === "box-2" ? ("box-2-upsell" as const) : ("box-1-upsell" as const);
 
     const payload = {
       name: ctx.name,
       phone: ctx.phone,
       city: "",
-      offer: "box-1" as const,
+      offer: upsellOfferId,
       price_sar: cfg.price,
       quantity: 1,
       product: "SIWAKY Box x1 — Upsell",

@@ -1,4 +1,4 @@
-export type OfferId = "box-1" | "box-2" | "box-3";
+export type OfferId = "box-1" | "box-2" | "box-3" | "box-1-upsell" | "box-2-upsell";
 
 export interface Offer {
   id: OfferId;
