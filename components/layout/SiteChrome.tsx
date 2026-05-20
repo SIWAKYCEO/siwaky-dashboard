@@ -6,7 +6,7 @@ import Header from "@/components/layout/Header";
 import PageTransition from "@/components/shared/PageTransition";
 import ScrollProgress from "@/components/shared/ScrollProgress";
 import SocialProofTicker from "@/components/shared/SocialProofTicker";
-import SplashScreen from "@/components/shared/SplashScreen";
+// SplashScreen is rendered in app/[locale]/layout.tsx
 import WhatsappFab from "@/components/shared/WhatsappFab";
 
 function showSocialProofTicker(): boolean {
@@ -24,7 +24,6 @@ export default function SiteChrome({ children, showCart = true }: Props) {
   const withCart = showCart !== false;
   return (
     <>
-      <SplashScreen />
       <ScrollProgress />
       <Header />
       <main className="relative z-20">

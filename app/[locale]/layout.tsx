@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import HtmlAttributes from "@/components/shared/HtmlAttributes";
 import PixelsLoader from "@/components/shared/PixelsLoader";
+import SplashScreen from "@/components/SplashScreen";
 import { locales, type Locale } from "@/i18n";
 import { localBusinessSchema, organizationSchema } from "@/lib/seo/jsonld";
 
@@ -30,6 +31,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Pro
       <HtmlAttributes lang={lang} dir={dir} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJson }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: localJson }} />
+      <SplashScreen />
       <div lang={lang} dir={dir} className="min-h-screen bg-brand-dark font-sans text-white">
         <PixelsLoader />
         {children}

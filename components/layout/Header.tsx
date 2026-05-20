@@ -127,6 +127,7 @@ export default function Header() {
           <div className="absolute left-1/2 -translate-x-1/2">
             <Link href={`/${locale}`} aria-label="SIWAKY home" className="group block shrink-0">
               <motion.div
+                layoutId="siwaky-logo"
                 animate={{
                   filter: [
                     "drop-shadow(0 0 0px rgba(201,168,76,0))",
