@@ -273,7 +273,7 @@ export default function SplashScreen() {
               "--d":  `${p.duration}s`,
               "--dl": `${p.delay}s`,
               "--dr": `${p.drift}px`,
-            } as React.CSSProperties}
+            } as React.CSSProperties & { [key: string]: string | number }}
           />
         ))}
 
