@@ -4,6 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+/* ─── Mobile detection (module-level, safe in "use client") ─────────────── */
+const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+const DUR = isMobile ? 0.8 : 1; // 20% faster on mobile
+
 /* ─── Particle types ─────────────────────────────────────────────────────── */
 type PType = "a" | "b" | "c";
 interface Particle {
@@ -12,34 +16,36 @@ interface Particle {
   duration: number; delay: number; drift: number;
 }
 
-// Type A — tiny fast gold dots
 const PA: [number,number,number,number,number][] = [
   [1.0,8,5.2,0.5,-8],[1.2,19,6.8,1.2,12],[0.8,31,5.5,2.8,-15],
   [1.1,52,7.2,0.3,8],[1.0,64,6.0,3.5,-20],[1.3,76,5.8,1.7,15],
   [0.9,88,7.5,4.1,-10],[1.2,43,6.3,2.2,22],[1.0,25,5.9,0.9,-5],
   [1.1,71,6.6,3.8,18],
 ];
-// Type B — large dreamy glow orbs
 const PB: [number,number,number,number,number][] = [
   [3.2,15,13.5,0.7,-25],[3.8,37,15.2,2.4,20],[3.0,58,12.8,4.6,-18],
   [4.0,79,14.7,1.3,28],[3.5,91,13.2,3.2,-22],[3.2,6,15.8,0.4,15],
   [3.7,46,14.3,2.9,-30],[3.4,62,12.5,4.3,25],[3.9,83,15.5,1.8,-12],
   [3.1,28,13.0,3.7,20],
 ];
-// Type C — star bursts at fixed positions [size, left%, dur, delay, drift, top%]
 const PC: [number,number,number,number,number,number][] = [
   [2.5,12,3.8,0.5,0,22],[2.0,35,4.2,2.1,0,68],
   [2.8,65,3.5,4.0,0,35],[2.2,82,4.8,1.8,0,55],
   [3.0,50,3.2,3.5,0,15],
 ];
 
-function buildParticles(mobile: boolean): Particle[] {
+function buildParticles(): Particle[] {
+  if (isMobile) {
+    // 6 particles on mobile — type A only, no glow orbs or star bursts
+    return PA.slice(0,3).map(([size,left,duration,delay,drift],i) =>
+      ({ id:i, type:"a" as PType, size, left, duration:duration*DUR, delay, drift }))
+      .concat(PB.slice(0,3).map(([size,left,duration,delay,drift],i) =>
+      ({ id:10+i, type:"b" as PType, size, left, duration:duration*DUR, delay, drift })));
+  }
   const out: Particle[] = [];
-  const aCount = mobile ? 4 : 10;
-  const bCount = mobile ? 4 : 10;
-  PA.slice(0,aCount).forEach(([size,left,duration,delay,drift],i) =>
+  PA.forEach(([size,left,duration,delay,drift],i) =>
     out.push({ id:i, type:"a", size, left, duration, delay, drift }));
-  PB.slice(0,bCount).forEach(([size,left,duration,delay,drift],i) =>
+  PB.forEach(([size,left,duration,delay,drift],i) =>
     out.push({ id:10+i, type:"b", size, left, duration, delay, drift }));
   PC.forEach(([size,left,duration,delay,drift,top],i) =>
     out.push({ id:20+i, type:"c", size, left, duration, delay, drift, top }));
@@ -56,17 +62,18 @@ const DOT_SEED:[number,number,number,number][] = [
   [.91,.08,.22,-.22],[.08,.91,-.15,.18],[.55,.75,.20,.15],[.75,.55,-.25,-.18],
 ];
 
-/* ─── Phase timings (ms) ─────────────────────────────────────────────────── */
+/* ─── Phase timings ──────────────────────────────────────────────────────── */
+// Mobile total: ~3s. Desktop: ~5s.
 const T = {
-  p1:   50,
-  p2:   800,
-  skip: 1800,
-  p3:   2200,
-  p4:   3800,   // text begins fading
-  p5:   4000,   // logo exits to header
-  p6:   4100,   // lens flare sweep
-  p7:   4200,   // clip-path wipe upward
-  out:  5000,   // unmount
+  p1:   isMobile ? 40   : 50,
+  p2:   isMobile ? 500  : 800,
+  skip: isMobile ? 1000 : 1800,
+  p3:   isMobile ? 1300 : 2200,
+  p4:   isMobile ? 2100 : 3800,   // text fades
+  p5:   isMobile ? 2350 : 4000,   // logo exits
+  p6:   isMobile ? 9999 : 4100,   // lens flare — disabled on mobile (9999 = never)
+  p7:   isMobile ? 2500 : 4200,   // exit wipe / fade
+  out:  isMobile ? 3200 : 5000,
 } as const;
 
 /* ─── Injected CSS ───────────────────────────────────────────────────────── */
@@ -100,20 +107,15 @@ const CSS = `
   75% {transform:scale(1.4);opacity:.25}
   100%{transform:scale(.1);opacity:0}}
 
-.sw-logo-img{
-  will-change:filter;
-  animation:sw-glow 2.5s ease-in-out infinite}
+${isMobile
+  /* Mobile: static single drop-shadow, no animation on filter */
+  ? `.sw-logo-img{filter:drop-shadow(0 0 25px rgba(201,168,76,0.6));}`
+  /* Desktop: triple-layer breathing glow */
+  : `.sw-logo-img{will-change:filter;animation:sw-glow 2.5s ease-in-out infinite}
 @keyframes sw-glow{
-  0%,100%{filter:
-    drop-shadow(0 0 24px rgba(255,240,150,.54))
-    drop-shadow(0 0 48px rgba(201,168,76,.36))
-    drop-shadow(0 0 96px rgba(201,168,76,.18))
-    brightness(1.02)}
-  50%{filter:
-    drop-shadow(0 0 40px rgba(255,240,150,.9))
-    drop-shadow(0 0 80px rgba(201,168,76,.6))
-    drop-shadow(0 0 160px rgba(201,168,76,.3))
-    brightness(1.06)}}
+  0%,100%{filter:drop-shadow(0 0 24px rgba(255,240,150,.54)) drop-shadow(0 0 48px rgba(201,168,76,.36)) drop-shadow(0 0 96px rgba(201,168,76,.18)) brightness(1.02)}
+  50%{filter:drop-shadow(0 0 40px rgba(255,240,150,.9)) drop-shadow(0 0 80px rgba(201,168,76,.6)) drop-shadow(0 0 160px rgba(201,168,76,.3)) brightness(1.06)}}`
+}
 
 .sw-tagline{animation:sw-tglow .6s 1.0s ease-in-out both}
 @keyframes sw-tglow{
@@ -135,19 +137,18 @@ export default function SplashScreen() {
   const dotsRef   = useRef<Dot[]>([]);
   const psRef     = useRef<Particle[]>([]);
 
-  /* session + reduced-motion guard */
+  /* ── session + prefers-reduced-motion guard ── */
   useEffect(() => {
     if (
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
       sessionStorage.getItem("sw_splash_v2")
     ) { setExited(true); return; }
-    const mobile = window.innerWidth < 768;
-    setLogoWidth(mobile ? 260 : 320);
-    psRef.current = buildParticles(mobile);
+    setLogoWidth(isMobile ? 260 : 320);
+    psRef.current = buildParticles();
     setShow(true);
   }, []);
 
-  /* phase timers */
+  /* ── phase timers ── */
   useEffect(() => {
     if (!show) return;
     const ts = [
@@ -167,9 +168,9 @@ export default function SplashScreen() {
     return () => ts.forEach(clearTimeout);
   }, [show]);
 
-  /* canvas constellation loop */
+  /* ── canvas constellation — desktop only ── */
   useEffect(() => {
-    if (!show) return;
+    if (!show || isMobile) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -224,7 +225,30 @@ export default function SplashScreen() {
   const halfLogo = logoWidth / 2 + 16;
 
   const exitText = { opacity: 0, y: -15 };
-  const exitTxt  = (delay=0) => ({ duration:.3, delay });
+  const exitTxt  = (delay = 0) => ({ duration: 0.24 * DUR, delay });
+
+  // Container exit: opacity fade on mobile, clip-path wipe on desktop
+  const containerAnim = wipe
+    ? (isMobile ? { opacity: 0 }                    : { clipPath: "inset(0 0 100% 0)" })
+    : (isMobile ? {}                                 : { clipPath: "inset(0 0 0% 0)"   });
+  const containerTrans = wipe
+    ? { duration: isMobile ? 0.3 : 0.4, ease: "easeInOut" as const }
+    : { duration: 0 };
+
+  // Logo animation: no filter animation on mobile (Safari perf)
+  const logoInitial = isMobile
+    ? { scale: 0.6,  opacity: 0 }
+    : { scale: 0.4,  filter: "blur(20px)", opacity: 0, y: 0 };
+  const logoAnimate = logoExit
+    ? (isMobile
+        ? { scale: 0.5, opacity: 0 }
+        : { scale: 0.5, y: "-48vh", opacity: 0, filter: "blur(5px)" })
+    : (isMobile
+        ? { scale: 1, opacity: 1 }
+        : { scale: 1, filter: "blur(0px)", opacity: 1, y: 0 });
+  const logoTrans = logoExit
+    ? { duration: 0.44 * DUR, ease: [.4,0,.2,1] as const }
+    : { duration: 0.72 * DUR, ease: [.16,1,.3,1] as const };
 
   return (
     <>
@@ -237,47 +261,60 @@ export default function SplashScreen() {
           display:"flex", alignItems:"center", justifyContent:"center",
           flexDirection:"column",
           transform:"translateZ(0)",
+          WebkitTransform:"translateZ(0)",
           overflow:"hidden",
           pointerEvents: phase>=4 ? "none" : undefined,
         }}
-        animate={wipe ? {clipPath:"inset(0 0 100% 0)"} : {clipPath:"inset(0 0 0% 0)"}}
-        transition={wipe ? {duration:.4, ease:"easeInOut"} : {duration:0}}
+        animate={containerAnim}
+        transition={containerTrans}
       >
-        {/* ── Canvas constellation ─── */}
-        <canvas ref={canvasRef} style={{position:"absolute",inset:0,pointerEvents:"none"}} />
+        {/* ── Canvas — desktop only (CPU-heavy on mobile) ── */}
+        {!isMobile && (
+          <canvas ref={canvasRef} style={{position:"absolute",inset:0,pointerEvents:"none"}} />
+        )}
 
-        {/* ── Grain texture ─── */}
-        <svg aria-hidden style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.03,pointerEvents:"none"}}>
-          <filter id="sw-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
-            <feColorMatrix type="saturate" values="0"/>
-          </filter>
-          <rect width="100%" height="100%" filter="url(#sw-noise)"/>
-        </svg>
+        {/* ── Grain — desktop only (feTurbulence is slow on Safari) ── */}
+        {!isMobile && (
+          <svg aria-hidden style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.03,pointerEvents:"none"}}>
+            <filter id="sw-noise">
+              <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+              <feColorMatrix type="saturate" values="0"/>
+            </filter>
+            <rect width="100%" height="100%" filter="url(#sw-noise)"/>
+          </svg>
+        )}
 
-        {/* ── Vignette ─── */}
+        {/* ── Vignette ── */}
         <div aria-hidden style={{
           position:"absolute", inset:0, pointerEvents:"none",
           background:"radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.72) 100%)",
         }}/>
 
-        {/* ── Particles ─── */}
-        {ps.map((p) => (
-          <div
-            key={p.id}
-            className={`sw-p${p.type}`}
-            style={{
-              width: p.size, height: p.size,
-              left: `${p.left}%`,
-              ...(p.type==="c" ? {top:`${p.top}%`} : {bottom:0}),
-              "--d":  `${p.duration}s`,
-              "--dl": `${p.delay}s`,
-              "--dr": `${p.drift}px`,
-            } as React.CSSProperties & { [key: string]: string | number }}
-          />
-        ))}
+        {/* ── Particles (contain:layout paint for compositor isolation) ── */}
+        <div
+          aria-hidden
+          style={{
+            position:"absolute", inset:0, pointerEvents:"none",
+            contain:"layout paint",
+          } as React.CSSProperties}
+        >
+          {ps.map((p) => (
+            <div
+              key={p.id}
+              className={`sw-p${p.type}`}
+              style={{
+                width: p.size, height: p.size,
+                left: `${p.left}%`,
+                ...(p.type==="c" ? {top:`${p.top}%`} : {bottom:0}),
+                "--d":  `${p.duration}s`,
+                "--dl": `${p.delay}s`,
+                "--dr": `${p.drift}px`,
+              } as React.CSSProperties & { [key: string]: string | number }}
+            />
+          ))}
+        </div>
 
-        {/* ── Phase 1: center gold pixel ─── */}
+        {/* ── Phase 1: center gold pixel ── */}
         {phase>=1 && (
           <motion.div aria-hidden
             style={{
@@ -290,11 +327,11 @@ export default function SplashScreen() {
             }}
             initial={{scale:0, opacity:0}}
             animate={{scale:[0,1,2.2,1], opacity:[0,1,.5,1]}}
-            transition={{duration:.8, times:[0,.25,.6,1]}}
+            transition={{duration:.64*DUR, times:[0,.25,.6,1]}}
           />
         )}
 
-        {/* ── Phase 2: radial light burst ─── */}
+        {/* ── Phase 2: radial light burst ── */}
         {phase>=2 && (
           <motion.div aria-hidden
             style={{
@@ -306,28 +343,27 @@ export default function SplashScreen() {
             }}
             initial={{width:0, height:0, opacity:0}}
             animate={{width:420, height:420, opacity:[0,1,.15,0]}}
-            transition={{duration:1.15, times:[0,.16,.65,1], ease:"easeOut"}}
+            transition={{duration:.92*DUR, times:[0,.16,.65,1], ease:"easeOut"}}
           />
         )}
 
-        {/* ── Phase 2: elliptical ambient glow behind logo ─── */}
+        {/* ── Phase 2: elliptical ambient glow behind logo ── */}
         {phase>=2 && (
           <motion.div aria-hidden
             style={{
               position:"absolute", top:"50%", left:"50%",
               transform:"translate(-50%,-50%)",
-              width:500, height:200,
-              borderRadius:"50%",
+              width:500, height:200, borderRadius:"50%",
               background:"radial-gradient(ellipse at center, rgba(201,168,76,.15) 0%, transparent 70%)",
               pointerEvents:"none",
             }}
             initial={{opacity:0, scale:.5}}
             animate={{opacity:1, scale:1}}
-            transition={{duration:1.0, ease:"easeOut"}}
+            transition={{duration:.8*DUR, ease:"easeOut"}}
           />
         )}
 
-        {/* ── Phase 2: horizontal gold lines left/right ─── */}
+        {/* ── Phase 2: horizontal gold lines ── */}
         {phase>=2 && (
           <>
             <motion.div aria-hidden
@@ -341,7 +377,7 @@ export default function SplashScreen() {
               }}
               initial={{width:0}}
               animate={logoExit ? {opacity:0} : {width:"45vw"}}
-              transition={logoExit ? {duration:.25} : {duration:.75, delay:.3, ease:[.16,1,.3,1]}}
+              transition={logoExit ? {duration:.2} : {duration:.6*DUR, delay:.24*DUR, ease:[.16,1,.3,1]}}
             />
             <motion.div aria-hidden
               style={{
@@ -354,12 +390,12 @@ export default function SplashScreen() {
               }}
               initial={{width:0}}
               animate={logoExit ? {opacity:0} : {width:"45vw"}}
-              transition={logoExit ? {duration:.25} : {duration:.75, delay:.3, ease:[.16,1,.3,1]}}
+              transition={logoExit ? {duration:.2} : {duration:.6*DUR, delay:.24*DUR, ease:[.16,1,.3,1]}}
             />
           </>
         )}
 
-        {/* ── Phase 2: logo ─── */}
+        {/* ── Phase 2: logo (will-change on logo only) ── */}
         {phase>=2 && (
           <motion.div
             layoutId="siwaky-logo"
@@ -368,15 +404,9 @@ export default function SplashScreen() {
               display:"flex", alignItems:"center", justifyContent:"center",
               willChange:"transform, opacity",
             }}
-            initial={{scale:.4, filter:"blur(20px)", opacity:0, y:0}}
-            animate={logoExit
-              ? {scale:.5, y:"-48vh", opacity:0, filter:"blur(5px)"}
-              : {scale:1, filter:"blur(0px)", opacity:1, y:0}
-            }
-            transition={logoExit
-              ? {duration:.55, ease:[.4,0,.2,1]}
-              : {duration:.9, ease:[.16,1,.3,1]}
-            }
+            initial={logoInitial}
+            animate={logoAnimate}
+            transition={logoTrans}
           >
             <Image
               src="/logo.png"
@@ -391,7 +421,7 @@ export default function SplashScreen() {
           </motion.div>
         )}
 
-        {/* ── Phase 3: text block ─── */}
+        {/* ── Phase 3: text block ── */}
         {phase>=3 && (
           <div style={{
             position:"absolute", bottom:"15%",
@@ -399,16 +429,13 @@ export default function SplashScreen() {
             display:"flex", flexDirection:"column", alignItems:"center",
             gap:12, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
           }}>
-
-            {/* Diamond */}
             <motion.div aria-hidden
               style={{fontSize:8, color:"#C9A84C", lineHeight:1}}
               initial={{opacity:0}}
               animate={textExit ? exitText : {opacity:[0,1,.7,1], scale:[1,1.4,1]}}
-              transition={textExit ? exitTxt(0) : {duration:.5,repeat:Infinity,repeatDelay:2,ease:"easeInOut",times:[0,.4,1]}}
+              transition={textExit ? exitTxt(0) : {duration:.4*DUR,repeat:Infinity,repeatDelay:2,ease:"easeInOut",times:[0,.4,1]}}
             >◆</motion.div>
 
-            {/* SIWAKY — explicit ltr so RTL page doesn't reverse letter order */}
             <motion.div
               style={{
                 display:"flex", direction:"ltr",
@@ -418,18 +445,17 @@ export default function SplashScreen() {
                 fontWeight:200,
               }}
               animate={textExit ? exitText : {}}
-              transition={textExit ? exitTxt(.05) : {}}
+              transition={textExit ? exitTxt(.04) : {}}
             >
               {"SIWAKY".split("").map((ch,i) => (
                 <motion.span key={i}
                   initial={{opacity:0, y:8}}
                   animate={{opacity:1, y:0}}
-                  transition={{delay:i*.06, duration:.4, ease:"easeOut"}}
+                  transition={{delay:i*.05*DUR, duration:.32*DUR, ease:"easeOut"}}
                 >{ch}</motion.span>
               ))}
             </motion.div>
 
-            {/* Arabic tagline with one-shot gold shimmer at 3.2s */}
             <motion.div
               className="sw-tagline"
               style={{
@@ -442,18 +468,17 @@ export default function SplashScreen() {
                 gap:"0 6px",
               }}
               animate={textExit ? exitText : {}}
-              transition={textExit ? exitTxt(.10) : {}}
+              transition={textExit ? exitTxt(.08) : {}}
             >
               {"حيث تلتقي السنّة بالفخامة".split(" ").map((word,i) => (
                 <motion.span key={i}
                   initial={{opacity:0}}
                   animate={{opacity:.92}}
-                  transition={{delay:.2+i*.12, duration:.4}}
+                  transition={{delay:.16*DUR+i*.096*DUR, duration:.32*DUR}}
                 >{word}</motion.span>
               ))}
             </motion.div>
 
-            {/* Subtitle */}
             <motion.div
               style={{
                 fontSize:10, color:"rgba(201,168,76,.45)",
@@ -463,15 +488,15 @@ export default function SplashScreen() {
               }}
               initial={{opacity:0}}
               animate={textExit ? exitText : {opacity:1}}
-              transition={textExit ? exitTxt(.15) : {delay:.65, duration:.5}}
+              transition={textExit ? exitTxt(.12) : {delay:.52*DUR, duration:.4*DUR}}
             >
               طهارة · أصالة · رقي
             </motion.div>
           </div>
         )}
 
-        {/* ── Phase 6: cinematic lens flare sweep ─── */}
-        {phase>=6 && (
+        {/* ── Phase 6: lens flare — desktop only ── */}
+        {!isMobile && phase>=6 && (
           <motion.div aria-hidden
             style={{
               position:"absolute", top:"44%", left:0, right:0,
@@ -486,12 +511,12 @@ export default function SplashScreen() {
           />
         )}
 
-        {/* ── Skip button ─── */}
+        {/* ── Skip button ── */}
         <AnimatePresence>
           {skipVis && phase<4 && (
             <motion.button
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              transition={{duration:.4}}
+              transition={{duration:.32*DUR}}
               onClick={() => { sessionStorage.setItem("sw_splash_v2","1"); setExited(true); }}
               style={{
                 position:"fixed", bottom:32, right:32,
