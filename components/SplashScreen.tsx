@@ -4,27 +4,51 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-/* ─── Particle data (seeded for determinism) ────────────────────────────── */
+/* ─── Particle types ─────────────────────────────────────────────────────── */
+type PType = "a" | "b" | "c";
 interface Particle {
-  id: number; size: number; left: number;
+  id: number; type: PType; size: number;
+  left: number; top?: number;
   duration: number; delay: number; drift: number;
 }
-const PARTICLE_DATA: [number, number, number, number, number][] = [
-  [1.8,23,9.2,1.3,-12],[2.4,67,11.5,0.4,18],[1.2,45,8.7,3.1,-25],
-  [3.1,12,13.2,0.8,7],[1.6,78,10.4,2.5,-18],[2.9,34,7.8,4.2,22],
-  [1.4,56,12.1,1.7,-8],[3.3,89,9.6,0.2,15],[2.1,29,11.8,3.8,-20],
-  [1.7,61,8.3,2.1,28],[2.6,8,13.7,0.6,-15],[1.3,72,10.9,4.7,10],
-  [3.0,41,7.5,1.9,-28],[2.2,83,12.4,3.3,20],[1.5,17,9.8,0.9,-5],
-  [2.8,53,11.2,2.7,25],[1.9,36,8.6,4.4,-22],[3.2,95,10.1,1.1,12],
+
+// Type A — tiny fast gold dots
+const PA: [number,number,number,number,number][] = [
+  [1.0,8,5.2,0.5,-8],[1.2,19,6.8,1.2,12],[0.8,31,5.5,2.8,-15],
+  [1.1,52,7.2,0.3,8],[1.0,64,6.0,3.5,-20],[1.3,76,5.8,1.7,15],
+  [0.9,88,7.5,4.1,-10],[1.2,43,6.3,2.2,22],[1.0,25,5.9,0.9,-5],
+  [1.1,71,6.6,3.8,18],
 ];
-function buildParticles(count: number): Particle[] {
-  return PARTICLE_DATA.slice(0, count).map(([size,left,duration,delay,drift], id) =>
-    ({ id, size, left, duration, delay, drift }));
+// Type B — large dreamy glow orbs
+const PB: [number,number,number,number,number][] = [
+  [3.2,15,13.5,0.7,-25],[3.8,37,15.2,2.4,20],[3.0,58,12.8,4.6,-18],
+  [4.0,79,14.7,1.3,28],[3.5,91,13.2,3.2,-22],[3.2,6,15.8,0.4,15],
+  [3.7,46,14.3,2.9,-30],[3.4,62,12.5,4.3,25],[3.9,83,15.5,1.8,-12],
+  [3.1,28,13.0,3.7,20],
+];
+// Type C — star bursts at fixed positions [size, left%, dur, delay, drift, top%]
+const PC: [number,number,number,number,number,number][] = [
+  [2.5,12,3.8,0.5,0,22],[2.0,35,4.2,2.1,0,68],
+  [2.8,65,3.5,4.0,0,35],[2.2,82,4.8,1.8,0,55],
+  [3.0,50,3.2,3.5,0,15],
+];
+
+function buildParticles(mobile: boolean): Particle[] {
+  const out: Particle[] = [];
+  const aCount = mobile ? 4 : 10;
+  const bCount = mobile ? 4 : 10;
+  PA.slice(0,aCount).forEach(([size,left,duration,delay,drift],i) =>
+    out.push({ id:i, type:"a", size, left, duration, delay, drift }));
+  PB.slice(0,bCount).forEach(([size,left,duration,delay,drift],i) =>
+    out.push({ id:10+i, type:"b", size, left, duration, delay, drift }));
+  PC.forEach(([size,left,duration,delay,drift,top],i) =>
+    out.push({ id:20+i, type:"c", size, left, duration, delay, drift, top }));
+  return out;
 }
 
-/* ─── Canvas constellation dots (seeded positions) ──────────────────────── */
+/* ─── Canvas constellation ───────────────────────────────────────────────── */
 interface Dot { x:number; y:number; vx:number; vy:number }
-const DOT_SEED: [number,number,number,number][] = [
+const DOT_SEED:[number,number,number,number][] = [
   [.12,.23,.18,-.15],[.34,.67,-.12,.22],[.56,.45,.25,-.18],[.78,.12,-.20,.15],
   [.23,.89,.15,.20],[.67,.34,-.18,-.12],[.45,.78,.22,.18],[.89,.56,-.15,-.25],
   [.11,.44,.20,.12],[.50,.50,-.22,.20],[.73,.27,.18,-.15],[.27,.73,-.12,.22],
@@ -32,74 +56,118 @@ const DOT_SEED: [number,number,number,number][] = [
   [.91,.08,.22,-.22],[.08,.91,-.15,.18],[.55,.75,.20,.15],[.75,.55,-.25,-.18],
 ];
 
+/* ─── Phase timings (ms) ─────────────────────────────────────────────────── */
+const T = {
+  p1:   50,
+  p2:   800,
+  skip: 1800,
+  p3:   2200,
+  p4:   3800,   // text begins fading
+  p5:   4000,   // logo exits to header
+  p6:   4100,   // lens flare sweep
+  p7:   4200,   // clip-path wipe upward
+  out:  5000,   // unmount
+} as const;
+
 /* ─── Injected CSS ───────────────────────────────────────────────────────── */
-const PARTICLE_CSS = `
-.sw-ptcl {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(201,168,76,0.9), transparent);
-  pointer-events: none;
-  animation: sw-float var(--d) var(--dl) linear infinite;
-}
-@keyframes sw-float {
-  0%   { transform: translateY(100vh) translateX(0) scale(0); opacity:0; }
-  10%  { opacity:1; }
-  90%  { opacity:0.5; }
-  100% { transform: translateY(-20vh) translateX(var(--dr)) scale(1); opacity:0; }
-}
+const CSS = `
+.sw-pa{position:absolute;border-radius:50%;background:#C9A84C;
+  box-shadow:0 0 3px 1px rgba(201,168,76,0.8);pointer-events:none;
+  animation:sw-fa var(--d) var(--dl) linear infinite}
+@keyframes sw-fa{
+  0%  {transform:translateY(100vh) translateX(0) scale(0);opacity:0}
+  8%  {opacity:1}
+  92% {opacity:.7}
+  100%{transform:translateY(-15vh) translateX(var(--dr)) scale(1);opacity:0}}
+
+.sw-pb{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(201,168,76,.85) 0%,rgba(201,168,76,.2) 50%,transparent 70%);
+  animation:sw-fb var(--d) var(--dl) ease-in-out infinite}
+@keyframes sw-fb{
+  0%  {transform:translateY(90vh) translateX(0) scale(.4);opacity:0}
+  12% {opacity:.6}
+  88% {opacity:.35}
+  100%{transform:translateY(-10vh) translateX(var(--dr)) scale(1.3);opacity:0}}
+
+.sw-pc{position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(255,240,150,.95);
+  box-shadow:0 0 6px 3px rgba(255,240,150,.5);
+  animation:sw-fc var(--d) var(--dl) ease-in-out infinite}
+@keyframes sw-fc{
+  0%  {transform:scale(.1);opacity:0}
+  25% {transform:scale(2.0);opacity:1}
+  55% {transform:scale(.9);opacity:.5}
+  75% {transform:scale(1.4);opacity:.25}
+  100%{transform:scale(.1);opacity:0}}
+
+.sw-logo-img{
+  will-change:filter;
+  animation:sw-glow 2.5s ease-in-out infinite}
+@keyframes sw-glow{
+  0%,100%{filter:
+    drop-shadow(0 0 24px rgba(255,240,150,.54))
+    drop-shadow(0 0 48px rgba(201,168,76,.36))
+    drop-shadow(0 0 96px rgba(201,168,76,.18))
+    brightness(1.02)}
+  50%{filter:
+    drop-shadow(0 0 40px rgba(255,240,150,.9))
+    drop-shadow(0 0 80px rgba(201,168,76,.6))
+    drop-shadow(0 0 160px rgba(201,168,76,.3))
+    brightness(1.06)}}
+
+.sw-tagline{animation:sw-tglow .6s 1.0s ease-in-out both}
+@keyframes sw-tglow{
+  0%  {text-shadow:0 0 30px rgba(201,168,76,.4)}
+  50% {text-shadow:0 0 40px rgba(255,240,150,1),0 0 80px rgba(201,168,76,.7),0 0 120px rgba(201,168,76,.4);color:rgba(255,240,150,1)}
+  100%{text-shadow:0 0 30px rgba(201,168,76,.4)}}
 `;
 
-/* ─── Phase constants ────────────────────────────────────────────────────── */
-const T_PHASE1  = 50;
-const T_PHASE2  = 800;
-const T_SKIP    = 1800;
-const T_PHASE3  = 2200;
-const T_PHASE4  = 3400;
-const T_UNMOUNT = 5100;
-
+/* ─── Component ──────────────────────────────────────────────────────────── */
 export default function SplashScreen() {
-  const [show,       setShow]       = useState(false);
-  const [exited,     setExited]     = useState(false);
-  const [phase,      setPhase]      = useState(0);
-  const [skipVis,    setSkipVis]    = useState(false);
-  const [logoWidth,  setLogoWidth]  = useState(240);
+  const [show,      setShow]      = useState(false);
+  const [exited,    setExited]    = useState(false);
+  const [phase,     setPhase]     = useState(0);
+  const [skipVis,   setSkipVis]   = useState(false);
+  const [logoWidth, setLogoWidth] = useState(320);
 
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const rafRef     = useRef<number>(0);
-  const dotsRef    = useRef<Dot[]>([]);
-  const particlesR = useRef<Particle[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef    = useRef<number>(0);
+  const dotsRef   = useRef<Dot[]>([]);
+  const psRef     = useRef<Particle[]>([]);
 
-  /* ── Hydration / session guard ───────────────────────────────────────── */
+  /* session + reduced-motion guard */
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || sessionStorage.getItem("sw_splash_v2")) {
-      setExited(true);
-      return;
-    }
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      sessionStorage.getItem("sw_splash_v2")
+    ) { setExited(true); return; }
     const mobile = window.innerWidth < 768;
-    setLogoWidth(mobile ? 200 : 240);
-    particlesR.current = buildParticles(mobile ? 8 : 18);
+    setLogoWidth(mobile ? 260 : 320);
+    psRef.current = buildParticles(mobile);
     setShow(true);
   }, []);
 
-  /* ── Phase timer ─────────────────────────────────────────────────────── */
+  /* phase timers */
   useEffect(() => {
     if (!show) return;
     const ts = [
-      setTimeout(() => setPhase(1),    T_PHASE1),
-      setTimeout(() => setPhase(2),    T_PHASE2),
-      setTimeout(() => setSkipVis(true), T_SKIP),
-      setTimeout(() => setPhase(3),    T_PHASE3),
-      setTimeout(() => setPhase(4),    T_PHASE4),
+      setTimeout(() => setPhase(1),       T.p1),
+      setTimeout(() => setPhase(2),       T.p2),
+      setTimeout(() => setSkipVis(true),  T.skip),
+      setTimeout(() => setPhase(3),       T.p3),
+      setTimeout(() => setPhase(4),       T.p4),
+      setTimeout(() => setPhase(5),       T.p5),
+      setTimeout(() => setPhase(6),       T.p6),
+      setTimeout(() => setPhase(7),       T.p7),
       setTimeout(() => {
-        sessionStorage.setItem("sw_splash_v2", "1");
+        sessionStorage.setItem("sw_splash_v2","1");
         setExited(true);
-      }, T_UNMOUNT),
+      }, T.out),
     ];
     return () => ts.forEach(clearTimeout);
   }, [show]);
 
-  /* ── Canvas constellation ────────────────────────────────────────────── */
+  /* canvas constellation loop */
   useEffect(() => {
     if (!show) return;
     const canvas = canvasRef.current;
@@ -113,99 +181,95 @@ export default function SplashScreen() {
     };
     resize();
     window.addEventListener("resize", resize);
-
     dotsRef.current = DOT_SEED.map(([rx,ry,vx,vy]) => ({
-      x: rx * canvas.width,
-      y: ry * canvas.height,
-      vx: vx * 0.35,
-      vy: vy * 0.35,
+      x: rx*canvas.width, y: ry*canvas.height,
+      vx: vx*.35, vy: vy*.35,
     }));
 
     const tick = () => {
-      const { width: w, height: h } = canvas;
-      ctx.clearRect(0, 0, w, h);
+      const { width:w, height:h } = canvas;
+      ctx.clearRect(0,0,w,h);
       const dots = dotsRef.current;
-
       for (const d of dots) {
         d.x += d.vx; d.y += d.vy;
-        if (d.x < 0 || d.x > w) d.vx *= -1;
-        if (d.y < 0 || d.y > h) d.vy *= -1;
+        if (d.x<0||d.x>w) d.vx*=-1;
+        if (d.y<0||d.y>h) d.vy*=-1;
       }
-      for (let i = 0; i < dots.length; i++) {
-        for (let j = i + 1; j < dots.length; j++) {
-          const dx = dots[i].x - dots[j].x;
-          const dy = dots[i].y - dots[j].y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 180) {
-            ctx.beginPath();
-            ctx.moveTo(dots[i].x, dots[i].y);
-            ctx.lineTo(dots[j].x, dots[j].y);
-            ctx.strokeStyle = `rgba(201,168,76,${0.08 * (1 - dist/180)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+      for (let i=0;i<dots.length;i++) {
+        for (let j=i+1;j<dots.length;j++) {
+          const dx=dots[i].x-dots[j].x, dy=dots[i].y-dots[j].y;
+          const dist=Math.sqrt(dx*dx+dy*dy);
+          if (dist<180) {
+            ctx.beginPath(); ctx.moveTo(dots[i].x,dots[i].y); ctx.lineTo(dots[j].x,dots[j].y);
+            ctx.strokeStyle=`rgba(201,168,76,${.08*(1-dist/180)})`; ctx.lineWidth=.5; ctx.stroke();
           }
         }
       }
       for (const d of dots) {
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(201,168,76,0.08)";
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(d.x,d.y,1.5,0,Math.PI*2);
+        ctx.fillStyle="rgba(201,168,76,0.08)"; ctx.fill();
       }
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-    };
+    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener("resize",resize); };
   }, [show]);
-
-  /* ── Skip handler ────────────────────────────────────────────────────── */
-  const handleSkip = () => {
-    sessionStorage.setItem("sw_splash_v2", "1");
-    setExited(true);
-  };
 
   if (!show || exited) return null;
 
-  const p4 = phase >= 4;
-  const ps = particlesR.current;
+  const textExit = phase >= 4;
+  const logoExit = phase >= 5;
+  const wipe     = phase >= 7;
+  const ps       = psRef.current;
+  const halfLogo = logoWidth / 2 + 16;
+
+  const exitText = { opacity: 0, y: -15 };
+  const exitTxt  = (delay=0) => ({ duration:.3, delay });
 
   return (
     <>
-      <style>{PARTICLE_CSS}</style>
+      <style>{CSS}</style>
 
       <motion.div
         style={{
-          position: "fixed", inset: 0, zIndex: 9999,
-          background: "#0a0a0b",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexDirection: "column",
-          transform: "translateZ(0)",
-          overflow: "hidden",
-          pointerEvents: p4 ? "none" : undefined,
+          position:"fixed", inset:0, zIndex:9999,
+          background:"#070708",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          flexDirection:"column",
+          transform:"translateZ(0)",
+          overflow:"hidden",
+          pointerEvents: phase>=4 ? "none" : undefined,
         }}
-        animate={p4 ? { clipPath: "inset(0 0 100% 0)" } : { clipPath: "inset(0 0 0% 0)" }}
-        transition={p4 ? { duration: 0.5, delay: 0.35, ease: "easeInOut" } : { duration: 0 }}
+        animate={wipe ? {clipPath:"inset(0 0 100% 0)"} : {clipPath:"inset(0 0 0% 0)"}}
+        transition={wipe ? {duration:.4, ease:"easeInOut"} : {duration:0}}
       >
-        {/* ── Canvas ─────────────────────────────────────────────────── */}
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-        />
+        {/* ── Canvas constellation ─── */}
+        <canvas ref={canvasRef} style={{position:"absolute",inset:0,pointerEvents:"none"}} />
 
-        {/* ── Particles (CSS only) ────────────────────────────────────── */}
+        {/* ── Grain texture ─── */}
+        <svg aria-hidden style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.03,pointerEvents:"none"}}>
+          <filter id="sw-noise">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+          </filter>
+          <rect width="100%" height="100%" filter="url(#sw-noise)"/>
+        </svg>
+
+        {/* ── Vignette ─── */}
+        <div aria-hidden style={{
+          position:"absolute", inset:0, pointerEvents:"none",
+          background:"radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.72) 100%)",
+        }}/>
+
+        {/* ── Particles ─── */}
         {ps.map((p) => (
           <div
             key={p.id}
-            className="sw-ptcl"
+            className={`sw-p${p.type}`}
             style={{
-              width:  p.size,
-              height: p.size,
-              left:   `${p.left}%`,
-              bottom: 0,
+              width: p.size, height: p.size,
+              left: `${p.left}%`,
+              ...(p.type==="c" ? {top:`${p.top}%`} : {bottom:0}),
               "--d":  `${p.duration}s`,
               "--dl": `${p.delay}s`,
               "--dr": `${p.drift}px`,
@@ -213,117 +277,106 @@ export default function SplashScreen() {
           />
         ))}
 
-        {/* ── Ambient glow (behind logo) ──────────────────────────────── */}
-        <motion.div
-          aria-hidden
-          style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%,-50%)",
-            width: 400, height: 400, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%)",
-            pointerEvents: "none",
-            willChange: "transform, opacity",
-          }}
-          animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.4, 0.8, 0.4] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* ── Phase 1: center pulse dot ───────────────────────────────── */}
-        {phase >= 1 && (
-          <motion.div
-            aria-hidden
+        {/* ── Phase 1: center gold pixel ─── */}
+        {phase>=1 && (
+          <motion.div aria-hidden
             style={{
-              position: "absolute", top: "50%", left: "50%",
-              width: 3, height: 3, borderRadius: "50%",
-              background: "#C9A84C",
-              transform: "translate(-50%,-50%)",
-              boxShadow: "0 0 8px 3px rgba(201,168,76,0.7)",
-              zIndex: 1,
+              position:"absolute", top:"50%", left:"50%",
+              width:3, height:3, borderRadius:"50%",
+              background:"#FFF8E1",
+              transform:"translate(-50%,-50%)",
+              boxShadow:"0 0 12px 5px rgba(255,240,150,.85)",
+              zIndex:1,
             }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: [0,1,1.8,1], opacity: [0,1,0.6,1] }}
-            transition={{ duration: 0.8, times: [0,0.3,0.6,1] }}
+            initial={{scale:0, opacity:0}}
+            animate={{scale:[0,1,2.2,1], opacity:[0,1,.5,1]}}
+            transition={{duration:.8, times:[0,.25,.6,1]}}
           />
         )}
 
-        {/* ── Phase 1: compass rays (SVG) ─────────────────────────────── */}
-        {phase >= 1 && (
-          <svg
-            aria-hidden
+        {/* ── Phase 2: radial light burst ─── */}
+        {phase>=2 && (
+          <motion.div aria-hidden
             style={{
-              position: "absolute", inset: 0,
-              width: "100%", height: "100%",
-              overflow: "visible", pointerEvents: "none",
+              position:"absolute", top:"50%", left:"50%",
+              borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(255,248,225,.95) 0%, rgba(201,168,76,.6) 18%, rgba(201,168,76,.1) 55%, transparent 75%)",
+              transform:"translate(-50%,-50%)",
+              pointerEvents:"none",
             }}
-          >
-            {/* Lines from center 50%,50% — use foreignObject trick: draw from 0,0 with transform */}
-            <g style={{ transform: "translate(50%, 50%)" }}>
-              {([
-                [0, -320],
-                [277, 160],
-                [-277, 160],
-              ] as [number, number][]).map(([ex, ey], i) => (
-                <motion.line
-                  key={i}
-                  x1={0} y1={0} x2={ex} y2={ey}
-                  stroke="#C9A84C"
-                  strokeWidth={0.5}
-                  strokeOpacity={0.55}
-                  strokeDasharray="320"
-                  initial={{ strokeDashoffset: 320 }}
-                  animate={{ strokeDashoffset: 0 }}
-                  transition={{ duration: 0.8, delay: i * 0.08, ease: "linear" }}
-                />
-              ))}
-            </g>
-          </svg>
-        )}
-
-        {/* ── Phase 2: radial light burst ─────────────────────────────── */}
-        {phase >= 2 && (
-          <motion.div
-            aria-hidden
-            style={{
-              position: "absolute", top: "50%", left: "50%",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, #FFF8E1 0%, #C9A84C 20%, transparent 70%)",
-              transform: "translate(-50%,-50%)",
-              pointerEvents: "none",
-            }}
-            initial={{ width: 0, height: 0, opacity: 0 }}
-            animate={{ width: 300, height: 300, opacity: [0, 1, 0.25, 0] }}
-            transition={{ duration: 1.0, times: [0, 0.2, 0.6, 1], ease: "easeOut" }}
+            initial={{width:0, height:0, opacity:0}}
+            animate={{width:420, height:420, opacity:[0,1,.15,0]}}
+            transition={{duration:1.15, times:[0,.16,.65,1], ease:"easeOut"}}
           />
         )}
 
-        {/* ── Phase 2: logo + gold line ───────────────────────────────── */}
-        {phase >= 2 && (
+        {/* ── Phase 2: elliptical ambient glow behind logo ─── */}
+        {phase>=2 && (
+          <motion.div aria-hidden
+            style={{
+              position:"absolute", top:"50%", left:"50%",
+              transform:"translate(-50%,-50%)",
+              width:500, height:200,
+              borderRadius:"50%",
+              background:"radial-gradient(ellipse at center, rgba(201,168,76,.15) 0%, transparent 70%)",
+              pointerEvents:"none",
+            }}
+            initial={{opacity:0, scale:.5}}
+            animate={{opacity:1, scale:1}}
+            transition={{duration:1.0, ease:"easeOut"}}
+          />
+        )}
+
+        {/* ── Phase 2: horizontal gold lines left/right ─── */}
+        {phase>=2 && (
+          <>
+            <motion.div aria-hidden
+              style={{
+                position:"absolute", top:"50%", right:"50%",
+                height:"0.5px",
+                background:"linear-gradient(to left, #C9A84C 0%, rgba(201,168,76,.4) 60%, transparent 100%)",
+                transformOrigin:"right center",
+                marginRight: halfLogo,
+                pointerEvents:"none",
+              }}
+              initial={{width:0}}
+              animate={logoExit ? {opacity:0} : {width:"45vw"}}
+              transition={logoExit ? {duration:.25} : {duration:.75, delay:.3, ease:[.16,1,.3,1]}}
+            />
+            <motion.div aria-hidden
+              style={{
+                position:"absolute", top:"50%", left:"50%",
+                height:"0.5px",
+                background:"linear-gradient(to right, #C9A84C 0%, rgba(201,168,76,.4) 60%, transparent 100%)",
+                transformOrigin:"left center",
+                marginLeft: halfLogo,
+                pointerEvents:"none",
+              }}
+              initial={{width:0}}
+              animate={logoExit ? {opacity:0} : {width:"45vw"}}
+              transition={logoExit ? {duration:.25} : {duration:.75, delay:.3, ease:[.16,1,.3,1]}}
+            />
+          </>
+        )}
+
+        {/* ── Phase 2: logo ─── */}
+        {phase>=2 && (
           <motion.div
             layoutId="siwaky-logo"
             style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              position: "relative", zIndex: 2,
-              willChange: "transform, filter, opacity",
+              position:"relative", zIndex:2,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              willChange:"transform, opacity",
             }}
-            initial={{ scale: 0.4, filter: "blur(20px)", opacity: 0, y: 0 }}
-            animate={p4 ? {
-              scale: 0.45,
-              y: "-45vh",
-              opacity: 0,
-              filter: "blur(6px)",
-            } : {
-              scale: 1,
-              filter: "blur(0px)",
-              opacity: 1,
-              y: 0,
-            }}
-            transition={p4 ? {
-              duration: 0.7,
-              ease: [0.4, 0, 0.2, 1],
-            } : {
-              duration: 0.9,
-              ease: [0.16, 1, 0.3, 1],
-            }}
+            initial={{scale:.4, filter:"blur(20px)", opacity:0, y:0}}
+            animate={logoExit
+              ? {scale:.5, y:"-48vh", opacity:0, filter:"blur(5px)"}
+              : {scale:1, filter:"blur(0px)", opacity:1, y:0}
+            }
+            transition={logoExit
+              ? {duration:.55, ease:[.4,0,.2,1]}
+              : {duration:.9, ease:[.16,1,.3,1]}
+            }
           >
             <Image
               src="/logo.png"
@@ -332,154 +385,135 @@ export default function SplashScreen() {
               height={160}
               priority
               unoptimized
-              style={{
-                width:  logoWidth,
-                height: "auto",
-                display: "block",
-                filter: "drop-shadow(0 0 30px rgba(201,168,76,0.6)) brightness(1.05)",
-              }}
-            />
-            {/* Horizontal gold line */}
-            <motion.div
-              style={{
-                width: 280, height: 1, marginTop: 18,
-                background: "linear-gradient(90deg, transparent 0%, #C9A84C 50%, transparent 100%)",
-                transformOrigin: "left center",
-              }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.9, delay: 0.35, ease: [0.16,1,0.3,1] }}
+              className="sw-logo-img"
+              style={{width:logoWidth, height:"auto", display:"block"}}
             />
           </motion.div>
         )}
 
-        {/* ── Phase 3: text block ─────────────────────────────────────── */}
-        {phase >= 3 && (
-          <div
-            style={{
-              position: "absolute", bottom: "18%",
-              left: "50%", transform: "translateX(-50%)",
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 10, zIndex: 3, textAlign: "center",
-            }}
-          >
-            {/* Diamond ornament */}
-            <motion.div
-              aria-hidden
-              style={{ fontSize: 8, color: "#C9A84C", lineHeight: 1 }}
-              initial={{ opacity: 0 }}
-              animate={p4 ? { opacity: 0, y: -10 } : { opacity: [0,1,0.7,1], scale: [1,1.4,1] }}
-              transition={p4 ? { duration: 0.25 } : {
-                duration: 0.4,
-                repeat: Infinity,
-                repeatDelay: 1.8,
-                ease: "easeInOut",
-                times: [0, 0.4, 1],
-              }}
+        {/* ── Phase 3: text block ─── */}
+        {phase>=3 && (
+          <div style={{
+            position:"absolute", bottom:"15%",
+            left:"50%", transform:"translateX(-50%)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            gap:12, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
+          }}>
+
+            {/* Diamond */}
+            <motion.div aria-hidden
+              style={{fontSize:8, color:"#C9A84C", lineHeight:1}}
+              initial={{opacity:0}}
+              animate={textExit ? exitText : {opacity:[0,1,.7,1], scale:[1,1.4,1]}}
+              transition={textExit ? exitTxt(0) : {duration:.5,repeat:Infinity,repeatDelay:2,ease:"easeInOut",times:[0,.4,1]}}
             >◆</motion.div>
 
-            {/* S I W A K Y */}
+            {/* SIWAKY — explicit ltr so RTL page doesn't reverse letter order */}
             <motion.div
               style={{
-                display: "flex",
-                fontSize: 11,
-                letterSpacing: 14,
-                color: "#C9A84C",
-                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                fontWeight: 300,
-                paddingRight: 14, /* compensate trailing letter-spacing */
+                display:"flex", direction:"ltr",
+                fontSize:10, letterSpacing:16, paddingRight:16,
+                color:"#C9A84C",
+                fontFamily:"'Helvetica Neue', Helvetica, Arial, sans-serif",
+                fontWeight:200,
               }}
-              animate={p4 ? { opacity: 0, y: -10 } : {}}
-              transition={p4 ? { duration: 0.25, delay: 0.08 } : {}}
+              animate={textExit ? exitText : {}}
+              transition={textExit ? exitTxt(.05) : {}}
             >
-              {"SIWAKY".split("").map((char, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06, duration: 0.4, ease: "easeOut" }}
-                >
-                  {char}
-                </motion.span>
+              {"SIWAKY".split("").map((ch,i) => (
+                <motion.span key={i}
+                  initial={{opacity:0, y:8}}
+                  animate={{opacity:1, y:0}}
+                  transition={{delay:i*.06, duration:.4, ease:"easeOut"}}
+                >{ch}</motion.span>
               ))}
             </motion.div>
 
-            {/* Arabic tagline */}
+            {/* Arabic tagline with one-shot gold shimmer at 3.2s */}
             <motion.div
+              className="sw-tagline"
               style={{
-                fontSize: 18,
-                color: "rgba(255,255,255,0.9)",
-                fontFamily: "var(--font-naskh), 'Noto Naskh Arabic', serif",
-                direction: "rtl",
-                display: "flex", flexWrap: "wrap", justifyContent: "center",
-                gap: "0 6px",
+                fontSize:22,
+                color:"rgba(255,255,255,0.92)",
+                fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
+                textShadow:"0 0 30px rgba(201,168,76,.4)",
+                direction:"rtl",
+                display:"flex", flexWrap:"wrap", justifyContent:"center",
+                gap:"0 6px",
               }}
-              animate={p4 ? { opacity: 0, y: -10 } : {}}
-              transition={p4 ? { duration: 0.25, delay: 0.16 } : {}}
+              animate={textExit ? exitText : {}}
+              transition={textExit ? exitTxt(.10) : {}}
             >
-              {"حيث تلتقي السنّة بالفخامة".split(" ").map((word, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.9 }}
-                  transition={{ delay: 0.25 + i * 0.12, duration: 0.4 }}
-                >
-                  {word}
-                </motion.span>
+              {"حيث تلتقي السنّة بالفخامة".split(" ").map((word,i) => (
+                <motion.span key={i}
+                  initial={{opacity:0}}
+                  animate={{opacity:.92}}
+                  transition={{delay:.2+i*.12, duration:.4}}
+                >{word}</motion.span>
               ))}
             </motion.div>
 
             {/* Subtitle */}
             <motion.div
               style={{
-                fontSize: 11,
-                color: "rgba(201,168,76,0.55)",
-                letterSpacing: 3,
-                fontFamily: "var(--font-naskh), 'Noto Naskh Arabic', serif",
-                direction: "rtl",
+                fontSize:10, color:"rgba(201,168,76,.45)",
+                letterSpacing:4, paddingRight:4,
+                fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
+                direction:"rtl",
               }}
-              initial={{ opacity: 0 }}
-              animate={p4 ? { opacity: 0, y: -10 } : { opacity: 1 }}
-              transition={p4 ? { duration: 0.25, delay: 0.24 } : { delay: 0.65, duration: 0.5 }}
+              initial={{opacity:0}}
+              animate={textExit ? exitText : {opacity:1}}
+              transition={textExit ? exitTxt(.15) : {delay:.65, duration:.5}}
             >
               طهارة · أصالة · رقي
             </motion.div>
           </div>
         )}
 
-        {/* ── Skip button ──────────────────────────────────────────────── */}
+        {/* ── Phase 6: cinematic lens flare sweep ─── */}
+        {phase>=6 && (
+          <motion.div aria-hidden
+            style={{
+              position:"absolute", top:"44%", left:0, right:0,
+              height:1,
+              background:"linear-gradient(90deg, transparent 0%, rgba(255,240,150,.25) 15%, rgba(255,248,220,.95) 50%, rgba(255,240,150,.25) 85%, transparent 100%)",
+              pointerEvents:"none", zIndex:10,
+              transformOrigin:"left center",
+            }}
+            initial={{scaleX:0, opacity:1}}
+            animate={{scaleX:1, opacity:[1,1,0]}}
+            transition={{duration:.38, times:[0,.65,1], ease:"easeOut"}}
+          />
+        )}
+
+        {/* ── Skip button ─── */}
         <AnimatePresence>
-          {skipVis && !p4 && (
+          {skipVis && phase<4 && (
             <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              onClick={handleSkip}
+              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+              transition={{duration:.4}}
+              onClick={() => { sessionStorage.setItem("sw_splash_v2","1"); setExited(true); }}
               style={{
-                position: "fixed", bottom: 32, right: 32,
-                border: "1px solid rgba(201,168,76,0.3)",
-                padding: "6px 16px", borderRadius: 20,
-                background: "transparent", cursor: "pointer",
-                fontSize: 11, color: "rgba(201,168,76,0.5)",
-                letterSpacing: 2,
-                fontFamily: "var(--font-naskh), 'Noto Naskh Arabic', serif",
-                transition: "border-color 0.2s, color 0.2s, box-shadow 0.2s",
-                zIndex: 10000,
+                position:"fixed", bottom:32, right:32,
+                border:"1px solid rgba(201,168,76,.3)",
+                padding:"6px 16px", borderRadius:20,
+                background:"transparent", cursor:"pointer",
+                fontSize:11, color:"rgba(201,168,76,.5)", letterSpacing:2,
+                fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
+                transition:"border-color .2s,color .2s,box-shadow .2s",
+                zIndex:10000,
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#C9A84C";
-                e.currentTarget.style.color = "#C9A84C";
-                e.currentTarget.style.boxShadow = "0 0 12px rgba(201,168,76,0.2)";
+              onMouseEnter={e=>{
+                e.currentTarget.style.borderColor="#C9A84C";
+                e.currentTarget.style.color="#C9A84C";
+                e.currentTarget.style.boxShadow="0 0 12px rgba(201,168,76,.2)";
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)";
-                e.currentTarget.style.color = "rgba(201,168,76,0.5)";
-                e.currentTarget.style.boxShadow = "none";
+              onMouseLeave={e=>{
+                e.currentTarget.style.borderColor="rgba(201,168,76,.3)";
+                e.currentTarget.style.color="rgba(201,168,76,.5)";
+                e.currentTarget.style.boxShadow="none";
               }}
-            >
-              تخطي
-            </motion.button>
+            >تخطي</motion.button>
           )}
         </AnimatePresence>
       </motion.div>
