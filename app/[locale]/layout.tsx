@@ -4,6 +4,7 @@ import { getMessages, unstable_setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import HtmlAttributes from "@/components/shared/HtmlAttributes";
+import MotionLayoutProvider from "@/components/shared/MotionLayoutProvider";
 import PixelsLoader from "@/components/shared/PixelsLoader";
 import SplashScreen from "@/components/SplashScreen";
 import { locales, type Locale } from "@/i18n";
@@ -31,11 +32,13 @@ export default async function LocaleLayout({ children, params: { locale } }: Pro
       <HtmlAttributes lang={lang} dir={dir} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJson }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: localJson }} />
-      <SplashScreen />
-      <div lang={lang} dir={dir} className="min-h-screen bg-brand-dark font-sans text-white">
-        <PixelsLoader />
-        {children}
-      </div>
+      <MotionLayoutProvider>
+        <SplashScreen />
+        <div lang={lang} dir={dir} className="min-h-screen bg-brand-dark font-sans text-white">
+          <PixelsLoader />
+          {children}
+        </div>
+      </MotionLayoutProvider>
     </NextIntlClientProvider>
   );
 }

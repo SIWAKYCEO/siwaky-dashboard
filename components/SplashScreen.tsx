@@ -73,7 +73,7 @@ const T = {
   p5:   isMobile ? 2350 : 4000,   // logo exits
   p6:   isMobile ? 9999 : 4100,   // lens flare — disabled on mobile (9999 = never)
   p7:   isMobile ? 2500 : 4200,   // exit wipe / fade
-  out:  isMobile ? 3200 : 5000,
+  out:  isMobile ? 3400 : 5000,
 } as const;
 
 /* ─── Injected CSS ───────────────────────────────────────────────────────── */
@@ -129,6 +129,7 @@ export default function SplashScreen() {
   const [show,      setShow]      = useState(false);
   const [exited,    setExited]    = useState(false);
   const [phase,     setPhase]     = useState(0);
+  const [logoGone,  setLogoGone]  = useState(false);
   const [skipVis,   setSkipVis]   = useState(false);
   const [logoWidth, setLogoWidth] = useState(320);
 
@@ -157,7 +158,7 @@ export default function SplashScreen() {
       setTimeout(() => setSkipVis(true),  T.skip),
       setTimeout(() => setPhase(3),       T.p3),
       setTimeout(() => setPhase(4),       T.p4),
-      setTimeout(() => setPhase(5),       T.p5),
+      setTimeout(() => { setPhase(5); setLogoGone(true); }, T.p5),
       setTimeout(() => setPhase(6),       T.p6),
       setTimeout(() => setPhase(7),       T.p7),
       setTimeout(() => {
@@ -235,28 +236,52 @@ export default function SplashScreen() {
     ? { duration: isMobile ? 0.3 : 0.4, ease: "easeInOut" as const }
     : { duration: 0 };
 
-  // Logo animation: no filter animation on mobile (Safari perf)
-  const logoInitial = isMobile
-    ? { scale: 0.6,  opacity: 0 }
-    : { scale: 0.4,  filter: "blur(20px)", opacity: 0, y: 0 };
-  const logoAnimate = logoExit
-    ? (isMobile
-        ? { scale: 0.5, opacity: 0 }
-        : { scale: 0.5, y: "-48vh", opacity: 0, filter: "blur(5px)" })
-    : (isMobile
-        ? { scale: 1, opacity: 1 }
-        : { scale: 1, filter: "blur(0px)", opacity: 1, y: 0 });
-  const logoTrans = logoExit
-    ? { duration: 0.44 * DUR, ease: [.4,0,.2,1] as const }
-    : { duration: 0.72 * DUR, ease: [.16,1,.3,1] as const };
-
   return (
     <>
       <style>{CSS}</style>
 
+      {/* ── Logo — outside container so layoutId fly-to-header is unclipped ── */}
+      <div style={{
+        position:"fixed", inset:0,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        zIndex:10000, pointerEvents:"none",
+      }}>
+        <AnimatePresence>
+          {phase >= 2 && !logoGone && (
+            <motion.div
+              key="splash-logo"
+              layoutId="siwaky-logo"
+              style={{ willChange:"transform, opacity" }}
+              initial={isMobile
+                ? { scale:0.6, opacity:0 }
+                : { scale:0.4, filter:"blur(20px)", opacity:0 }}
+              animate={isMobile
+                ? { scale:1, opacity:1 }
+                : { scale:1, filter:"blur(0px)", opacity:1 }}
+              transition={{
+                duration: 0.72 * DUR,
+                ease: [.16,1,.3,1] as const,
+                layout: { duration: 0.8, ease: [.4,0,.2,1] as const },
+              }}
+            >
+              <Image
+                src="/logo.png"
+                alt="SIWAKY"
+                width={512}
+                height={160}
+                priority
+                unoptimized
+                className="sw-logo-img"
+                style={{ width:logoWidth, height:"auto", display:"block" }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <motion.div
         style={{
-          position:"fixed", inset:0, zIndex:9999,
+          position:"fixed", inset:0, zIndex:9998,
           background:"#070708",
           display:"flex", alignItems:"center", justifyContent:"center",
           flexDirection:"column",
@@ -393,32 +418,6 @@ export default function SplashScreen() {
               transition={logoExit ? {duration:.2} : {duration:.6*DUR, delay:.24*DUR, ease:[.16,1,.3,1]}}
             />
           </>
-        )}
-
-        {/* ── Phase 2: logo (will-change on logo only) ── */}
-        {phase>=2 && (
-          <motion.div
-            layoutId="siwaky-logo"
-            style={{
-              position:"relative", zIndex:2,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              willChange:"transform, opacity",
-            }}
-            initial={logoInitial}
-            animate={logoAnimate}
-            transition={logoTrans}
-          >
-            <Image
-              src="/logo.png"
-              alt="SIWAKY"
-              width={512}
-              height={160}
-              priority
-              unoptimized
-              className="sw-logo-img"
-              style={{width:logoWidth, height:"auto", display:"block"}}
-            />
-          </motion.div>
         )}
 
         {/* ── Phase 3: text block ── */}

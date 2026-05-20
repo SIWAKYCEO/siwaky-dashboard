@@ -135,7 +135,10 @@ export default function Header() {
                     "drop-shadow(0 0 0px rgba(201,168,76,0))",
                   ],
                 }}
-                transition={{ duration: 1.4, delay: 0.4, ease: "easeOut", times: [0, 0.4, 1] }}
+                transition={{
+                  filter: { duration: 1.4, delay: 0.4, ease: "easeOut", times: [0, 0.4, 1] },
+                  layout: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+                }}
               >
                 <Logo size="2xl" shimmer />
               </motion.div>
