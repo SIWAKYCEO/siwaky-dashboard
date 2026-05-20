@@ -119,7 +119,9 @@ export default function CheckoutPopup({ open, onClose }: Props) {
     const res = await createOrder({
       name: values.name,
       phone: values.phone,
-      offer: cartItem.offerId,
+      offer: (cartItem.offerId === "box-1-upsell" ? "box-1" :
+              cartItem.offerId === "box-2-upsell" ? "box-2" :
+              cartItem.offerId) as "box-1" | "box-2" | "box-3",
       quantity: bundle.quantity,
       price_sar: bundle.price,
       source,
