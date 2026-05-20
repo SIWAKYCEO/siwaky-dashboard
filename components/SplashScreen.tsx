@@ -63,17 +63,17 @@ const DOT_SEED:[number,number,number,number][] = [
 ];
 
 /* ─── Phase timings ──────────────────────────────────────────────────────── */
-// Mobile total: ~3s. Desktop: ~5s.
+// Mobile total: ~4.2s. Desktop: ~5s.
 const T = {
   p1:   isMobile ? 40   : 50,
-  p2:   isMobile ? 500  : 800,
-  skip: isMobile ? 1000 : 1800,
-  p3:   isMobile ? 1300 : 2200,
-  p4:   isMobile ? 2100 : 3800,   // text fades
-  p5:   isMobile ? 2350 : 4000,   // logo exits
+  p2:   isMobile ? 650  : 800,
+  skip: isMobile ? 1300 : 1800,
+  p3:   isMobile ? 1700 : 2200,
+  p4:   isMobile ? 2700 : 3800,   // text fades
+  p5:   isMobile ? 3000 : 4000,   // logo exits
   p6:   isMobile ? 9999 : 4100,   // lens flare — disabled on mobile (9999 = never)
-  p7:   isMobile ? 2500 : 4200,   // exit wipe / fade
-  out:  isMobile ? 3400 : 5000,
+  p7:   isMobile ? 3150 : 4200,   // exit wipe / fade
+  out:  isMobile ? 4200 : 5000,
 } as const;
 
 /* ─── Injected CSS ───────────────────────────────────────────────────────── */
