@@ -56,8 +56,8 @@ interface CartState {
 
   addCount: number;
 
-  addOffer: (offerId: OfferId) => void;
-  setOffer: (offerId: OfferId) => void;     // single-product store: replace, not append
+  addOffer: (offerId: OfferId, priceOverride?: number) => void;
+  setOffer: (offerId: OfferId, priceOverride?: number) => void;  // single-product store: replace, not append
   removeOffer: (offerId: OfferId) => void;
   /** Empty cart, close drawer & checkout, persist [] — call after successful order & on thank-you. */
   clear: () => void;
@@ -88,18 +88,18 @@ export const useCartStore = create<CartState>()(
       openCheckout: () => set({ isCheckoutOpen: true }),
       closeCheckout: () => set({ isCheckoutOpen: false }),
 
-      addOffer: (offerId) => {
+      addOffer: (offerId, priceOverride) => {
         const o = OFFERS[toBaseOfferId(offerId)];
         set((s) => ({
-          items: [{ offerId, quantity: 1, price: o.price }],
+          items: [{ offerId, quantity: 1, price: priceOverride ?? o.price }],
           isOpen: true,
           addCount: s.addCount + 1,
         }));
       },
 
-      setOffer: (offerId) => {
+      setOffer: (offerId, priceOverride) => {
         const o = OFFERS[toBaseOfferId(offerId)];
-        set({ items: [{ offerId, quantity: 1, price: o.price }] });
+        set({ items: [{ offerId, quantity: 1, price: priceOverride ?? o.price }] });
       },
 
       removeOffer: (offerId) =>

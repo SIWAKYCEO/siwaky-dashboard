@@ -112,7 +112,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
         typeof window !== "undefined" ? window.location.href : "(no window)",
       offer: cartItem.offerId,
       quantity: bundle.quantity,
-      price_sar: bundle.price,
+      price_sar: cartItem.price,
       event_id_hint: eventId,
     });
 
@@ -121,7 +121,7 @@ export default function CheckoutPopup({ open, onClose }: Props) {
       phone: values.phone,
       offer: (["box-1", "box-2", "box-3"].includes(cartItem.offerId) ? cartItem.offerId : "box-1") as "box-1" | "box-2" | "box-3",
       quantity: bundle.quantity,
-      price_sar: bundle.price,
+      price_sar: cartItem.price,
       source,
       campaign,
       event_id: eventId,

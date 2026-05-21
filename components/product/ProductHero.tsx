@@ -14,25 +14,40 @@ import { DEFAULT_OFFER, OFFERS, toBaseOfferId, type OfferId } from "@/lib/offers
 import { track } from "@/lib/pixels";
 import { useCartStore } from "@/store/cartStore";
 
-export default function ProductHero() {
+interface Props {
+  discountPrice?: number | null;
+}
+
+export default function ProductHero({ discountPrice }: Props) {
   const t = useTranslations();
-  const [offer, setOffer] = useState<OfferId>(DEFAULT_OFFER);
+  const [offer, setOffer] = useState<OfferId>(discountPrice ? "box-1" : DEFAULT_OFFER);
   const addOffer = useCartStore((s) => s.addOffer);
+
+  const effectivePrice = offer === "box-1" && discountPrice ? discountPrice : undefined;
 
   const handleAdd = () => {
     const o = OFFERS[toBaseOfferId(offer)];
-    addOffer(offer);
+    const price = effectivePrice ?? o.price;
+    addOffer(offer, effectivePrice);
     track("AddToCart", {
-      value: o.price,
+      value: price,
       currency: "SAR",
       content_ids: [o.id],
-      contents: [{ id: o.id, quantity: o.quantity, item_price: o.price / o.quantity }],
+      contents: [{ id: o.id, quantity: o.quantity, item_price: price / o.quantity }],
       content_type: "product",
     });
   };
 
   return (
     <section id="product-hero-top" className="bg-[#28282A] pt-8 md:pt-12">
+      {discountPrice && (
+        <div className="container-luxury mb-6">
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-brand-gold/50 bg-brand-gold/10 px-4 py-3 text-center font-sans text-sm font-semibold text-brand-goldLight">
+            ⚡ عرض خاص لك — سعر مخفّض
+          </div>
+        </div>
+      )}
+
       <div className="container-luxury grid items-start gap-10 md:grid-cols-2 md:gap-14">
         <ProductImages />
 
@@ -49,7 +64,11 @@ export default function ProductHero() {
           </div>
 
           <div className="mt-7">
-            <OfferSelector value={offer} onChange={setOffer} />
+            <OfferSelector
+              value={offer}
+              onChange={setOffer}
+              discountOverride={discountPrice ? { offerId: "box-1", price: discountPrice } : undefined}
+            />
           </div>
 
           <button type="button" onClick={handleAdd} className="btn-primary mt-6 w-full text-lg">
@@ -66,7 +85,7 @@ export default function ProductHero() {
         <GoldOrnamentalDivider className="py-2 md:py-3" />
       </div>
 
-      <StickyAddToCart offerId={offer} />
+      <StickyAddToCart offerId={offer} priceOverride={effectivePrice} />
     </section>
   );
 }

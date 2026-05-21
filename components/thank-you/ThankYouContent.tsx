@@ -156,7 +156,7 @@ export default function ThankYouContent() {
         </div>
 
         {/* ── Upsell ──────────────────────────────────────── */}
-        <UpsellCard offerId={offerId} originalOrderId={orderId} />
+        <UpsellCard offerId={offerId} />
 
         {/* ── Order summary ───────────────────────────────── */}
         <motion.div

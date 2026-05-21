@@ -9,12 +9,13 @@ import { track } from "@/lib/pixels";
 
 interface Props {
   offerId: OfferId;
+  priceOverride?: number;
 }
 
 /**
  * Mobile-only sticky bar — appears after scrolling past the hero block.
  */
-export default function StickyAddToCart({ offerId }: Props) {
+export default function StickyAddToCart({ offerId, priceOverride }: Props) {
   const t = useTranslations();
   const addOffer = useCartStore((s) => s.addOffer);
   const [visible, setVisible] = useState(false);
@@ -27,11 +28,12 @@ export default function StickyAddToCart({ offerId }: Props) {
   }, []);
 
   const offer = OFFERS[toBaseOfferId(offerId)];
+  const displayPrice = priceOverride ?? offer.price;
 
   const handleClick = () => {
-    addOffer(offerId);
+    addOffer(offerId, priceOverride);
     track("AddToCart", {
-      value: offer.price,
+      value: displayPrice,
       currency: "SAR",
       content_ids: [offer.id],
       contents: [{ id: offer.id, quantity: offer.quantity, item_price: offer.price / offer.quantity }],
@@ -55,7 +57,7 @@ export default function StickyAddToCart({ offerId }: Props) {
               })}
             </p>
             <p className="text-base font-semibold text-white">
-              {offer.price} {t("common.currency")}
+              {displayPrice} {t("common.currency")}
             </p>
           </div>
           <button type="button" onClick={handleClick} className="btn-primary !px-6 !py-3 !text-sm">

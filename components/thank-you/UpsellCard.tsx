@@ -2,17 +2,16 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { v4 as uuid } from "uuid";
+import { useParams, useRouter } from "next/navigation";
 
-import { createOrder } from "@/lib/api";
-import { toBaseOfferId, type OfferId } from "@/lib/offers";
+import { type OfferId } from "@/lib/offers";
 
 const UPSELL = {
   "box-1": { price: 199, original: 245, savings: 46 },
   "box-2": { price: 179, original: 245, savings: 66 },
 } as const;
 
-const DURATION_S = 10 * 60; // 10 minutes
+const DURATION_S = 10 * 60;
 
 function fmt(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -20,103 +19,41 @@ function fmt(s: number) {
 
 interface Props {
   offerId: OfferId | undefined;
-  originalOrderId?: string | null;
 }
 
-export default function UpsellCard({ offerId, originalOrderId }: Props) {
+export default function UpsellCard({ offerId }: Props) {
   const cfg = offerId && offerId in UPSELL ? UPSELL[offerId as keyof typeof UPSELL] : null;
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale ?? "ar";
+  const router = useRouter();
 
-  const [state, setState] = useState<"idle" | "success" | "gone">("idle");
+  const [gone, setGone] = useState(false);
   const [seconds, setSeconds] = useState(DURATION_S);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
-  // Read upsell context from sessionStorage on mount
-  const [ctx, setCtx] = useState<{ name: string; phone: string } | null>(null);
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("siwaky-upsell-ctx");
-      if (raw) {
-        const parsed = JSON.parse(raw) as { name?: string; phone?: string };
-        if (parsed.name && parsed.phone) {
-          setCtx({ name: parsed.name, phone: parsed.phone });
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Countdown timer — stops when success or gone
-  useEffect(() => {
-    if (state !== "idle" || !cfg) return;
+    if (gone || !cfg) return;
     const id = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(id);
-          setState("gone");
+          setGone(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [state, cfg]);
+  }, [gone, cfg]);
 
   if (!cfg) return null;
 
-  const handleAdd = async () => {
-    if (loading || state !== "idle") return;
-
-    if (!ctx?.phone) {
-      console.warn("[upsell] sessionStorage ctx missing — cannot submit");
-      setErr("تعذّر تحديد بيانات طلبك — يرجى التواصل معنا عبر واتساب");
-      return;
-    }
-
-    setLoading(true);
-    setErr(null);
-
-    const upsellSource = offerId === "box-1" ? "upsell-box1" : "upsell-box2";
-    const upsellOfferId = offerId === "box-2" ? ("box-2-upsell" as const) : ("box-1-upsell" as const);
-
-    const payload = {
-      name: ctx.name,
-      phone: ctx.phone,
-      city: "",
-      offer: toBaseOfferId(upsellOfferId),
-      price_sar: cfg.price,
-      quantity: 1,
-      product: "SIWAKY Box x1 — Upsell",
-      sku: "SIWAKY12",
-      source: upsellSource,
-      campaign: "thankyou-page-upsell",
-      notes: `Upsell aggiunto dalla thank you page — ordine originale: ${originalOrderId ?? "sconosciuto"}`,
-      event_id: uuid(),
-    };
-
-    console.log("[upsell] Submitting payload:", {
-      ...payload,
-      phone: ctx.phone.slice(0, 3) + "****",
-    });
-
-    const res = await createOrder(payload);
-
-    setLoading(false);
-
-    if (res.ok) {
-      console.log("[upsell] Order created successfully:", res.data.order_id);
-      try { sessionStorage.removeItem("siwaky-upsell-ctx"); } catch { /* ignore */ }
-      setState("success");
-    } else {
-      console.error("[upsell] Order failed — code:", res.code, "status:", res.status);
-      setErr(`حدث خطأ (${res.code}) — يرجى المحاولة مرة أخرى`);
-    }
+  const handleAdd = () => {
+    router.push(`/${locale}/product?discount=upsell&price=${cfg.price}`);
   };
 
   return (
     <AnimatePresence mode="wait">
-      {state === "idle" && (
+      {!gone && (
         <motion.div
           key="upsell"
           initial={{ opacity: 0, y: 28 }}
@@ -173,44 +110,19 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
                 </motion.span>
               </div>
 
-              {/* Error */}
-              {err && (
-                <p className="relative mt-4 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-                  {err}
-                </p>
-              )}
-
               {/* CTA */}
               <button
                 type="button"
                 onClick={handleAdd}
-                disabled={loading}
-                className="btn-primary relative mt-6 w-full justify-center text-base disabled:opacity-60"
+                className="btn-primary relative mt-6 w-full justify-center text-base"
               >
-                {loading ? "جاري الإضافة..." : `أضف للطلب الآن — ${cfg.price} ر.س`}
+                أضف للطلب الآن — {cfg.price} ر.س
               </button>
 
               <p className="relative mt-3 text-xs text-white/40">
-                سيتم إضافته لطلبك الحالي · الدفع عند الاستلام
+                سيتم تطبيق السعر المخفّض تلقائياً · الدفع عند الاستلام
               </p>
             </div>
-          </div>
-        </motion.div>
-      )}
-
-      {state === "success" && (
-        <motion.div
-          key="success"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto mt-8 max-w-lg"
-        >
-          <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/[0.08] px-6 py-8 text-center shadow-[0_0_32px_-10px_rgba(52,211,153,0.3)]">
-            <p className="font-display text-2xl text-emerald-300 md:text-3xl">
-              ✅ تمت إضافة طلبك! سنتصل بك قريباً
-            </p>
           </div>
         </motion.div>
       )}

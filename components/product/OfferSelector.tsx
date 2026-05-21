@@ -9,11 +9,12 @@ import { OFFERS, type BaseOfferId, type OfferId, savingsFor } from "@/lib/offers
 interface Props {
   value: OfferId;
   onChange: (id: OfferId) => void;
+  discountOverride?: { offerId: BaseOfferId; price: number };
 }
 
 const ORDER: BaseOfferId[] = ["box-1", "box-2", "box-3"];
 
-export default function OfferSelector({ value, onChange }: Props) {
+export default function OfferSelector({ value, onChange, discountOverride }: Props) {
   const t = useTranslations();
 
   return (
@@ -26,7 +27,9 @@ export default function OfferSelector({ value, onChange }: Props) {
         {ORDER.map((id) => {
           const offer = OFFERS[id];
           const active = id === value;
-          const save = savingsFor(id);
+          const isDiscounted = discountOverride?.offerId === id;
+          const displayPrice = isDiscounted ? discountOverride!.price : offer.price;
+          const save = isDiscounted ? offer.price - discountOverride!.price : savingsFor(id);
 
           return (
             <motion.button
@@ -68,8 +71,13 @@ export default function OfferSelector({ value, onChange }: Props) {
                 </div>
 
                 <div className="text-end">
+                  {isDiscounted && (
+                    <p className="text-sm text-white/40 line-through">
+                      {offer.price} {t("common.currency")}
+                    </p>
+                  )}
                   <p className="font-serif text-2xl text-brand-goldLight">
-                    {offer.price} {t("common.currency")}
+                    {displayPrice} {t("common.currency")}
                   </p>
                   {save > 0 && (
                     <p className="mt-1 text-xs text-emerald-300">

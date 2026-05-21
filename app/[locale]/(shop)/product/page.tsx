@@ -29,6 +29,7 @@ export const fetchCache = "default-no-store";
 
 interface Props {
   params: { locale: string };
+  searchParams?: { discount?: string; price?: string };
 }
 
 export async function generateMetadata({ params: { locale } }: Props): Promise<Metadata> {
@@ -49,9 +50,12 @@ export async function generateMetadata({ params: { locale } }: Props): Promise<M
   );
 }
 
-export default function ProductPage({ params: { locale } }: Props) {
+export default function ProductPage({ params: { locale }, searchParams }: Props) {
   noStore();
   unstable_setRequestLocale(locale);
+  const rawPrice = Number(searchParams?.price);
+  const discountPrice =
+    searchParams?.discount === "upsell" && rawPrice > 0 ? rawPrice : null;
   return (
     <>
       {/* HTML source marker — View Page Source → search SIWAKY_PDP */}
@@ -65,7 +69,7 @@ export default function ProductPage({ params: { locale } }: Props) {
       <ProductViewedTracker />
       <ProductDeployProbe />
       <div className="bg-[#28282A] pb-28 font-sans text-white md:pb-0" data-siwaky-pdp-version="3.0">
-        <ProductHero />
+        <ProductHero discountPrice={discountPrice} />
         <ProductBenefits />
         <ProductSectionDivider />
         <Ingredients />
