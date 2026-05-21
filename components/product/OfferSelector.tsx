@@ -4,14 +4,14 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { OFFERS, type OfferId, savingsFor } from "@/lib/offers";
+import { OFFERS, type BaseOfferId, type OfferId, savingsFor } from "@/lib/offers";
 
 interface Props {
   value: OfferId;
   onChange: (id: OfferId) => void;
 }
 
-const ORDER: OfferId[] = ["box-1", "box-2", "box-3"];
+const ORDER: BaseOfferId[] = ["box-1", "box-2", "box-3"];
 
 export default function OfferSelector({ value, onChange }: Props) {
   const t = useTranslations();
