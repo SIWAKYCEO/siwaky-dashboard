@@ -3,7 +3,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { OFFERS, savingsFor, type OfferId } from "@/lib/offers";
+import { OFFERS, savingsFor, toBaseOfferId, type OfferId } from "@/lib/offers";
 import { useCartStore } from "@/store/cartStore";
 import { track } from "@/lib/pixels";
 
@@ -20,7 +20,7 @@ export default function UpgradeOffer({ fromOffer }: Props) {
 
   if (!upgrade) return null;
 
-  const offer = OFFERS[upgrade];
+  const offer = OFFERS[toBaseOfferId(upgrade)];
 
   const handle = () => {
     setOffer(upgrade);

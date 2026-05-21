@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-import { OFFERS, type OfferId } from "@/lib/offers";
+import { OFFERS, toBaseOfferId, type OfferId } from "@/lib/offers";
 
 const CART_LS_KEY = "siwaky-cart";
 
@@ -89,7 +89,7 @@ export const useCartStore = create<CartState>()(
       closeCheckout: () => set({ isCheckoutOpen: false }),
 
       addOffer: (offerId) => {
-        const o = OFFERS[offerId];
+        const o = OFFERS[toBaseOfferId(offerId)];
         set((s) => ({
           items: [{ offerId, quantity: 1, price: o.price }],
           isOpen: true,
@@ -98,7 +98,7 @@ export const useCartStore = create<CartState>()(
       },
 
       setOffer: (offerId) => {
-        const o = OFFERS[offerId];
+        const o = OFFERS[toBaseOfferId(offerId)];
         set({ items: [{ offerId, quantity: 1, price: o.price }] });
       },
 

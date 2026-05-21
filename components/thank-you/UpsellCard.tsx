@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import { createOrder } from "@/lib/api";
-import { type OfferId } from "@/lib/offers";
+import { toBaseOfferId, type OfferId } from "@/lib/offers";
 
 const UPSELL = {
   "box-1": { price: 199, original: 245, savings: 46 },
@@ -84,7 +84,7 @@ export default function UpsellCard({ offerId, originalOrderId }: Props) {
       name: ctx.name,
       phone: ctx.phone,
       city: "",
-      offer: upsellOfferId,
+      offer: toBaseOfferId(upsellOfferId),
       price_sar: cfg.price,
       quantity: 1,
       product: "SIWAKY Box x1 — Upsell",

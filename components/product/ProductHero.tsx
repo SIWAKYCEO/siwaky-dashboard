@@ -10,7 +10,7 @@ import GoldOrnamentalDivider from "@/components/shared/GoldOrnamentalDivider";
 import TrustBadges from "@/components/shared/TrustBadges";
 import StickyAddToCart from "@/components/shared/StickyAddToCart";
 
-import { DEFAULT_OFFER, OFFERS, type OfferId } from "@/lib/offers";
+import { DEFAULT_OFFER, OFFERS, toBaseOfferId, type OfferId } from "@/lib/offers";
 import { track } from "@/lib/pixels";
 import { useCartStore } from "@/store/cartStore";
 
@@ -20,7 +20,7 @@ export default function ProductHero() {
   const addOffer = useCartStore((s) => s.addOffer);
 
   const handleAdd = () => {
-    const o = OFFERS[offer];
+    const o = OFFERS[toBaseOfferId(offer)];
     addOffer(offer);
     track("AddToCart", {
       value: o.price,

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { useCartStore } from "@/store/cartStore";
-import { OFFERS, type OfferId } from "@/lib/offers";
+import { OFFERS, toBaseOfferId, type OfferId } from "@/lib/offers";
 import { track } from "@/lib/pixels";
 
 interface Props {
@@ -26,7 +26,7 @@ export default function StickyAddToCart({ offerId }: Props) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const offer = OFFERS[offerId];
+  const offer = OFFERS[toBaseOfferId(offerId)];
 
   const handleClick = () => {
     addOffer(offerId);
