@@ -159,14 +159,11 @@ export default function CheckoutPopup({ open, onClose }: Props) {
     document.body.style.overflow = "";
     useCartStore.getState().clearCart();
 
-    // Save name + phone for post-purchase upsell on thank-you page
     try {
-      sessionStorage.setItem(
-        "siwaky-upsell-ctx",
-        JSON.stringify({ name: values.name, phone: values.phone }),
-      );
+      sessionStorage.setItem("sw_order_name", values.name);
+      sessionStorage.setItem("sw_order_phone", values.phone);
     } catch {
-      // sessionStorage unavailable — upsell will still show but won't be able to submit
+      // sessionStorage unavailable — upsell pre-fill won't work but order proceeds
     }
 
     const dest = `/${locale}/thank-you?order=${encodeURIComponent(res.data.order_id)}&qty=${q}&total=${tot}&offer=${offerEnc}`;
