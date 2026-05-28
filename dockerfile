@@ -1,6 +1,6 @@
-# Build context: . (repo root — set Easypanel build path to /)
+# Build context: . (repo root — Easypanel build path must be /)
 # syntax=docker/dockerfile:1.7
-# cache-bust: 2026-05-28
+ARG CACHE_BUST=2026-05-28-force
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
