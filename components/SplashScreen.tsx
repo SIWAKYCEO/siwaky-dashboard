@@ -426,7 +426,7 @@ export default function SplashScreen() {
             position:"absolute", bottom:"15%",
             left:"50%", transform:"translateX(-50%)",
             display:"flex", flexDirection:"column", alignItems:"center",
-            gap:12, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
+            gap:32, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
           }}>
             <motion.div aria-hidden
               style={{fontSize:8, color:"#C9A84C", lineHeight:1}}
@@ -438,10 +438,11 @@ export default function SplashScreen() {
             <motion.div
               style={{
                 display:"flex", direction:"ltr",
-                fontSize:10, letterSpacing:16, paddingRight:16,
+                fontSize:14, letterSpacing:18, paddingRight:18,
                 color:"#C9A84C",
                 fontFamily:"'Helvetica Neue', Helvetica, Arial, sans-serif",
-                fontWeight:200,
+                fontWeight:300,
+                WebkitFontSmoothing:"antialiased",
               }}
               animate={textExit ? exitText : {}}
               transition={textExit ? exitTxt(.04) : {}}
@@ -458,13 +459,15 @@ export default function SplashScreen() {
             <motion.div
               className="sw-tagline"
               style={{
-                fontSize:22,
-                color:"rgba(255,255,255,0.92)",
+                fontSize:28,
+                color:"rgba(255,255,255,0.95)",
                 fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
+                fontWeight:400,
                 textShadow:"0 0 30px rgba(201,168,76,.4)",
                 direction:"rtl",
                 display:"flex", flexWrap:"wrap", justifyContent:"center",
                 gap:"0 6px",
+                WebkitFontSmoothing:"antialiased",
               }}
               animate={textExit ? exitText : {}}
               transition={textExit ? exitTxt(.08) : {}}
@@ -480,10 +483,11 @@ export default function SplashScreen() {
 
             <motion.div
               style={{
-                fontSize:10, color:"rgba(201,168,76,.45)",
-                letterSpacing:4, paddingRight:4,
+                fontSize:14, color:"rgba(201,168,76,0.7)",
+                letterSpacing:5, paddingRight:5,
                 fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
                 direction:"rtl",
+                WebkitFontSmoothing:"antialiased",
               }}
               initial={{opacity:0}}
               animate={textExit ? exitText : {opacity:1}}
