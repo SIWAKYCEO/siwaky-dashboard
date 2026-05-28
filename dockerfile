@@ -1,5 +1,6 @@
-# Build context: ./frontend (see docker-compose.yml)
+# Build context: . (repo root — set Easypanel build path to /)
 # syntax=docker/dockerfile:1.7
+# cache-bust: 2026-05-28
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
