@@ -4,11 +4,15 @@ import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
-import { checkoutOrderPostAbsoluteUrl } from "@/lib/checkout/order-post-url";
-
 const PHONE_RE = /^(05|5)(5|0|3|6|4|9|1|8|7)[0-9]{7}$/;
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.siwaky.com";
+
 type FromId = "box-1" | "box-2";
+
+function offerId(from: FromId): "box-1-upsell" | "box-2-upsell" {
+  return from === "box-2" ? "box-2-upsell" : "box-1-upsell";
+}
 
 function sourceFromId(from: FromId): string {
   return from === "box-2" ? "upsell-box2" : "upsell-box1";
@@ -20,12 +24,10 @@ function UpsellContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const priceRaw = parseInt(searchParams.get("price") ?? "", 10);
-  const price = Number.isFinite(priceRaw) && priceRaw > 0 ? priceRaw : 150;
+  const price = Number(searchParams.get("price")) || 150;
   const fromRaw = searchParams.get("from");
   const from: FromId = fromRaw === "box-2" ? "box-2" : "box-1";
-  const savedRaw = parseInt(searchParams.get("saved") ?? "", 10);
-  const saved = Number.isFinite(savedRaw) && savedRaw > 0 ? savedRaw : 95;
+  const saved = Number(searchParams.get("saved")) || 95;
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -66,9 +68,9 @@ function UpsellContent() {
     const payload = {
       name: trimmedName,
       phone: trimmedPhone,
-      offer: "box-1" as const,
+      offer: offerId(from),
       quantity: 1,
-      price_sar: price,
+      price_sar: Number(price),
       product: "SIWAKY Box x1 — Upsell",
       sku: "SIWAKY12",
       source: sourceFromId(from),
@@ -76,8 +78,10 @@ function UpsellContent() {
       city: "",
     };
 
+    console.log("Upsell payload:", payload);
+
     try {
-      const postUrl = checkoutOrderPostAbsoluteUrl();
+      const postUrl = `${API_BASE}/api/orders`;
       const res = await fetch(postUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,17 +90,19 @@ function UpsellContent() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        console.log("Upsell error response:", data);
         const code = data?.error ?? data?.detail?.error ?? "server_error";
         if (code === "geo_blocked") setError("الطلب غير متاح في منطقتك");
         else if (code === "invalid_phone") setError("رقم الجوال غير صحيح");
         else if (code === "invalid_name") setError("الاسم غير صحيح");
-        else setError("حدث خطأ، الرجاء المحاولة مجدداً");
+        else setError(`حدث خطأ، الرجاء المحاولة مجدداً (${code})`);
         setSubmitting(false);
         return;
       }
 
       router.push(`/${locale}/thank-you`);
-    } catch {
+    } catch (err) {
+      console.log("Upsell fetch error:", err);
       setError("تعذّر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة");
       setSubmitting(false);
     }
