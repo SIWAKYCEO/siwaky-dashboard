@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { checkoutOrderPostAbsoluteUrl } from "@/lib/checkout/order-post-url";
 
@@ -14,7 +14,7 @@ function sourceFromId(from: FromId): string {
   return from === "box-2" ? "upsell-box2" : "upsell-box1";
 }
 
-export default function UpsellPage() {
+function UpsellContent() {
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "ar";
   const router = useRouter();
@@ -200,5 +200,13 @@ export default function UpsellPage() {
         </form>
       </div>
     </section>
+  );
+}
+
+export default function UpsellPage() {
+  return (
+    <Suspense fallback={<div style={{ background: "#28282A", minHeight: "100vh" }} />}>
+      <UpsellContent />
+    </Suspense>
   );
 }
