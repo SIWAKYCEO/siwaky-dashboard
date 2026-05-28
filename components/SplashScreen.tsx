@@ -426,7 +426,7 @@ export default function SplashScreen() {
             position:"absolute", bottom:"15%",
             left:"50%", transform:"translateX(-50%)",
             display:"flex", flexDirection:"column", alignItems:"center",
-            gap:32, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
+            gap:40, zIndex:3, textAlign:"center", whiteSpace:"nowrap",
           }}>
             <motion.div aria-hidden
               style={{fontSize:8, color:"#C9A84C", lineHeight:1}}
@@ -438,7 +438,7 @@ export default function SplashScreen() {
             <motion.div
               style={{
                 display:"flex", direction:"ltr",
-                fontSize:14, letterSpacing:18, paddingRight:18,
+                fontSize:15, letterSpacing:16, paddingRight:16,
                 color:"#C9A84C",
                 fontFamily:"'Helvetica Neue', Helvetica, Arial, sans-serif",
                 fontWeight:300,
@@ -459,14 +459,17 @@ export default function SplashScreen() {
             <motion.div
               className="sw-tagline"
               style={{
-                fontSize:28,
+                fontSize: isMobile ? 20 : 24,
                 color:"rgba(255,255,255,0.95)",
                 fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
                 fontWeight:400,
                 textShadow:"0 0 30px rgba(201,168,76,.4)",
                 direction:"rtl",
-                display:"flex", flexWrap:"wrap", justifyContent:"center",
+                display:"flex", flexWrap:"nowrap", justifyContent:"center",
                 gap:"0 6px",
+                whiteSpace:"nowrap",
+                width:"100%",
+                textAlign:"center",
                 WebkitFontSmoothing:"antialiased",
               }}
               animate={textExit ? exitText : {}}
@@ -483,7 +486,7 @@ export default function SplashScreen() {
 
             <motion.div
               style={{
-                fontSize:14, color:"rgba(201,168,76,0.7)",
+                fontSize: isMobile ? 15 : 16, color:"rgba(201,168,76,0.7)",
                 letterSpacing:5, paddingRight:5,
                 fontFamily:"var(--font-naskh), 'Noto Naskh Arabic', serif",
                 direction:"rtl",
