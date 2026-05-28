@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DashboardShell } from "@/components/dashboard/shell/DashboardShell";
@@ -19,7 +20,10 @@ import { useDashboardAlerts } from "@/components/dashboard/providers/DashboardAl
 import { useOrdersPolling } from "@/hooks/useOrdersPolling";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
-import LiveOrdersMap from "@/components/dashboard/maps/LiveOrdersMap";
+const LiveOrdersMap = dynamic(
+  () => import("@/components/dashboard/maps/LiveOrdersMap"),
+  { ssr: false, loading: () => <div style={{ height: 300, background: "#1a1a2e", borderRadius: 12 }} /> },
+);
 import { OrderFeed } from "./OrderFeed";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { PwaInstallButton } from "./PwaInstallButton";
