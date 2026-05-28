@@ -1,6 +1,5 @@
 # Build context: . (repo root — Easypanel build path must be /)
 # syntax=docker/dockerfile:1.7
-ARG CACHE_BUST=2026-05-28-force
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
@@ -9,6 +8,8 @@ RUN npm ci
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+ARG CACHE_BUST=2026-05-28-13h
+RUN echo "Cache bust: $CACHE_BUST"
 COPY . .
 RUN test -f public/images/product.jpg || (echo "FATAL: missing public/images/product.jpg" && exit 1)
 ENV NEXT_TELEMETRY_DISABLED=1
