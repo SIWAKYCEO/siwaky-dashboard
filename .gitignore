@@ -29,3 +29,13 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local media assets (not tracked in this repo)
+frontend/public/images/
+frontend/public/uploads/
+frontend/public/halal-cert.pdf
