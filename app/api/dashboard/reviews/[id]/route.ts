@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
-import { getReviewsUpstreamBase } from "@/lib/dashboard/reviews-upstream";
+import { getReviewsInternalToken, getReviewsUpstreamBase } from "@/lib/dashboard/reviews-upstream";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +15,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const session = await verifyDashboardSessionToken(token);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as unknown;
-  const url  = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
+  const body          = await req.json() as unknown;
+  const url           = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
+  const internalToken = getReviewsInternalToken();
 
   try {
     const res = await fetch(url, {
@@ -24,6 +25,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
+        ...(internalToken ? { "X-Dashboard-Token": internalToken } : {}),
         Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}`,
       },
       body: JSON.stringify(body),
@@ -42,13 +44,17 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   const session = await verifyDashboardSessionToken(token);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
+  const url           = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
+  const internalToken = getReviewsInternalToken();
 
   try {
     const res = await fetch(url, {
       method: "DELETE",
       cache: "no-store",
-      headers: { Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}` },
+      headers: {
+        ...(internalToken ? { "X-Dashboard-Token": internalToken } : {}),
+        Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}`,
+      },
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
