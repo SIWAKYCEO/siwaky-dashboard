@@ -1,41 +1,57 @@
 "use client";
 
+import { useState } from "react";
 import { Shield } from "lucide-react";
 
 import type { DashboardNavEntry } from "./dashboardNav";
 import { dashboardNavEntries } from "./dashboardNav";
 
-type RailProps = {
-  onNavigate: (id: string) => void;
-};
+// ── Shared nav tile list ──────────────────────────────────────────────────────
 
 function NavTiles({
   items,
   onNavigate,
+  activeId,
+  compact,
 }: {
   items: DashboardNavEntry[];
   onNavigate: (id: string) => void;
+  activeId?: string | null;
+  compact?: boolean;
 }) {
   return (
-    <nav className="flex flex-col gap-1.5 px-3 pb-4 pt-8" aria-label="Dashboard workspace">
+    <nav
+      className={`flex flex-col ${compact ? "gap-0.5 px-2 pb-3 pt-5" : "gap-1.5 px-3 pb-4 pt-8"}`}
+      aria-label="Dashboard workspace"
+    >
       {items.map((item) => {
         const Icon = item.Icon;
+        const isActive = activeId === item.id;
         return (
           <button
             key={item.id}
             type="button"
             data-section={item.id}
             onClick={() => onNavigate(item.id)}
-            className="group flex w-full gap-4 rounded-[1.15rem] border border-transparent bg-transparent px-3.5 py-3 text-left outline-none motion-safe:transition-all motion-safe:duration-200 hover:border-white/[0.08] hover:bg-white/[0.04]"
+            style={{
+              borderLeft: isActive ? "3px solid #C9A84C" : "3px solid transparent",
+            }}
+            className={`group flex w-full items-center gap-3.5 rounded-xl bg-transparent px-3 text-left outline-none transition-colors
+              hover:bg-white/[0.04] ${compact ? "py-3" : "py-3.5"}
+              ${isActive ? "bg-white/[0.03]" : ""}`}
           >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-black/42 text-[#ebe2c9] shadow-inner motion-safe:group-hover:shadow-[0_0_26px_-8px_rgba(201,169,98,.42)] motion-safe:group-hover:border-[#c9a962]/35">
-              <Icon className="size-[19px]" strokeWidth={1.65} aria-hidden />
+            <span
+              className={`flex shrink-0 items-center justify-center rounded-xl border border-white/[0.08] shadow-inner
+                ${isActive ? "border-[#c9a84c]/35 bg-[#1c2010] text-[#c9a84c]" : "bg-[#1a1a1d] text-[#c9a84c] group-hover:border-[#c9a84c]/28"}
+                ${compact ? "size-[42px]" : "size-10"}`}
+            >
+              <Icon className={compact ? "size-5" : "size-[18px]"} strokeWidth={1.65} aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className="font-dashSans text-[15px] font-semibold tracking-tight text-white/95">
+              <span className={`block font-bold leading-tight text-white/95 ${compact ? "text-[15px]" : "text-[14px]"}`}>
                 {item.label}
               </span>
-              <span className="mt-0.5 block text-[11px] font-medium uppercase tracking-[0.26em] text-white/43">
+              <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.22em] text-white/38">
                 {item.subtitle}
               </span>
             </span>
@@ -46,13 +62,24 @@ function NavTiles({
   );
 }
 
+// ── Desktop rail (unchanged layout) ──────────────────────────────────────────
+
+type RailProps = { onNavigate: (id: string) => void };
+
 export function DashboardSidebarRail({ onNavigate }: RailProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const handleNavigate = (id: string) => {
+    setActiveId(id);
+    onNavigate(id);
+  };
+
   return (
     <div className="flex h-[100dvh] w-[272px] shrink-0 flex-col border-r border-white/[0.06] bg-gradient-to-b from-[#29292c]/90 via-[#28282a] to-[#1e1e21]/95 backdrop-blur-3xl md:w-[296px]">
-      <BrandHeader />
+      <RailBrandHeader />
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-16">
-        <NavTiles items={dashboardNavEntries} onNavigate={onNavigate} />
+        <NavTiles items={dashboardNavEntries} onNavigate={handleNavigate} activeId={activeId} compact />
 
         <div className="mx-5 rounded-3xl border border-white/[0.07] bg-gradient-to-br from-[#323236]/92 to-transparent p-[1px] shadow-glass">
           <div className="rounded-[calc(1.5rem-1px)] px-5 py-4">
@@ -76,47 +103,18 @@ export function DashboardSidebarRail({ onNavigate }: RailProps) {
   );
 }
 
-type DrawerProps = {
-  onNavigate: (id: string) => void;
-  onClose: () => void;
-};
-
-export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
+function RailBrandHeader() {
   return (
-    <div className="flex h-full flex-col bg-gradient-to-b from-[#29292c]/95 via-[#28282a]/98 to-[#1f1f22] backdrop-blur-3xl">
-      <div className="flex justify-end px-5 pt-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-2xl border border-white/[0.1] px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70 hover:bg-white/[0.05]"
-          aria-label="Close navigation drawer"
-        >
-          Close panel
-        </button>
-      </div>
-      <BrandHeader compact />
-
-      <div className="min-h-0 flex-1 overflow-y-auto pb-20">
-        <NavTiles items={dashboardNavEntries} onNavigate={onNavigate} />
-      </div>
-    </div>
-  );
-}
-
-function BrandHeader({ compact = false }: { compact?: boolean }) {
-  return (
-    <div
-      className={`relative z-10 overflow-visible border-b border-white/[0.065] px-6 ${compact ? "py-5" : "py-9"}`}
-    >
+    <div className="relative z-10 overflow-visible border-b border-white/[0.065] px-6 py-9">
       <div className="relative flex flex-col gap-3 overflow-visible">
         {/* eslint-disable-next-line @next/next/no-img-element -- SVG wordmark */}
         <img
           src="/images/logo-siwaky.svg"
           alt="SIWAKY"
-          width={compact ? 120 : 150}
-          height={compact ? 30 : 40}
+          width={150}
+          height={40}
           decoding="async"
-          className={`w-auto shrink-0 object-contain ${compact ? "h-9 max-w-[148px]" : "h-11 max-w-[188px]"}`}
+          className="h-11 w-auto max-w-[188px] shrink-0 object-contain"
         />
         <span
           aria-live="polite"
@@ -130,10 +128,88 @@ function BrandHeader({ compact = false }: { compact?: boolean }) {
         </span>
       </div>
       <p className="mt-4 max-w-[16rem] text-[13px] leading-relaxed text-siwaky-muted">
-        {compact
-          ? "Navigate workspaces"
-          : "Luxury-grade operations rail · SIWAKY internal"}
+        Luxury-grade operations rail · SIWAKY internal
       </p>
+    </div>
+  );
+}
+
+// ── Mobile drawer (redesigned) ────────────────────────────────────────────────
+
+type DrawerProps = { onNavigate: (id: string) => void; onClose: () => void };
+
+export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const handleNavigate = (id: string) => {
+    setActiveId(id);
+    onNavigate(id);
+  };
+
+  return (
+    <div
+      className="flex h-full w-full flex-col overflow-hidden"
+      style={{ background: "#0e0e10" }}
+    >
+      {/* ── Close button ── */}
+      <div className="flex shrink-0 justify-end px-4 pt-5 pb-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-white/[0.12] px-5 py-2 font-dashSans text-[10px] font-bold uppercase tracking-[0.28em] text-white/50 transition-colors hover:bg-white/[0.05] hover:text-white/70"
+          aria-label="Close navigation panel"
+        >
+          Close panel
+        </button>
+      </div>
+
+      {/* ── Brand header ── */}
+      <div className="shrink-0 border-b border-white/[0.07] px-6 pb-5 pt-3">
+        {/* SIWAKY gold wordmark */}
+        <p
+          aria-label="SIWAKY"
+          style={{
+            color: "#C9A84C",
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: 6,
+            textTransform: "uppercase",
+            fontFamily: "inherit",
+            lineHeight: 1,
+          }}
+        >
+          SIWAKY
+        </p>
+
+        {/* LIVE LEDGER badge */}
+        <div className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-emerald-500/[0.22] bg-emerald-950/50 px-3 py-1.5">
+          <span className="relative flex size-[7px] shrink-0">
+            <span className="absolute size-full rounded-full bg-emerald-400/75 motion-safe:animate-pulse motion-reduce:animate-none" />
+            <span className="relative size-full rounded-full bg-emerald-200" />
+          </span>
+          <span className="font-dashSans text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-300/88">
+            Live Ledger
+          </span>
+        </div>
+
+        {/* Subtitle */}
+        <p className="mt-3 font-dashSans text-[12px] tracking-[0.03em] text-white/35">
+          Navigate workspaces
+        </p>
+      </div>
+
+      {/* Thin divider */}
+      <div className="mx-5 my-1 h-px shrink-0 bg-white/[0.05]" />
+
+      {/* ── Nav items ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <NavTiles
+          items={dashboardNavEntries}
+          onNavigate={handleNavigate}
+          activeId={activeId}
+          compact
+        />
+      </div>
     </div>
   );
 }

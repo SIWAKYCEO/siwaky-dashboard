@@ -60,21 +60,21 @@ export function DashboardShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.25 }}
               className="fixed inset-0 z-[70] xl:hidden"
             >
               <button
                 type="button"
                 aria-label="Dismiss navigation drawer"
-                className="absolute inset-0 bg-black/55 backdrop-blur-md"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={() => setDrawerOpen(false)}
               />
               <motion.aside
-                initial={{ x: "-102%" }}
+                initial={{ x: "-100%" }}
                 animate={{ x: 0 }}
-                exit={{ x: "-102%" }}
-                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-[71] flex h-[100dvh] min-h-[100dvh] w-[min(88vw,300px)] max-w-[100vw] overflow-x-hidden shadow-[24px_0_80px_rgba(0,0,0,0.45)]"
+                exit={{ x: "-100%" }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="relative z-[71] flex h-[100dvh] min-h-[100dvh] w-[min(80vw,320px)] max-w-[100vw] overflow-x-hidden shadow-[24px_0_80px_rgba(0,0,0,0.6)]"
               >
                 <DashboardSidebarDrawer onClose={() => setDrawerOpen(false)} onNavigate={handleNavigate} />
               </motion.aside>
