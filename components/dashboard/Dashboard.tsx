@@ -24,6 +24,8 @@ const LiveOrdersMap = dynamic(
   () => import("@/components/dashboard/maps/LiveOrdersMap"),
   { ssr: false, loading: () => <div style={{ height: 300, background: "#1a1a2e", borderRadius: 12 }} /> },
 );
+import { MobileKpiGrid } from "@/components/dashboard/mobile/MobileKpiGrid";
+import { MobileOrdersList } from "@/components/dashboard/mobile/MobileOrdersList";
 import { OrderFeed } from "./OrderFeed";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { PwaInstallButton } from "./PwaInstallButton";
@@ -250,31 +252,43 @@ export function Dashboard() {
 
         {bodyReady ? (
           <div className="space-y-16 md:space-y-[4.75rem]">
-            <section id="pulse" className="space-y-9 scroll-mt-28 xl:scroll-mt-[7rem]">
-              <SectionLabel
-                eyebrow="Orders dashboard"
-                title={
-                  <>
-                    At-a-glance view across{" "}
-                    <span className="bg-gradient-to-r from-[#f5efd9] via-white to-emerald-200/90 bg-clip-text text-transparent">
-                      {analytics.kpis.totalOrders.toLocaleString("en-US")} orders
+            <section id="pulse" className="space-y-6 scroll-mt-28 md:space-y-9 xl:scroll-mt-[7rem]">
+              {/* Desktop-only section header */}
+              <div className="hidden md:block">
+                <SectionLabel
+                  eyebrow="Orders dashboard"
+                  title={
+                    <>
+                      At-a-glance view across{" "}
+                      <span className="bg-gradient-to-r from-[#f5efd9] via-white to-emerald-200/90 bg-clip-text text-transparent">
+                        {analytics.kpis.totalOrders.toLocaleString("en-US")} orders
+                      </span>
+                    </>
+                  }
+                  action={
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/43 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/72 shadow-inner backdrop-blur-md">
+                      <span className="relative flex size-2 shrink-0">
+                        <span className="absolute inline-flex size-full rounded-full bg-emerald-400/92 motion-safe:animate-ping motion-reduce:animate-none" />
+                        <span className="relative m-auto inline-flex size-[5px] rounded-full bg-emerald-200 shadow-[0_0_14px_-1px_rgba(167,243,208,.9)]" />
+                      </span>
+                      Live metrics
                     </span>
-                  </>
-                }
-                action={
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/43 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/72 shadow-inner backdrop-blur-md lg:hidden">
-                    <span className="relative flex size-2 shrink-0">
-                      <span className="absolute inline-flex size-full rounded-full bg-emerald-400/92 motion-safe:animate-ping motion-reduce:animate-none" />
-                      <span className="relative m-auto inline-flex size-[5px] rounded-full bg-emerald-200 shadow-[0_0_14px_-1px_rgba(167,243,208,.9)]" />
-                    </span>
-                    Live metrics
-                  </span>
-                }
-              />
+                  }
+                />
+              </div>
 
-              <MetricsCommandDeck analytics={analytics} orders={payload.orders} />
+              {/* Mobile 2×2 period KPI grid */}
+              <MobileKpiGrid orders={payload.orders} />
 
-          <div className="grid min-w-0 gap-7 lg:grid-cols-12 lg:gap-8">
+              {/* Desktop full KPI deck */}
+              <div className="hidden md:block">
+                <MetricsCommandDeck analytics={analytics} orders={payload.orders} />
+              </div>
+
+              {/* Mobile latest orders */}
+              <MobileOrdersList orders={payload.orders} />
+
+          <div className="hidden min-w-0 gap-7 md:grid lg:grid-cols-12 lg:gap-8">
                 <GlassPanel outerClassName="min-w-0 lg:col-span-7 xl:col-span-7" className="p-7 sm:p-8">
                   <SectionLabel
                     eyebrow="Revenue analytics"

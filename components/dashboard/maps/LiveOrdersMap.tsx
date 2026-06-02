@@ -245,7 +245,8 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
   const draggingRef    = useRef(false);
   const prevMouseRef   = useRef({ x: 0, y: 0 });
   const resumeRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mouse2dRef     = useRef(new THREE.Vector2(-9, -9));
+  // Initialised lazily inside the effect — never evaluated during SSR
+  const mouse2dRef     = useRef<THREE.Vector2 | null>(null);
 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; city: string; count: number; sar: number } | null>(null);
 
@@ -257,7 +258,11 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
   useEffect(() => {
     const canvas    = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container) return;
+    if (!canvas || !container || typeof window === "undefined") return;
+
+    // Mouse tracking (created here to stay SSR-safe)
+    const mouse2d = new THREE.Vector2(-9, -9);
+    mouse2dRef.current = mouse2d;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -366,7 +371,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       }
 
       // Tooltip: raycast against dot main meshes
-      raycaster.setFromCamera(mouse2dRef.current, camera);
+      raycaster.setFromCamera(mouse2d, camera);
       const hits = raycaster.intersectObjects(dotEntriesRef.current.map((e) => e.mainMesh));
       if (hits.length > 0) {
         const hit   = hits[0];
@@ -409,7 +414,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     const onMouseDown  = (e: MouseEvent) => startDrag(e.clientX, e.clientY);
     const onMouseMove  = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      mouse2dRef.current.set(
+      mouse2d.set(
         ((e.clientX - rect.left) / rect.width)  * 2 - 1,
         -((e.clientY - rect.top)  / rect.height) * 2 + 1,
       );

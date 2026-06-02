@@ -280,6 +280,7 @@ export function DashboardTopBar({
           {/* Row: menu · title stack · compact actions */}
           <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
             <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
+              {/* Hamburger — visible on < xl */}
               <button
                 type="button"
                 aria-label="Open navigation"
@@ -289,16 +290,18 @@ export function DashboardTopBar({
                 <Menu className="size-[18px] stroke-[1.6]" />
               </button>
 
-              <div className="min-w-0 flex-1 text-left">
+              {/* Mobile-only compact brand label */}
+              <span className="mt-[14px] font-dashSans text-[11px] font-bold uppercase tracking-[0.3em] text-[#c9a84c] md:hidden">
+                SIWAKY
+              </span>
+
+              {/* Desktop breadcrumb + title + sync pill — hidden on mobile */}
+              <div className="hidden min-w-0 flex-1 text-left md:block">
                 <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-white/52">
                   <li>SIWAKY</li>
-                  <li aria-hidden className="select-none text-white/18">
-                    ·
-                  </li>
+                  <li aria-hidden className="select-none text-white/18">·</li>
                   <li className="text-siwaky-muted">Team</li>
-                  <li aria-hidden className="select-none text-white/18">
-                    /
-                  </li>
+                  <li aria-hidden className="select-none text-white/18">/</li>
                   <li className="text-white">Orders dashboard</li>
                 </ol>
 
@@ -320,7 +323,8 @@ export function DashboardTopBar({
               </div>
             </div>
 
-            <div className="relative z-[2] flex w-full shrink-0 flex-row flex-wrap items-center justify-start gap-2 overflow-visible pb-0.5 sm:w-auto sm:justify-end sm:gap-3">
+            {/* Desktop action buttons — hidden on mobile */}
+            <div className="relative z-[2] hidden w-full shrink-0 flex-row flex-wrap items-center justify-start gap-2 overflow-visible pb-0.5 sm:w-auto sm:justify-end sm:gap-3 md:flex">
               {viewerEmail ? (
                 <span
                   className="hidden max-w-[11rem] truncate rounded-full border border-white/[0.08] bg-black/38 px-3 py-2 font-dashSans text-[11px] text-white/62 shadow-inner backdrop-blur-md lg:inline"
