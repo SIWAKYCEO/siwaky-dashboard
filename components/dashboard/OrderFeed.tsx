@@ -5,14 +5,13 @@ import { useCallback, useMemo, useState } from "react";
 import { PackagePlus } from "lucide-react";
 
 import { liveOrderKey } from "@/lib/dashboard/geo/orderCoordinates";
-import { formatSar, lineRevenue, statusAccent } from "@/lib/dashboard/kpi";
+import { formatUsd, lineRevenue } from "@/lib/dashboard/kpi";
 import { stableOrderFingerprint } from "@/lib/dashboard/orderFingerprint";
 import type { OrderRow } from "@/lib/dashboard/types";
 
 import { OrderDetailDrawer } from "./OrderDetailDrawer";
 import { GlassPanel } from "./ui/GlassPanel";
 import { SheetPanelColumnHeader } from "./ui/SheetPanelColumnHeader";
-import { StatusBadge } from "./ui/StatusBadge";
 
 export function OrderFeed({
   orders,
@@ -21,7 +20,6 @@ export function OrderFeed({
 }: {
   orders: OrderRow[];
   embedded?: boolean;
-  /** Rows detected via polling diff — temporary highlight ring */
   highlightFingerprints?: Set<string>;
 }) {
   const [selected, setSelected] = useState<OrderRow | null>(null);
@@ -43,15 +41,19 @@ export function OrderFeed({
     <div className="relative pr-0.5">
       <div className="relative space-y-3 pb-2 before:absolute before:left-[41px] before:top-[10px] before:z-[0] before:h-[calc(100%-24px)] before:w-[1px] before:bg-gradient-to-b before:from-[#c9a962]/50 before:via-white/10 before:to-transparent md:before:left-[45px]">
         {keys.map(({ order, key }) => {
-          const accent = statusAccent(order);
           const rev = lineRevenue(order);
-          const fp = stableOrderFingerprint(order);
+          const fp  = stableOrderFingerprint(order);
           const rowHighlight = highlightFingerprints?.has(fp) ?? false;
-          const titleParts = [order.product?.trim(), quantityLabel(order.quantity)].filter(Boolean);
-          const subtitleParts = [
-            order.name?.trim(),
-            [order.city?.trim(), order.country?.trim()].filter(Boolean).join(", "),
-          ].filter(Boolean);
+
+          const product  = order.product?.trim();
+          const qty      = quantityLabel(order.quantity);
+          const titleStr = [product, qty].filter(Boolean).join(" ");
+
+          const name    = order.name?.trim();
+          const city    = [order.city?.trim(), order.country?.trim()].filter(Boolean).join(", ");
+          const subtitle = [name, city].filter(Boolean).join(" · ");
+
+          const date = fmtDate(order.date);
 
           return (
             <button
@@ -67,53 +69,44 @@ export function OrderFeed({
               <span className="pointer-events-none absolute -right-[18%] top-[-50%] h-[260%] w-[48%] rotate-[18deg] bg-gradient-to-bl from-transparent via-transparent to-[#c9a962]/12 opacity-80 transition-opacity duration-[420ms] group-hover:to-[#c9a962]/18" />
 
               <div className="relative flex gap-5 md:gap-6">
+                {/* Gold dot — timeline anchor, no status color */}
                 <span
                   aria-hidden
-                  className={`mt-2 hidden h-[11px] w-[11px] flex-none shrink-0 rounded-full ring-[6px] ring-[#28282a] sm:block ${accent.dotClass} ${accent.ringClass}`}
+                  className="mt-2 hidden h-[11px] w-[11px] flex-none shrink-0 rounded-full bg-[#c9a84c] ring-[6px] ring-[#28282a] sm:block"
                 />
                 <span
                   aria-hidden
-                  className={`mt-[6px] h-[11px] w-[11px] flex-none shrink-0 rounded-full ring-[6px] ring-[#28282a] sm:hidden ${accent.dotClass} ${accent.ringClass}`}
+                  className="mt-[6px] h-[11px] w-[11px] flex-none shrink-0 rounded-full bg-[#c9a84c] ring-[6px] ring-[#28282a] sm:hidden"
                 />
 
                 <div className="min-w-0 flex-1 space-y-3 md:pb-px">
                   <div className="flex flex-wrap items-start justify-between gap-4 md:gap-6">
                     <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-[10px] gap-y-[6px]">
-                        <span
-                          className={`truncate font-dashDisplay text-[16px] font-semibold leading-snug text-white md:text-[17px] ${accent.textClass}`}
-                        >
-                          {titleParts.length ? titleParts.join(" · ") : "Order"}
-                        </span>
-                        <StatusBadge accent={accent} />
-                      </div>
-                      {subtitleParts.length ? (
-                        <p className="truncate text-[13px] text-white/[0.61]">{subtitleParts.join(" · ")}</p>
+                      <span className="truncate font-dashDisplay text-[16px] font-semibold leading-snug text-white md:text-[17px]">
+                        {titleStr || "Order"}
+                      </span>
+                      {subtitle ? (
+                        <p className="truncate text-[13px] text-white/[0.61]">{subtitle}</p>
                       ) : null}
                     </div>
-                    <span className="rounded-[1rem] border border-white/[0.12] bg-black/[0.53] px-4 py-2 text-right align-top font-dashSans text-sm font-semibold tabular-nums text-[#f4eed9] shadow-inner backdrop-blur-md">
-                      {formatSar(rev)}
-                    </span>
+                    <div className="text-right">
+                      <span className="block rounded-[1rem] border border-white/[0.12] bg-black/[0.53] px-4 py-2 font-dashSans text-sm font-semibold tabular-nums text-[#f4eed9] shadow-inner backdrop-blur-md">
+                        {formatUsd(rev)}
+                      </span>
+                      {date ? (
+                        <span className="mt-1 block text-[11px] text-white/40">{date}</span>
+                      ) : null}
+                    </div>
                   </div>
 
-                  <dl className="flex flex-wrap gap-x-7 gap-y-2 border-t border-white/[0.05] pt-4 text-[12px] text-white/[0.5] md:gap-x-11">
-                    {order.phone?.trim() ? (
+                  {order.phone?.trim() ? (
+                    <dl className="flex flex-wrap gap-x-7 gap-y-2 border-t border-white/[0.05] pt-4 text-[12px] text-white/[0.5] md:gap-x-11">
                       <div>
                         <dt className="text-white/42">Phone</dt>{" "}
                         <dd className="inline translate-y-[0.05em] text-white/74">{order.phone.trim()}</dd>
                       </div>
-                    ) : null}
-                    <div>
-                      <dt className="text-white/42">Fulfillment</dt>{" "}
-                      <dd className="inline capitalize text-white/78">{tierLabel(accent.label)}</dd>
-                    </div>
-                    {sheetPreview(order.cod_fee, "") ? (
-                      <div>
-                        <dt className="text-white/42">COD</dt>{" "}
-                        <dd className="inline text-white/[0.71]">{sheetPreview(order.cod_fee, "—")}</dd>
-                      </div>
-                    ) : null}
-                  </dl>
+                    </dl>
+                  ) : null}
                 </div>
               </div>
             </button>
@@ -135,13 +128,7 @@ export function OrderFeed({
       </div>
     );
 
-    if (embedded) {
-      return (
-        <>
-          {emptyBody}
-        </>
-      );
-    }
+    if (embedded) return <>{emptyBody}</>;
 
     return (
       <>
@@ -180,30 +167,22 @@ export function OrderFeed({
       <GlassPanel outerClassName="overflow-hidden shadow-glassLg">
         <div className="p-8 sm:p-9">{column}</div>
       </GlassPanel>
-
       <OrderDetailDrawer open={selected != null} order={selected} onClose={closeDrawer} />
     </>
   );
 }
 
-function tierLabel(raw: string): string {
-  const base = raw.trim().toLowerCase();
-  if (base.includes("deliver")) return "Delivered";
-  if (base.includes("transit")) return "In transit";
-  if (base.includes("return")) return "Returned";
-  if (base.includes("process")) return "Processing";
-  return "Other";
+function fmtDate(raw: string | undefined): string {
+  const s = (raw ?? "").trim();
+  if (!s) return "";
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (m) return m[1] + "/" + m[2] + "/" + m[3].slice(-2);
+  return s.slice(0, 8);
 }
 
 function quantityLabel(raw: string | undefined): string {
   const n = Number.parseFloat(String(raw ?? "").replace(/[^\d.-]/g, ""));
   const qty = Number.isFinite(n) && n !== 0 ? String(n).replace(/\.0+$/, "") : (raw ?? "").trim();
   if (!qty) return "";
-  return `× ${qty}`;
-}
-
-function sheetPreview(value: string | undefined, fallback: string): string {
-  const v = (value ?? "").trim();
-  if (!v || v === "-" || v === "—") return fallback;
-  return v;
+  return "x" + qty;
 }

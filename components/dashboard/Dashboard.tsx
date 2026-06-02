@@ -7,7 +7,6 @@ import { DashboardShell } from "@/components/dashboard/shell/DashboardShell";
 import { CitiesBarChart } from "@/components/dashboard/charts/CitiesBarChart";
 import { ProductsLeaderboard } from "@/components/dashboard/charts/ProductsLeaderboard";
 import { RevenueAreaChart } from "@/components/dashboard/charts/RevenueAreaChart";
-import { FulfillmentGauges } from "@/components/dashboard/premium/FulfillmentGauges";
 import { MetricsCommandDeck } from "@/components/dashboard/premium/MetricsCommandDeck";
 import { GlassPanel } from "@/components/dashboard/ui/GlassPanel";
 import { SectionLabel } from "@/components/dashboard/ui/SectionLabel";
@@ -304,13 +303,6 @@ export function Dashboard() {
                   <RevenueAreaChart data={analytics.revenueBuckets} />
                 </GlassPanel>
                 <div className="min-w-0 space-y-4 lg:col-span-5">
-                  <p className="px-1 font-dashSans text-[11px] font-semibold uppercase tracking-[0.32em] text-white/54">
-                    Fulfillment snapshot
-                  </p>
-                  <FulfillmentGauges
-                    deliveryRatePct={analytics.deliveryRatePct}
-                    confirmationRatePct={analytics.confirmationRatePct}
-                  />
                   <GlassPanel className="p-7">
                     <p className="text-[13px] leading-relaxed text-siwaky-muted">
                       Snapshot totals:{" "}
