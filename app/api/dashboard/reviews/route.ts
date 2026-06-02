@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
-import { sql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
+import { getSql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 /** GET /api/dashboard/reviews — returns all reviews directly from PostgreSQL */
 export async function GET() {
@@ -15,7 +16,7 @@ export async function GET() {
 
   try {
     await ensureTable();
-    const rows = await sql<DbReview[]>`SELECT * FROM reviews ORDER BY created_at DESC`;
+    const rows = await getSql()<DbReview[]>`SELECT * FROM reviews ORDER BY created_at DESC`;
     return NextResponse.json(rows);
   } catch (err) {
     console.error("[api/dashboard/reviews GET]", err);

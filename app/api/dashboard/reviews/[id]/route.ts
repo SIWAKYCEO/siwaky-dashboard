@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
-import { sql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
+import { getSql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type Ctx = { params: { id: string } };
 
@@ -22,7 +23,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   try {
     await ensureTable();
-    const rows = await sql<DbReview[]>`
+    const rows = await getSql()<DbReview[]>`
       UPDATE reviews
       SET approved = ${body.approved}, status = ${status}
       WHERE id = ${params.id}
@@ -45,7 +46,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
 
   try {
     await ensureTable();
-    await sql`DELETE FROM reviews WHERE id = ${params.id}`;
+    await getSql()`DELETE FROM reviews WHERE id = ${params.id}`;
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[api/dashboard/reviews DELETE]", err);

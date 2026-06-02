@@ -1,6 +1,9 @@
 /**
  * Direct PostgreSQL connection for reviews — eliminates the storefront proxy.
  * Both apps (storefront + dashboard) connect to the same DATABASE_URL.
+ *
+ * The client is created lazily (inside getSql()) so that importing this module
+ * at build time does NOT throw when DATABASE_URL is not yet set.
  */
 import postgres from "postgres";
 
@@ -28,13 +31,20 @@ function makeSql() {
   });
 }
 
+// Lazy singleton — created on first request, never at import/build time.
 const g = globalThis as typeof globalThis & { _dashReviewsSql?: ReturnType<typeof makeSql> };
-export const sql: ReturnType<typeof makeSql> = g._dashReviewsSql ?? makeSql();
-if (process.env.NODE_ENV !== "production") g._dashReviewsSql = sql;
+
+export function getSql(): ReturnType<typeof makeSql> {
+  if (!g._dashReviewsSql) {
+    g._dashReviewsSql = makeSql();
+  }
+  return g._dashReviewsSql;
+}
 
 let ensured = false;
 export async function ensureTable(): Promise<void> {
   if (ensured) return;
+  const sql = getSql();
   await sql`CREATE EXTENSION IF NOT EXISTS pgcrypto`;
   await sql`
     CREATE TABLE IF NOT EXISTS reviews (
