@@ -3,63 +3,52 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
-import { getReviewsInternalToken, getReviewsUpstreamBase } from "@/lib/dashboard/reviews-upstream";
+import { sql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
 
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: { id: string } };
 
-/** PATCH /api/dashboard/reviews/[id] — proxy approve/reject to storefront */
+/** PATCH /api/dashboard/reviews/[id] — approve or reject */
 export async function PATCH(req: Request, { params }: Ctx) {
   const token   = cookies().get(DASHBOARD_SESSION_COOKIE)?.value;
   const session = await verifyDashboardSessionToken(token);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body          = await req.json() as unknown;
-  const url           = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
-  const internalToken = getReviewsInternalToken();
+  const body = (await req.json()) as { approved: boolean; status?: string };
+  const status = body.status === "approved" || body.status === "rejected" || body.status === "pending"
+    ? body.status
+    : body.approved ? "approved" : "rejected";
 
   try {
-    const res = await fetch(url, {
-      method: "PATCH",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-        ...(internalToken ? { "X-Dashboard-Token": internalToken } : {}),
-        Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}`,
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch (e) {
-    console.error("[api/dashboard/reviews PATCH]", e);
-    return NextResponse.json({ error: "Upstream unreachable" }, { status: 503 });
+    await ensureTable();
+    const rows = await sql<DbReview[]>`
+      UPDATE reviews
+      SET approved = ${body.approved}, status = ${status}
+      WHERE id = ${params.id}
+      RETURNING *
+    `;
+    if (rows.length === 0)
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[api/dashboard/reviews PATCH]", err);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }
 
-/** DELETE /api/dashboard/reviews/[id] — proxy delete to storefront */
+/** DELETE /api/dashboard/reviews/[id] */
 export async function DELETE(_req: Request, { params }: Ctx) {
   const token   = cookies().get(DASHBOARD_SESSION_COOKIE)?.value;
   const session = await verifyDashboardSessionToken(token);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url           = `${getReviewsUpstreamBase()}/api/reviews/${params.id}`;
-  const internalToken = getReviewsInternalToken();
-
   try {
-    const res = await fetch(url, {
-      method: "DELETE",
-      cache: "no-store",
-      headers: {
-        ...(internalToken ? { "X-Dashboard-Token": internalToken } : {}),
-        Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}`,
-      },
-    });
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch (e) {
-    console.error("[api/dashboard/reviews DELETE]", e);
-    return NextResponse.json({ error: "Upstream unreachable" }, { status: 503 });
+    await ensureTable();
+    await sql`DELETE FROM reviews WHERE id = ${params.id}`;
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[api/dashboard/reviews DELETE]", err);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }

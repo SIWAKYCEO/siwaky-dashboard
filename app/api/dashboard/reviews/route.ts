@@ -3,33 +3,22 @@ import { NextResponse } from "next/server";
 
 import { DASHBOARD_SESSION_COOKIE } from "@/lib/dashboard/auth/constants";
 import { verifyDashboardSessionToken } from "@/lib/dashboard/auth/session";
-import { getReviewsInternalToken, getReviewsUpstreamBase } from "@/lib/dashboard/reviews-upstream";
+import { sql, ensureTable, type DbReview } from "@/lib/dashboard/reviews-db";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/dashboard/reviews — proxy to storefront, returns all reviews (admin) */
+/** GET /api/dashboard/reviews — returns all reviews directly from PostgreSQL */
 export async function GET() {
   const token   = cookies().get(DASHBOARD_SESSION_COOKIE)?.value;
   const session = await verifyDashboardSessionToken(token);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url           = `${getReviewsUpstreamBase()}/api/reviews`;
-  const internalToken = getReviewsInternalToken();
-
   try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        // Primary auth: shared secret — works regardless of JWT env-var parity
-        ...(internalToken ? { "X-Dashboard-Token": internalToken } : {}),
-        // Fallback auth: forward the session cookie in case the storefront also verifies it
-        Cookie: `${DASHBOARD_SESSION_COOKIE}=${token ?? ""}`,
-      },
-    });
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch (e) {
-    console.error("[api/dashboard/reviews GET] upstream error", e);
-    return NextResponse.json({ error: "Reviews upstream unreachable" }, { status: 503 });
+    await ensureTable();
+    const rows = await sql<DbReview[]>`SELECT * FROM reviews ORDER BY created_at DESC`;
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error("[api/dashboard/reviews GET]", err);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }
