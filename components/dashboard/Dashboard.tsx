@@ -26,6 +26,7 @@ const LiveOrdersMap = dynamic(
 );
 import { MobileKpiGrid } from "@/components/dashboard/mobile/MobileKpiGrid";
 import { MobileOrdersList } from "@/components/dashboard/mobile/MobileOrdersList";
+import { ReviewsManager } from "@/components/dashboard/ReviewsManager";
 import { OrderFeed } from "./OrderFeed";
 import { PremiumSkeleton } from "./PremiumSkeleton";
 import { PwaInstallButton } from "./PwaInstallButton";
@@ -74,7 +75,8 @@ export function Dashboard() {
   const [feedPollingActive, setFeedPollingActive] = useState(false);
   const [highlightFingerprints, setHighlightFingerprints] = useState<Set<string>>(() => new Set());
   const [mapPulseFingerprints, setMapPulseFingerprints] = useState<Set<string>>(() => new Set());
-  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
+  const [viewerEmail, setViewerEmail]   = useState<string | null>(null);
+  const [activeTab, setActiveTab]       = useState<"orders" | "reviews">("orders");
 
   const baselineEstablishedRef = useRef(false);
   const priorFingerprintRef = useRef<Set<string>>(new Set());
@@ -200,6 +202,33 @@ export function Dashboard() {
       viewerEmail={viewerEmail}
     >
       <>
+        {/* ── Tab bar ── */}
+        <div
+          className="mb-6 flex gap-1 rounded-2xl border border-white/[0.07] bg-black/30 p-1"
+          dir="rtl"
+        >
+          {(["orders", "reviews"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 rounded-xl px-4 py-2.5 font-dashSans text-[13px] font-semibold transition-all ${
+                activeTab === tab
+                  ? "bg-[#c9a84c] text-black shadow-[0_2px_14px_-4px_rgba(201,168,76,0.55)]"
+                  : "text-white/55 hover:text-white/85"
+              }`}
+            >
+              {tab === "orders" ? "لوحة المعلومات" : "التقييمات ⭐"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Reviews tab ── */}
+        {activeTab === "reviews" ? <ReviewsManager /> : null}
+
+        {/* ── Orders tab content ── */}
+        {activeTab === "orders" ? (
+        <>
         <div style={{ height: refreshing ? Math.max(48, pullPx) : pullPx }} className="flex justify-center">
           <div className="w-full">
             {(pullPx > 8 || refreshing) && (
@@ -386,6 +415,9 @@ export function Dashboard() {
               </GlassPanel>
             </section>
           </div>
+        ) : null}
+
+        </>
         ) : null}
 
       </>
