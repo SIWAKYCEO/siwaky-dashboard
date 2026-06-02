@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import type { DashboardNavEntry } from "./dashboardNav";
 import { dashboardNavEntries } from "./dashboardNav";
@@ -62,14 +63,20 @@ function NavTiles({
   );
 }
 
-// ── Desktop rail (unchanged layout) ──────────────────────────────────────────
+// ── Desktop rail ──────────────────────────────────────────────────────────────
 
 type RailProps = { onNavigate: (id: string) => void };
 
 export function DashboardSidebarRail({ onNavigate }: RailProps) {
+  const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleNavigate = (id: string) => {
+    const entry = dashboardNavEntries.find((e) => e.id === id);
+    if (entry?.href) {
+      router.push(entry.href);
+      return;
+    }
     setActiveId(id);
     onNavigate(id);
   };
@@ -134,14 +141,21 @@ function RailBrandHeader() {
   );
 }
 
-// ── Mobile drawer (redesigned) ────────────────────────────────────────────────
+// ── Mobile drawer ──────────────────────────────────────────────────────────────
 
 type DrawerProps = { onNavigate: (id: string) => void; onClose: () => void };
 
 export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
+  const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleNavigate = (id: string) => {
+    const entry = dashboardNavEntries.find((e) => e.id === id);
+    if (entry?.href) {
+      onClose();
+      router.push(entry.href);
+      return;
+    }
     setActiveId(id);
     onNavigate(id);
   };
@@ -165,7 +179,6 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
 
       {/* ── Brand header ── */}
       <div className="shrink-0 border-b border-white/[0.07] px-6 pb-5 pt-3">
-        {/* SIWAKY gold wordmark */}
         <p
           aria-label="SIWAKY"
           style={{
@@ -181,7 +194,6 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
           SIWAKY
         </p>
 
-        {/* LIVE LEDGER badge */}
         <div className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-emerald-500/[0.22] bg-emerald-950/50 px-3 py-1.5">
           <span className="relative flex size-[7px] shrink-0">
             <span className="absolute size-full rounded-full bg-emerald-400/75 motion-safe:animate-pulse motion-reduce:animate-none" />
@@ -192,13 +204,11 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
           </span>
         </div>
 
-        {/* Subtitle */}
         <p className="mt-3 font-dashSans text-[12px] tracking-[0.03em] text-white/35">
           Navigate workspaces
         </p>
       </div>
 
-      {/* Thin divider */}
       <div className="mx-5 my-1 h-px shrink-0 bg-white/[0.05]" />
 
       {/* ── Nav items ── */}

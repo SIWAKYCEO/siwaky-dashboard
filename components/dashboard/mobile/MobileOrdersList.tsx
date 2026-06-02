@@ -1,8 +1,15 @@
 "use client";
 
-import { formatSar, lineRevenue, statusAccent } from "@/lib/dashboard/kpi";
-import { scrollToDashboardSection } from "@/components/dashboard/shell/dashboardNav";
+import { formatUsd, lineRevenue } from "@/lib/dashboard/kpi";
 import type { OrderRow } from "@/lib/dashboard/types";
+
+function fmtDate(raw: string | undefined): string {
+  const s = (raw ?? "").trim();
+  if (!s) return "";
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})/);
+  if (m) return `${m[1]}/${m[2]}`;
+  return s.slice(0, 5);
+}
 
 export function MobileOrdersList({ orders }: { orders: OrderRow[] }) {
   const latest = [...orders].reverse().slice(0, 5);
@@ -12,13 +19,6 @@ export function MobileOrdersList({ orders }: { orders: OrderRow[] }) {
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-dashDisplay text-[16px] font-semibold text-white">أحدث الطلبات</h2>
-        <button
-          type="button"
-          onClick={() => scrollToDashboardSection("live")}
-          className="font-dashSans text-[12px] font-semibold text-[#c9a84c] transition-opacity hover:opacity-75"
-        >
-          عرض الكل
-        </button>
       </div>
 
       {/* Cards */}
@@ -29,30 +29,32 @@ export function MobileOrdersList({ orders }: { orders: OrderRow[] }) {
       ) : (
         <div className="space-y-2">
           {latest.map((order, i) => {
-            const accent = statusAccent(order);
-            const rev    = lineRevenue(order);
-            const name   = (order.name  ?? "").trim() || "—";
-            const city   = (order.city  ?? "").trim() || "—";
+            const rev  = lineRevenue(order);
+            const name = (order.name ?? "").trim() || "—";
+            const city = (order.city ?? "").trim() || "—";
+            const date = fmtDate(order.date);
 
             return (
               <div
                 key={`${order.order_id}-${i}`}
                 className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-[#1c1c1e] px-4 py-3.5"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-dashSans text-[14px] font-semibold text-white/92">
-                    {name}
+                {/* Right side: price + date */}
+                <div className="shrink-0 text-left ltr">
+                  <p className="font-dashDisplay text-[14px] font-semibold tabular-nums text-[#c9a84c]">
+                    {rev > 0 ? formatUsd(rev) : "—"}
                   </p>
-                  <p className="mt-0.5 font-dashSans text-[11px] text-white/42">{city}</p>
+                  {date && (
+                    <p className="mt-0.5 font-dashSans text-[11px] text-white/40">{date}</p>
+                  )}
                 </div>
 
-                <div className="shrink-0 text-end">
-                  <p className="font-dashDisplay text-[14px] font-semibold tabular-nums text-[#c9a84c]">
-                    {rev > 0 ? formatSar(rev) : "—"}
+                {/* Left side (renders on visual right due to RTL): name + city */}
+                <div className="min-w-0 flex-1 text-right">
+                  <p className="truncate font-dashSans text-[14px] font-bold text-white">
+                    {name}
                   </p>
-                  <span className={`mt-0.5 block font-dashSans text-[10px] font-semibold uppercase tracking-[0.14em] ${accent.textClass}`}>
-                    {accent.label}
-                  </span>
+                  <p className="mt-0.5 font-dashSans text-[11px] text-white/45">{city}</p>
                 </div>
               </div>
             );

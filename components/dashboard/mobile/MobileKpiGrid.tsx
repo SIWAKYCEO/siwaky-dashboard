@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { lineRevenue } from "@/lib/dashboard/kpi";
+import { formatUsd, lineRevenue } from "@/lib/dashboard/kpi";
 import type { OrderRow } from "@/lib/dashboard/types";
 
 // ── Date parsing ─────────────────────────────────────────────────────────────
@@ -20,7 +20,6 @@ function parseOrderDate(raw: string): Date | null {
     if (!isNaN(dt.getTime())) return dt;
   }
 
-  // ISO or native
   const native = new Date(s);
   return isNaN(native.getTime()) ? null : native;
 }
@@ -56,10 +55,6 @@ function computePeriods(orders: OrderRow[]): {
   return s;
 }
 
-function fmtSar(n: number): string {
-  return n === 0 ? "—" : n.toLocaleString("ar-SA", { maximumFractionDigits: 0 });
-}
-
 // ── Card config ───────────────────────────────────────────────────────────────
 
 const CARDS = [
@@ -92,12 +87,13 @@ export function MobileKpiGrid({ orders }: { orders: OrderRow[] }) {
             </p>
 
             <p className="mt-2 font-dashDisplay text-[1.55rem] font-semibold leading-none tabular-nums text-white">
-              {fmtSar(stat.revenue)}
-              <span className="ms-1.5 text-[11px] font-normal text-white/45">ر.س</span>
+              {formatUsd(stat.revenue)}
             </p>
 
             <p className="mt-1.5 text-[12px] text-white/50">
-              {stat.orders === 0 ? "لا يوجد" : `${stat.orders} طلب`}
+              {stat.orders === 0
+                ? "لا يوجد"
+                : `${stat.orders.toLocaleString("en-US")} طلب`}
             </p>
           </div>
         );

@@ -6,6 +6,7 @@ export type DashboardNavEntry = {
   label: string;
   subtitle: string;
   Icon: LucideIcon;
+  href?: string;
 };
 
 export const dashboardNavEntries: DashboardNavEntry[] = [
@@ -14,7 +15,7 @@ export const dashboardNavEntries: DashboardNavEntry[] = [
   { id: "regions",   label: "Orders by city",     subtitle: "Regional mix",          Icon: MapPin },
   { id: "live",      label: "Orders list",        subtitle: "All orders",            Icon: List },
   { id: "profit",    label: "Profit Calculator",  subtitle: "Earnings & ROI",        Icon: BarChart2 },
-  { id: "reviews",   label: "Reviews",            subtitle: "Customer feedback",     Icon: Star },
+  { id: "reviews",   label: "Reviews",            subtitle: "Customer feedback",     Icon: Star, href: "/dashboard/reviews" },
 ];
 
 export function scrollToDashboardSection(sectionId: string) {

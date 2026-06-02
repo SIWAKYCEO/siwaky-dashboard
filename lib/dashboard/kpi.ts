@@ -9,15 +9,26 @@ export function sheetCellTruthy(value: string | undefined): boolean {
 }
 
 function parseNumberLoose(raw: string): number {
-  const s = raw.replace(/[\s,]/g, "").replace(/[^\d.-]/g, "");
+  const s = (raw ?? "").replace(/[\s,]/g, "").replace(/[^\d.-]/g, "");
   const n = Number.parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 }
 
+// price_sar is the total order price — do NOT multiply by quantity
 export function lineRevenue(order: OrderRow): number {
-  const qty = Math.max(0, parseNumberLoose(order.quantity));
-  const price = Math.max(0, parseNumberLoose(order.price_sar));
-  return qty * price;
+  return Math.max(0, parseNumberLoose(order.price_sar));
+}
+
+const SAR_PER_USD = 3.75;
+
+export function sarToUsd(sar: number): number {
+  return sar / SAR_PER_USD;
+}
+
+export function formatUsd(sar: number): string {
+  if (!Number.isFinite(sar) || sar === 0) return "—";
+  const usd = Math.round(sar / SAR_PER_USD);
+  return "$" + usd.toLocaleString("en-US");
 }
 
 export type OrderKpis = {

@@ -3,29 +3,56 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-import { lineRevenue } from "@/lib/dashboard/kpi";
+import { lineRevenue, sarToUsd } from "@/lib/dashboard/kpi";
 import { stableOrderFingerprint } from "@/lib/dashboard/orderFingerprint";
 import type { OrderRow } from "@/lib/dashboard/types";
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 
-const OCEAN_COLOR  = "#0a1628";
-const LAND_COLOR   = "#1a2744";
-const SAUDI_COLOR  = "#1e3d2a";
-const GCC_COLOR    = "#1a2d3d";
-const BORDER_COLOR = "rgba(201,168,76,0.28)";
-const GOLD_HEX     = 0xc9a84c;
-const GOLD_BRIGHT  = 0xffd97a;
-const GEO_URL      = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-
-// ISO numeric IDs
-const SAUDI_ID = 682;
-const GCC_IDS  = new Set([784, 414, 634, 48, 512]); // UAE, Kuwait, Qatar, Bahrain, Oman
+const OCEAN_COLOR   = "#1a6b9e";
+const DESERT_COLOR  = "#c8a855";
+const GREEN_COLOR   = "#2d5a27";
+const GOLD_HEX      = 0xc9a84c;
+const GOLD_BRIGHT   = 0xffd97a;
+const GEO_URL       = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 const CANVAS_W = 2048;
 const CANVAS_H = 1024;
-const AUTO_ROTATE_SPEED = 0.0015;
-const RESUME_DELAY_MS   = 2200;
+const AUTO_ROTATE_SPEED = 0.001;
+const RESUME_DELAY_MS   = 2000;
+const DOT_RADIUS        = 0.014;
+
+// ISO numeric IDs for desert / arid countries
+const DESERT_IDS = new Set([
+  4,   // Afghanistan
+  12,  // Algeria
+  48,  // Bahrain
+  148, // Chad
+  262, // Djibouti
+  818, // Egypt
+  232, // Eritrea
+  364, // Iran
+  368, // Iraq
+  400, // Jordan
+  414, // Kuwait
+  434, // Libya
+  478, // Mauritania
+  496, // Mongolia
+  516, // Namibia
+  562, // Niger
+  512, // Oman
+  586, // Pakistan
+  634, // Qatar
+  682, // Saudi Arabia
+  706, // Somalia
+  736, // Sudan
+  760, // Syria
+  788, // Tunisia
+  795, // Turkmenistan
+  784, // UAE
+  732, // Western Sahara
+  887, // Yemen
+]);
 
 // ── City data ─────────────────────────────────────────────────────────────────
 
@@ -95,7 +122,8 @@ function buildRibbonLines(orders: OrderRow[]): string[] {
   const items = last5.map((o) => {
     const name = (o.name ?? "").trim() || "عميل";
     const city = (o.city ?? "").trim() || "—";
-    return `${name} · ${city} · SAR ${Math.round(lineRevenue(o))}`;
+    const usd = Math.round(sarToUsd(lineRevenue(o)));
+    return `${name} · ${city} · $${usd.toLocaleString("en-US")}`;
   });
   if (!items.length) return ["لا يوجد طلبات بعد…", "لا يوجد طلبات بعد…"];
   return [...items, ...items];
@@ -113,14 +141,23 @@ function latLngToVec3(lat: number, lng: number, r: number): THREE.Vector3 {
   );
 }
 
-function dotBaseRadius(count: number): number {
-  if (count <= 2)  return 0.016;
-  if (count <= 5)  return 0.022;
-  if (count <= 10) return 0.028;
-  return 0.036;
+function makeStarField(count: number, pixelSize: number): THREE.Points {
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const theta = Math.random() * Math.PI * 2;
+    const r = 85;
+    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.cos(phi);
+    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xffffff, size: pixelSize, sizeAttenuation: false });
+  return new THREE.Points(geo, mat);
 }
 
-// ── TopoJSON decoder (no extra dependency) ────────────────────────────────────
+// ── TopoJSON decoder ──────────────────────────────────────────────────────────
 
 type TopoPoint = [number, number];
 type TopoGeom = { type: string; id?: number; arcs: unknown };
@@ -190,22 +227,12 @@ async function paintTexture(canvas: HTMLCanvasElement): Promise<void> {
   const decoded = decodeArcs(topo);
   const geoms   = topo.objects.countries.geometries;
 
-  // Draw in layers: rest → GCC → Saudi
-  for (const pass of [0, 1, 2] as const) {
-    for (const g of geoms) {
-      const isSaudi = g.id === SAUDI_ID;
-      const isGcc   = GCC_IDS.has(g.id ?? -1);
-      if (pass === 0 && (isSaudi || isGcc)) continue;
-      if (pass === 1 && !isGcc)  continue;
-      if (pass === 2 && !isSaudi) continue;
-      const fill = isSaudi ? SAUDI_COLOR : isGcc ? GCC_COLOR : LAND_COLOR;
-      ctx.fillStyle   = fill;
-      ctx.strokeStyle = BORDER_COLOR;
-      ctx.lineWidth   = 0.4;
-      drawGeoGeom(ctx, g, decoded, CANVAS_W, CANVAS_H);
-      ctx.fill();
-      ctx.stroke();
-    }
+  for (const g of geoms) {
+    const isDesert = DESERT_IDS.has(g.id ?? -1);
+    ctx.fillStyle = isDesert ? DESERT_COLOR : GREEN_COLOR;
+    drawGeoGeom(ctx, g, decoded, CANVAS_W, CANVAS_H);
+    ctx.fill();
+    // No country border lines
   }
 }
 
@@ -216,7 +243,7 @@ type DotEntry = {
   group: THREE.Group;
   mainMesh: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>;
   rings: THREE.Mesh<THREE.CircleGeometry, THREE.MeshBasicMaterial>[];
-  burstT: number; // elapsed time when burst was registered
+  burstT: number;
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -231,38 +258,32 @@ export type LiveOrdersMapProps = {
 const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprints }: LiveOrdersMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const tooltipRef   = useRef<HTMLDivElement>(null);
 
-  // Mutable scene refs — never trigger re-renders
-  const rendererRef    = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef       = useRef<THREE.Scene | null>(null);
-  const cameraRef      = useRef<THREE.PerspectiveCamera | null>(null);
-  const globeGroupRef  = useRef<THREE.Group | null>(null);
-  const textureRef     = useRef<THREE.CanvasTexture | null>(null);
-  const clockRef       = useRef<THREE.Clock | null>(null);
-  const dotEntriesRef  = useRef<DotEntry[]>([]);
-  const rafRef         = useRef(0);
-  const autoRotateRef  = useRef(true);
-  const draggingRef    = useRef(false);
-  const prevMouseRef   = useRef({ x: 0, y: 0 });
-  const resumeRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Initialised lazily inside the effect — never evaluated during SSR
-  const mouse2dRef     = useRef<THREE.Vector2 | null>(null);
+  const rendererRef   = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef      = useRef<THREE.Scene | null>(null);
+  const cameraRef     = useRef<THREE.PerspectiveCamera | null>(null);
+  const globeGroupRef = useRef<THREE.Group | null>(null);
+  const clockRef      = useRef<THREE.Clock | null>(null);
+  const dotEntriesRef = useRef<DotEntry[]>([]);
+  const rafRef        = useRef(0);
+  const autoRotateRef = useRef(true);
+  const draggingRef   = useRef(false);
+  const prevMouseRef  = useRef({ x: 0, y: 0 });
+  const resumeRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tooltipCityRef = useRef<string | null>(null);
 
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; city: string; count: number; sar: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{ city: string; count: number; sar: number } | null>(null);
 
   const cities      = useMemo(() => aggregateCities(orders, pulseOrderFingerprints), [orders, pulseOrderFingerprints]);
   const ribbonLines = useMemo(() => buildRibbonLines(orders), [orders]);
 
-  // ── Three.js bootstrap (runs once) ───────────────────────────────────────
+  // ── Bootstrap (runs once) ──────────────────────────────────────────────────
 
   useEffect(() => {
     const canvas    = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container || typeof window === "undefined") return;
-
-    // Mouse tracking (created here to stay SSR-safe)
-    const mouse2d = new THREE.Vector2(-9, -9);
-    mouse2dRef.current = mouse2d;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -270,23 +291,31 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     renderer.setSize(container.clientWidth, container.clientHeight);
     rendererRef.current = renderer;
 
-    // Scene + background
+    // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0c);
+    scene.background = new THREE.Color(0x000008);
     sceneRef.current = scene;
 
-    // Camera — positioned to look at Saudi Arabia
+    // Stars (3 size groups: small, medium, large)
+    const starMeshes = [
+      makeStarField(50, 0.5),
+      makeStarField(35, 1.0),
+      makeStarField(15, 2.0),
+    ];
+    starMeshes.forEach((s) => scene.add(s));
+
+    // Camera
     const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 100);
     camera.position.copy(latLngToVec3(24, 46, 2.45));
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
-    // Globe group (everything that spins)
+    // Globe group
     const globeGroup = new THREE.Group();
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
 
-    // Canvas texture — ocean color immediately, countries drawn async
+    // Canvas texture
     const texCanvas  = document.createElement("canvas");
     texCanvas.width  = CANVAS_W;
     texCanvas.height = CANVAS_H;
@@ -296,31 +325,29 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
 
     const texture = new THREE.CanvasTexture(texCanvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    textureRef.current = texture;
 
     // Globe sphere
     const sphereGeo = new THREE.SphereGeometry(1, 72, 72);
-    const sphereMat = new THREE.MeshPhongMaterial({ map: texture, specular: new THREE.Color(0x223344), shininess: 10 });
+    const sphereMat = new THREE.MeshPhongMaterial({ map: texture, specular: new THREE.Color(0x336688), shininess: 18 });
     const globe = new THREE.Mesh(sphereGeo, sphereMat);
     globe.userData.isGlobe = true;
     globeGroup.add(globe);
 
-    // Atmosphere — back-face sphere, blue glow rim
+    // Atmosphere rim — soft blue glow
     const atmoGeo = new THREE.SphereGeometry(1.045, 32, 32);
-    const atmoMat = new THREE.MeshBasicMaterial({ color: 0x2244aa, transparent: true, opacity: 0.075, side: THREE.BackSide });
+    const atmoMat = new THREE.MeshBasicMaterial({ color: 0x4488cc, transparent: true, opacity: 0.12, side: THREE.BackSide });
     globeGroup.add(new THREE.Mesh(atmoGeo, atmoMat));
 
-    // Outer atmosphere halo
     const haloGeo = new THREE.SphereGeometry(1.09, 32, 32);
-    const haloMat = new THREE.MeshBasicMaterial({ color: 0x112266, transparent: true, opacity: 0.035, side: THREE.BackSide });
+    const haloMat = new THREE.MeshBasicMaterial({ color: 0x2255aa, transparent: true, opacity: 0.05, side: THREE.BackSide });
     globeGroup.add(new THREE.Mesh(haloGeo, haloMat));
 
     // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const sun = new THREE.DirectionalLight(0xffffff, 0.95);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.9);
     sun.position.set(4, 2, 4);
     scene.add(sun);
-    const fill = new THREE.DirectionalLight(0x4466aa, 0.25);
+    const fill = new THREE.DirectionalLight(0x4466aa, 0.2);
     fill.position.set(-4, -1, -2);
     scene.add(fill);
 
@@ -338,26 +365,24 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       if (!cancelled) texture.needsUpdate = true;
     });
 
-    // ── Render loop ──────────────────────────────────────────────────────────
+    // ── Render loop ────────────────────────────────────────────────────────
+
     function tick() {
       rafRef.current = requestAnimationFrame(tick);
       const elapsed = clock.getElapsedTime();
 
-      // Auto-rotate
       if (autoRotateRef.current && !draggingRef.current) {
         globeGroup.rotation.y += AUTO_ROTATE_SPEED;
       }
 
-      // Animate dots
+      // Animate dot rings and burst
       for (const entry of dotEntriesRef.current) {
-        // Staggered pulse rings
         entry.rings.forEach((ring, ri) => {
           const phase = (elapsed * 1.1 + ri * 0.333) % 1;
           ring.scale.setScalar(1 + phase * 2.8);
           ring.material.opacity = Math.max(0, 0.55 * (1 - phase));
         });
 
-        // Burst flash on new order
         if (entry.isBurst) {
           const t = elapsed - entry.burstT;
           if (t < 0.6) {
@@ -370,28 +395,28 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
         }
       }
 
-      // Tooltip: raycast against dot main meshes
-      raycaster.setFromCamera(mouse2d, camera);
-      const hits = raycaster.intersectObjects(dotEntriesRef.current.map((e) => e.mainMesh));
-      if (hits.length > 0) {
-        const hit   = hits[0];
-        const entry = dotEntriesRef.current.find((e) => e.mainMesh === hit.object);
-        if (entry && container) {
-          const wp  = new THREE.Vector3();
+      // Update tooltip position via direct DOM (no React re-render)
+      if (tooltipCityRef.current && tooltipRef.current && container) {
+        const entry = dotEntriesRef.current.find((e) => e.key === tooltipCityRef.current);
+        if (entry) {
+          const wp = new THREE.Vector3();
           entry.mainMesh.getWorldPosition(wp);
           wp.project(camera);
           const { width, height } = container.getBoundingClientRect();
-          setTooltip({ x: (wp.x * 0.5 + 0.5) * width, y: (-wp.y * 0.5 + 0.5) * height, city: entry.key, count: entry.count, sar: entry.sar });
+          tooltipRef.current.style.left  = `${(wp.x * 0.5 + 0.5) * width + 14}px`;
+          tooltipRef.current.style.top   = `${(-wp.y * 0.5 + 0.5) * height - 52}px`;
+          tooltipRef.current.style.display = "block";
+        } else {
+          tooltipRef.current.style.display = "none";
         }
-      } else {
-        setTooltip(null);
       }
 
       renderer.render(scene, camera);
     }
     tick();
 
-    // ── Interaction ──────────────────────────────────────────────────────────
+    // ── Interaction ────────────────────────────────────────────────────────
+
     const startDrag = (x: number, y: number) => {
       draggingRef.current = true;
       autoRotateRef.current = false;
@@ -411,21 +436,100 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       resumeRef.current = setTimeout(() => { autoRotateRef.current = true; }, RESUME_DELAY_MS);
     };
 
-    const onMouseDown  = (e: MouseEvent) => startDrag(e.clientX, e.clientY);
-    const onMouseMove  = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse2d.set(
-        ((e.clientX - rect.left) / rect.width)  * 2 - 1,
-        -((e.clientY - rect.top)  / rect.height) * 2 + 1,
-      );
-      moveDrag(e.clientX, e.clientY);
+    // Click / tap: raycast to show tooltip
+    const handlePointClick = (nx: number, ny: number) => {
+      const clickVec = new THREE.Vector2(nx, ny);
+      raycaster.setFromCamera(clickVec, camera);
+      const hits = raycaster.intersectObjects(dotEntriesRef.current.map((e) => e.mainMesh));
+      if (hits.length > 0) {
+        const entry = dotEntriesRef.current.find((e) => e.mainMesh === hits[0].object);
+        if (entry) {
+          tooltipCityRef.current = entry.key;
+          setTooltip({ city: entry.key, count: entry.count, sar: entry.sar });
+          return;
+        }
+      }
+      tooltipCityRef.current = null;
+      setTooltip(null);
+      if (tooltipRef.current) tooltipRef.current.style.display = "none";
     };
-    const onMouseUp    = () => endDrag();
+
+    let clickStartPos = { x: 0, y: 0 };
+
+    const onMouseDown  = (e: MouseEvent) => {
+      clickStartPos = { x: e.clientX, y: e.clientY };
+      startDrag(e.clientX, e.clientY);
+    };
+    const onMouseMove  = (e: MouseEvent) => moveDrag(e.clientX, e.clientY);
+    const onMouseUp    = (e: MouseEvent) => {
+      const dx = e.clientX - clickStartPos.x;
+      const dy = e.clientY - clickStartPos.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 5) {
+        const rect = canvas.getBoundingClientRect();
+        handlePointClick(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1,
+        );
+      }
+      endDrag();
+    };
     const onMouseLeave = () => endDrag();
 
-    const onTouchStart = (e: TouchEvent) => { const t = e.touches[0]; if (t) startDrag(t.clientX, t.clientY); };
-    const onTouchMove  = (e: TouchEvent) => { const t = e.touches[0]; if (t) moveDrag(t.clientX, t.clientY); };
-    const onTouchEnd   = () => endDrag();
+    // Touch: single finger drag, two-finger pinch zoom
+    let touchStartPos = { x: 0, y: 0 };
+    let pinchDist = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchDist = Math.sqrt(dx * dx + dy * dy);
+        autoRotateRef.current = false;
+        if (resumeRef.current) clearTimeout(resumeRef.current);
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchStartPos = { x: t.clientX, y: t.clientY };
+        startDrag(t.clientX, t.clientY);
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const newDist = Math.sqrt(dx * dx + dy * dy);
+        if (pinchDist > 0) {
+          const scale = pinchDist / newDist;
+          const cam = cameraRef.current;
+          if (cam) {
+            const dist = cam.position.length();
+            const next = Math.max(1.6, Math.min(4.5, dist * scale));
+            cam.position.normalize().multiplyScalar(next);
+            cam.lookAt(0, 0, 0);
+          }
+        }
+        pinchDist = newDist;
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        moveDrag(t.clientX, t.clientY);
+      }
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0 && e.changedTouches.length === 1) {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartPos.x;
+        const dy = t.clientY - touchStartPos.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 8) {
+          const rect = canvas.getBoundingClientRect();
+          handlePointClick(
+            ((t.clientX - rect.left) / rect.width) * 2 - 1,
+            -((t.clientY - rect.top) / rect.height) * 2 + 1,
+          );
+        }
+      }
+      if (e.touches.length === 0) endDrag();
+      pinchDist = 0;
+    };
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -450,10 +554,11 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     canvas.addEventListener("mouseleave", onMouseLeave);
     canvas.addEventListener("wheel",      onWheel, { passive: false });
     canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchmove",  onTouchMove,  { passive: true });
+    canvas.addEventListener("touchmove",  onTouchMove,  { passive: false });
     canvas.addEventListener("touchend",   onTouchEnd,   { passive: true });
 
-    // ── Cleanup ──────────────────────────────────────────────────────────────
+    // ── Cleanup ────────────────────────────────────────────────────────────
+
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
@@ -468,6 +573,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       canvas.removeEventListener("touchmove",  onTouchMove);
       canvas.removeEventListener("touchend",   onTouchEnd);
 
+      starMeshes.forEach((s) => { s.geometry.dispose(); (s.material as THREE.PointsMaterial).dispose(); });
       renderer.dispose();
       texture.dispose();
       sphereGeo.dispose(); sphereMat.dispose();
@@ -476,7 +582,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Sync dots whenever city data changes ──────────────────────────────────
+  // ── Sync dots when city data changes ─────────────────────────────────────
 
   useEffect(() => {
     const globeGroup = globeGroupRef.current;
@@ -485,35 +591,28 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
 
     const elapsed = clock.getElapsedTime();
 
-    // Dispose and remove old dots
     for (const e of dotEntriesRef.current) {
       globeGroup.remove(e.group);
       e.mainMesh.geometry.dispose(); e.mainMesh.material.dispose();
       for (const r of e.rings) { r.geometry.dispose(); r.material.dispose(); }
     }
 
-    // Create new dots
     const entries: DotEntry[] = cities.map((city) => {
       const normal = latLngToVec3(city.lat, city.lng, 1).normalize();
       const pos    = normal.clone().multiplyScalar(1.002);
 
       const group = new THREE.Group();
       group.position.copy(pos);
-      // Orient so local +Z faces outward (normal direction)
       group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
 
-      const r = dotBaseRadius(city.count);
-
-      // Main glowing dot
-      const mainGeo = new THREE.CircleGeometry(r, 20);
-      const mainMat = new THREE.MeshBasicMaterial({ color: GOLD_HEX, transparent: true, opacity: 0.92, depthTest: true });
+      const mainGeo  = new THREE.CircleGeometry(DOT_RADIUS, 20);
+      const mainMat  = new THREE.MeshBasicMaterial({ color: GOLD_HEX, transparent: true, opacity: 0.92, depthTest: true });
       const mainMesh = new THREE.Mesh(mainGeo, mainMat);
       group.add(mainMesh);
 
-      // 3 staggered pulse rings
       const rings: DotEntry["rings"] = [];
       for (let i = 0; i < 3; i++) {
-        const rgeo = new THREE.CircleGeometry(r * 1.1, 20);
+        const rgeo = new THREE.CircleGeometry(DOT_RADIUS * 1.1, 20);
         const rmat = new THREE.MeshBasicMaterial({ color: GOLD_HEX, transparent: true, opacity: 0, depthTest: true, depthWrite: false });
         const ring = new THREE.Mesh(rgeo, rmat);
         group.add(ring);
@@ -525,9 +624,21 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     });
 
     dotEntriesRef.current = entries;
+
+    // If tooltip was showing, keep it if city still exists
+    if (tooltipCityRef.current) {
+      const found = entries.find((e) => e.key === tooltipCityRef.current);
+      if (!found) {
+        tooltipCityRef.current = null;
+        setTooltip(null);
+        if (tooltipRef.current) tooltipRef.current.style.display = "none";
+      }
+    }
   }, [cities]);
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  const usd = tooltip ? Math.round(sarToUsd(tooltip.sar)) : 0;
 
   return (
     <div style={{ width: "100%" }}>
@@ -537,6 +648,8 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
         .sw-ribbon     { animation: sw-ribbon 36s linear infinite; display: inline-flex; gap: 2rem; white-space: nowrap; }
         .sw-ribbon:hover { animation-play-state: paused }
         .sw-live-ping  { animation: sw-ping 1s cubic-bezier(0,0,0.2,1) infinite }
+        .sw-globe-h    { height: 280px }
+        @media (min-width: 768px) { .sw-globe-h { height: 520px } }
         @media (prefers-reduced-motion: reduce) { .sw-ribbon, .sw-live-ping { animation: none } }
       `}</style>
 
@@ -549,24 +662,42 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: "#6ee7b7", fontFamily: "system-ui,sans-serif" }}>LIVE</span>
         <span style={{ width: 1, height: 20, background: "rgba(255,255,255,.08)", flexShrink: 0 }} />
         <span style={{ fontSize: 13, color: "rgba(255,255,255,.75)", fontFamily: "system-ui,sans-serif" }}>
-          Total orders: <strong style={{ color: "#fff" }}>{orders.length}</strong>
+          Total orders: <strong style={{ color: "#fff" }}>{orders.length.toLocaleString("en-US")}</strong>
         </span>
       </div>
 
       {/* ── Globe card ── */}
-      <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid rgba(201,168,76,0.2)", background: "#0a0a0c" }}>
-        <div ref={containerRef} style={{ position: "relative", width: "100%", height: 520 }}>
+      <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid rgba(201,168,76,0.2)", background: "#000008" }}>
+        <div ref={containerRef} className="sw-globe-h" style={{ position: "relative", width: "100%" }}>
           <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block", cursor: "grab" }} />
 
-          {/* Tooltip */}
-          {tooltip && (
-            <div style={{ position: "absolute", left: tooltip.x + 14, top: tooltip.y - 44, background: "rgba(5,7,14,0.96)", border: "1px solid rgba(201,168,76,0.55)", borderRadius: 8, padding: "7px 11px", pointerEvents: "none", backdropFilter: "blur(10px)", zIndex: 20, minWidth: 130 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f3e7c8", fontFamily: "system-ui,Tahoma,sans-serif" }}>{tooltip.city}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 3, fontFamily: "system-ui,sans-serif" }}>
-                {tooltip.count} {tooltip.count === 1 ? "order" : "orders"} · SAR {Math.round(tooltip.sar).toLocaleString()}
-              </div>
-            </div>
-          )}
+          {/* Tooltip — position managed by RAF, content by React state */}
+          <div
+            ref={tooltipRef}
+            style={{
+              display: "none",
+              position: "absolute",
+              background: "rgba(5,7,14,0.96)",
+              border: "1px solid rgba(201,168,76,0.55)",
+              borderRadius: 8,
+              padding: "8px 12px",
+              pointerEvents: "none",
+              backdropFilter: "blur(10px)",
+              zIndex: 20,
+              minWidth: 160,
+            }}
+          >
+            {tooltip && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#f3e7c8", fontFamily: "system-ui,Tahoma,sans-serif" }}>
+                  {tooltip.city}
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 4, fontFamily: "system-ui,sans-serif" }}>
+                  {tooltip.count.toLocaleString("en-US")} {tooltip.count === 1 ? "order" : "orders"} · ${usd.toLocaleString("en-US")}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ── Bottom ribbon ── */}
