@@ -261,6 +261,114 @@ export function DashboardTopBar({
             {syncBtn}
           </div>
 
+          {/* ── Mobile action bar — horizontally scrollable (< xl) ── */}
+          <div className="overflow-x-auto xl:hidden">
+            <div className="flex items-center gap-2 pb-1 pt-2" style={{ minWidth: "max-content" }}>
+              {viewerEmail ? (
+                <span
+                  className="hidden max-w-[11rem] truncate rounded-full border border-white/[0.08] bg-black/38 px-3 py-2 font-dashSans text-[11px] text-white/62 shadow-inner backdrop-blur-md lg:inline"
+                  title={viewerEmail}
+                >
+                  {viewerEmail}
+                </span>
+              ) : null}
+              {pwaInstall}
+              {pushCapable ? (
+                <div className="flex max-w-[15rem] flex-col gap-1 sm:max-w-none">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void enableNotifications()}
+                      disabled={pushBusy || pushOn}
+                      className="relative inline-flex min-h-[42px] items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-black/42 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.18em] text-white/82 shadow-inner backdrop-blur-md motion-safe:hover:border-[#c9a962]/38 disabled:cursor-not-allowed disabled:opacity-55"
+                      aria-pressed={pushOn}
+                    >
+                      <Smartphone className="size-[17px] text-sky-200/95" aria-hidden strokeWidth={1.65} />
+                      <span className="relative hidden sm:inline">
+                        {pushOn ? "Push on" : pushBusy ? "..." : "Enable notifications"}
+                      </span>
+                    </button>
+                    {pushOn ? (
+                      <button
+                        type="button"
+                        onClick={() => void retestNotifications()}
+                        disabled={pushBusy}
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-2xl border border-sky-400/25 bg-sky-950/35 px-2.5 py-2 font-dashSans text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-100/90 shadow-inner backdrop-blur-md disabled:opacity-45"
+                      >
+                        Test
+                      </button>
+                    ) : null}
+                  </div>
+                  {clientReady && isIosLike() && !iosStandaloneOk ? (
+                    <p className="rounded-lg border border-amber-500/25 bg-amber-950/25 px-2 py-1.5 font-dashSans text-[9px] leading-snug text-amber-100/85" dir="ltr">
+                      On iPhone, add to Home Screen to receive push notifications.
+                    </p>
+                  ) : null}
+                  {pushOn && supportsScreenWakeLock() ? (
+                    <p className="px-0.5 font-dashSans text-[8px] leading-snug text-white/38" dir="ltr">
+                      Screen stays awake while on this tab.
+                    </p>
+                  ) : null}
+                  {showIosHint ? (
+                    <p className="px-0.5 text-center font-dashSans text-[9px] leading-snug text-white/45 sm:text-left" dir="rtl">
+                      افتح Safari → شارك → أضف للشاشة الرئيسية
+                    </p>
+                  ) : null}
+                  {pushError ? (
+                    <span className="px-0.5 text-left text-[9px] text-rose-300/90">{pushError.length > 72 ? pushError.slice(0, 72) + "..." : pushError}</span>
+                  ) : null}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setToastEnabled(!toastEnabled)}
+                className="relative inline-flex min-h-[42px] items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-black/42 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.18em] text-white/82 shadow-inner backdrop-blur-md motion-safe:hover:border-[#c9a962]/38"
+                aria-pressed={toastEnabled}
+              >
+                {toastEnabled ? (
+                  <Bell className="size-[17px] text-[#ebe2c9]" aria-hidden strokeWidth={1.65} />
+                ) : (
+                  <BellOff className="size-[17px] text-white/58" aria-hidden strokeWidth={1.65} />
+                )}
+                <span className="relative hidden sm:inline">Alerts</span>
+              </button>
+              <button
+                type="button"
+                onPointerDown={() => void primeDashboardAudio()}
+                onClick={() =>
+                  void (async () => {
+                    await primeDashboardAudio();
+                    const next = !soundEnabled;
+                    setSoundEnabled(next);
+                    if (next) await previewOrderChime();
+                  })()
+                }
+                className={"relative inline-flex min-h-[42px] items-center justify-center gap-2 rounded-2xl border bg-black/42 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.18em] shadow-inner backdrop-blur-md motion-safe:hover:border-[#c9a962]/38 " + (soundEnabled && !audioUnlocked ? "border-amber-400/35 ring-1 ring-amber-400/25" : "border-white/[0.1]") + " text-white/82"}
+                aria-pressed={soundEnabled}
+              >
+                {soundEnabled ? (
+                  <Volume2 className="size-[17px] text-emerald-200/95" aria-hidden strokeWidth={1.65} />
+                ) : (
+                  <VolumeX className="size-[17px] text-white/58" aria-hidden strokeWidth={1.65} />
+                )}
+                <span className="relative hidden sm:inline">
+                  {!audioUnlocked && soundEnabled ? "Enable sound" : "Sound"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void logout()}
+                disabled={loggingOut}
+                className="relative inline-flex min-h-[42px] items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-black/42 px-3 py-2 font-dashSans text-[10px] font-semibold uppercase tracking-[0.18em] text-white/82 shadow-inner backdrop-blur-md motion-safe:hover:border-rose-400/35 motion-safe:hover:text-rose-100 disabled:opacity-45"
+                aria-label="Sign out"
+              >
+                <LogOut className="size-[17px]" aria-hidden strokeWidth={1.65} />
+                <span className="relative hidden sm:inline">{loggingOut ? "..." : "Logout"}</span>
+              </button>
+              {syncBtn}
+            </div>
+          </div>
+
           {/* ── Desktop header (≥ xl): logo left + all buttons right ── */}
           <div className="hidden xl:flex xl:items-center xl:justify-between xl:gap-6">
             {/* Logo */}
