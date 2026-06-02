@@ -20,6 +20,7 @@ type Props = {
   lastSyncIso: string | null;
   pwaSlot: ReactNode;
   viewerEmail?: string | null;
+  syncError?: string | null;
 };
 
 export function DashboardShell({
@@ -31,6 +32,7 @@ export function DashboardShell({
   lastSyncIso,
   pwaSlot,
   viewerEmail,
+  syncError,
 }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -91,6 +93,7 @@ export function DashboardShell({
             pwaInstall={pwaSlot}
             syncing={refreshing}
             viewerEmail={viewerEmail}
+            syncError={syncError}
           />
           <div
             ref={bindScrollRef}

@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DashboardShell } from "@/components/dashboard/shell/DashboardShell";
-import { CitiesBarChart } from "@/components/dashboard/charts/CitiesBarChart";
 import { ProductsLeaderboard } from "@/components/dashboard/charts/ProductsLeaderboard";
 import { RevenueAreaChart } from "@/components/dashboard/charts/RevenueAreaChart";
 import { MetricsCommandDeck } from "@/components/dashboard/premium/MetricsCommandDeck";
@@ -197,6 +196,7 @@ export function Dashboard() {
       lastSyncIso={lastSyncIso}
       pwaSlot={pwaSlot}
       viewerEmail={viewerEmail}
+      syncError={error}
     >
       <>
         {/* ── Orders content ── */}
@@ -332,15 +332,6 @@ export function Dashboard() {
               />
               <GlassPanel outerClassName="min-w-0 overflow-hidden" className="p-7 sm:p-9">
                 <LiveOrdersMap orders={payload.orders} pulseOrderFingerprints={mapPulseFingerprints} />
-              </GlassPanel>
-            </section>
-
-            <section id="regions" className="scroll-mt-28 xl:scroll-mt-[7rem]">
-              <GlassPanel outerClassName="min-w-0 overflow-hidden">
-                <div className="p-7 pb-10 sm:p-9">
-                  <SectionLabel eyebrow="Regional demand" title="Top cities by order volume." />
-                  <CitiesBarChart cities={analytics.cities} />
-                </div>
               </GlassPanel>
             </section>
 

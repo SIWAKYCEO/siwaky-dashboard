@@ -54,57 +54,85 @@ const DESERT_IDS = new Set([
   887, // Yemen
 ]);
 
-// ── City data ─────────────────────────────────────────────────────────────────
+// ── Country data ──────────────────────────────────────────────────────────────
 
-const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  "الرياض":  { lat: 24.7136, lng: 46.6753 },
-  "جدة":     { lat: 21.4858, lng: 39.1925 },
-  "الدمام":  { lat: 26.4207, lng: 50.0888 },
-  "مكة":     { lat: 21.3891, lng: 39.8579 },
-  "المدينة": { lat: 24.5247, lng: 39.5692 },
-  "دبي":     { lat: 25.2048, lng: 55.2708 },
-  "الكويت":  { lat: 29.3759, lng: 47.9774 },
-  "الدوحة":  { lat: 25.2854, lng: 51.5310 },
-  "أبوظبي":  { lat: 24.4539, lng: 54.3773 },
-  "مسقط":    { lat: 23.5880, lng: 58.5922 },
+const COUNTRY_COORDS: Record<string, { lat: number; lng: number }> = {
+  "السعودية":          { lat: 24.0,   lng: 45.0   },
+  "الإمارات":          { lat: 24.0,   lng: 54.0   },
+  "الكويت":            { lat: 29.3,   lng: 47.7   },
+  "قطر":               { lat: 25.3,   lng: 51.2   },
+  "البحرين":           { lat: 26.1,   lng: 50.5   },
+  "عُمان":             { lat: 22.0,   lng: 57.0   },
+  "اليمن":             { lat: 15.5,   lng: 48.5   },
+  "الأردن":            { lat: 31.2,   lng: 36.5   },
+  "العراق":            { lat: 33.2,   lng: 43.7   },
+  "سوريا":             { lat: 34.8,   lng: 38.9   },
+  "لبنان":             { lat: 33.9,   lng: 35.9   },
+  "مصر":               { lat: 26.8,   lng: 30.8   },
+  "ليبيا":             { lat: 26.3,   lng: 17.2   },
+  "المغرب":            { lat: 31.8,   lng: -7.1   },
+  "تونس":              { lat: 34.0,   lng: 9.0    },
+  "الجزائر":           { lat: 28.0,   lng: 2.6    },
+  "السودان":           { lat: 12.9,   lng: 30.2   },
+  "المملكة المتحدة":   { lat: 55.4,   lng: -3.4   },
+  "الولايات المتحدة":  { lat: 37.1,   lng: -95.7  },
+  "كندا":              { lat: 56.1,   lng: -106.3 },
+  "أستراليا":          { lat: -25.3,  lng: 133.8  },
+  "ألمانيا":           { lat: 51.2,   lng: 10.5   },
+  "فرنسا":             { lat: 46.2,   lng: 2.2    },
+  "تركيا":             { lat: 38.9,   lng: 35.2   },
+  "باكستان":           { lat: 30.4,   lng: 69.3   },
 };
 
-const CITY_LOOKUP: Record<string, string> = {
-  "الرياض": "الرياض", "الدمام": "الدمام", "جدة": "جدة",
-  "مكة": "مكة", "مكة المكرمة": "مكة",
-  "المدينة": "المدينة", "المدينة المنورة": "المدينة",
-  "دبي": "دبي", "الكويت": "الكويت", "مدينة الكويت": "الكويت",
-  "الدوحة": "الدوحة", "أبوظبي": "أبوظبي", "أبو ظبي": "أبوظبي",
-  "مسقط": "مسقط",
-  riyadh: "الرياض", arriyadh: "الرياض", riyad: "الرياض",
-  jeddah: "جدة", jidda: "جدة", jedda: "جدة",
-  dammam: "الدمام", dhahran: "الدمام", khobar: "الدمام",
-  "al khobar": "الدمام", alkhobar: "الدمام",
-  makkah: "مكة", mecca: "مكة", "makkah almukarramah": "مكة",
-  madinah: "المدينة", medina: "المدينة", "al madinah": "المدينة",
-  dubai: "دبي", dubayy: "دبي",
-  kuwait: "الكويت", "kuwait city": "الكويت",
-  doha: "الدوحة", "ad dawhah": "الدوحة",
-  "abu dhabi": "أبوظبي", abudhabi: "أبوظبي",
-  muscat: "مسقط", masqat: "مسقط",
+// Maps English/transliterated names → canonical Arabic key
+const COUNTRY_LOOKUP: Record<string, string> = {
+  "saudi arabia": "السعودية", "saudi": "السعودية", "sa": "السعودية",
+  "المملكة العربية السعودية": "السعودية", "السعوديه": "السعودية",
+  "uae": "الإمارات", "united arab emirates": "الإمارات",
+  "الامارات": "الإمارات", "الإمارات العربية المتحدة": "الإمارات",
+  "ae": "الإمارات",
+  "kuwait": "الكويت", "kw": "الكويت",
+  "qatar": "قطر", "qa": "قطر",
+  "bahrain": "البحرين", "bh": "البحرين",
+  "oman": "عُمان", "om": "عُمان", "عمان": "عُمان",
+  "yemen": "اليمن", "ye": "اليمن",
+  "jordan": "الأردن", "jo": "الأردن",
+  "iraq": "العراق", "iq": "العراق",
+  "syria": "سوريا", "sy": "سوريا",
+  "lebanon": "لبنان", "lb": "لبنان",
+  "egypt": "مصر", "eg": "مصر",
+  "libya": "ليبيا", "ly": "ليبيا",
+  "morocco": "المغرب", "ma": "المغرب",
+  "tunisia": "تونس", "tn": "تونس",
+  "algeria": "الجزائر", "dz": "الجزائر",
+  "sudan": "السودان", "sd": "السودان",
+  "uk": "المملكة المتحدة", "united kingdom": "المملكة المتحدة", "britain": "المملكة المتحدة", "gb": "المملكة المتحدة",
+  "usa": "الولايات المتحدة", "us": "الولايات المتحدة", "united states": "الولايات المتحدة",
+  "canada": "كندا", "ca": "كندا",
+  "australia": "أستراليا", "au": "أستراليا",
+  "germany": "ألمانيا", "de": "ألمانيا",
+  "france": "فرنسا", "fr": "فرنسا",
+  "turkey": "تركيا", "turkiye": "تركيا", "tr": "تركيا",
+  "pakistan": "باكستان", "pk": "باكستان",
 };
 
-function resolveCity(raw: string | undefined): string | null {
+function resolveCountry(raw: string | undefined): string | null {
   const s = (raw ?? "").trim();
   if (!s) return null;
-  if (CITY_COORDS[s]) return s;
+  if (COUNTRY_COORDS[s]) return s;
   const lower = s.toLowerCase();
-  return CITY_LOOKUP[s] ?? CITY_LOOKUP[lower] ?? null;
+  return COUNTRY_LOOKUP[s] ?? COUNTRY_LOOKUP[lower] ?? null;
 }
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
 
-type CityData = { key: string; lat: number; lng: number; count: number; sar: number; isBurst: boolean };
+type CountryData = { key: string; lat: number; lng: number; count: number; sar: number; isBurst: boolean };
 
-function aggregateCities(orders: OrderRow[], pulseSet: ReadonlySet<string>): CityData[] {
+function aggregateCountries(orders: OrderRow[], pulseSet: ReadonlySet<string>): CountryData[] {
   const map = new Map<string, { count: number; sar: number; burst: boolean }>();
   for (const o of orders) {
-    const key = resolveCity(o.city);
+    // Try country field first, fall back to city field
+    const key = resolveCountry(o.country) ?? resolveCountry(o.city);
     if (!key) continue;
     const cur = map.get(key) ?? { count: 0, sar: 0, burst: false };
     cur.count++;
@@ -114,16 +142,22 @@ function aggregateCities(orders: OrderRow[], pulseSet: ReadonlySet<string>): Cit
   }
   return [...map.entries()]
     .filter(([, v]) => v.count > 0)
-    .map(([key, v]) => ({ key, lat: CITY_COORDS[key].lat, lng: CITY_COORDS[key].lng, ...v, isBurst: v.burst }));
+    .map(([key, v]) => ({
+      key,
+      lat: COUNTRY_COORDS[key].lat,
+      lng: COUNTRY_COORDS[key].lng,
+      ...v,
+      isBurst: v.burst,
+    }));
 }
 
 function buildRibbonLines(orders: OrderRow[]): string[] {
   const last5 = [...orders].reverse().slice(0, 5);
   const items = last5.map((o) => {
-    const name = (o.name ?? "").trim() || "عميل";
-    const city = (o.city ?? "").trim() || "—";
-    const usd = Math.round(sarToUsd(lineRevenue(o)));
-    return `${name} · ${city} · $${usd.toLocaleString("en-US")}`;
+    const name    = (o.name ?? "").trim() || "عميل";
+    const country = resolveCountry(o.country) ?? resolveCountry(o.city) ?? ((o.country ?? o.city ?? "").trim() || "—");
+    const usd     = Math.round(sarToUsd(lineRevenue(o)));
+    return name + " · " + country + " · $" + usd.toLocaleString("en-US");
   });
   if (!items.length) return ["لا يوجد طلبات بعد…", "لا يوجد طلبات بعد…"];
   return [...items, ...items];
@@ -275,7 +309,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
 
   const [tooltip, setTooltip] = useState<{ city: string; count: number; sar: number } | null>(null);
 
-  const cities      = useMemo(() => aggregateCities(orders, pulseOrderFingerprints), [orders, pulseOrderFingerprints]);
+  const countries   = useMemo(() => aggregateCountries(orders, pulseOrderFingerprints), [orders, pulseOrderFingerprints]);
   const ribbonLines = useMemo(() => buildRibbonLines(orders), [orders]);
 
   // ── Bootstrap (runs once) ──────────────────────────────────────────────────
@@ -582,7 +616,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Sync dots when city data changes ─────────────────────────────────────
+  // ── Sync dots when country data changes ──────────────────────────────────
 
   useEffect(() => {
     const globeGroup = globeGroupRef.current;
@@ -597,8 +631,8 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       for (const r of e.rings) { r.geometry.dispose(); r.material.dispose(); }
     }
 
-    const entries: DotEntry[] = cities.map((city) => {
-      const normal = latLngToVec3(city.lat, city.lng, 1).normalize();
+    const entries: DotEntry[] = countries.map((country) => {
+      const normal = latLngToVec3(country.lat, country.lng, 1).normalize();
       const pos    = normal.clone().multiplyScalar(1.002);
 
       const group = new THREE.Group();
@@ -620,7 +654,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
       }
 
       globeGroup.add(group);
-      return { key: city.key, count: city.count, sar: city.sar, isBurst: city.isBurst, group, mainMesh, rings, burstT: city.isBurst ? elapsed : 0 };
+      return { key: country.key, count: country.count, sar: country.sar, isBurst: country.isBurst, group, mainMesh, rings, burstT: country.isBurst ? elapsed : 0 };
     });
 
     dotEntriesRef.current = entries;
@@ -634,7 +668,7 @@ const LiveOrdersMap = memo(function LiveOrdersMap({ orders, pulseOrderFingerprin
         if (tooltipRef.current) tooltipRef.current.style.display = "none";
       }
     }
-  }, [cities]);
+  }, [countries]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 

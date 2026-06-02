@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import type { DashboardNavEntry } from "./dashboardNav";
 import { dashboardNavEntries } from "./dashboardNav";
@@ -22,7 +22,7 @@ function NavTiles({
 }) {
   return (
     <nav
-      className={`flex flex-col ${compact ? "gap-0.5 px-2 pb-3 pt-5" : "gap-1.5 px-3 pb-4 pt-8"}`}
+      className={"flex flex-col " + (compact ? "gap-0.5 px-2 pb-3 pt-5" : "gap-1.5 px-3 pb-4 pt-8")}
       aria-label="Dashboard workspace"
     >
       {items.map((item) => {
@@ -34,22 +34,16 @@ function NavTiles({
             type="button"
             data-section={item.id}
             onClick={() => onNavigate(item.id)}
-            style={{
-              borderLeft: isActive ? "3px solid #C9A84C" : "3px solid transparent",
-            }}
-            className={`group flex w-full items-center gap-3.5 rounded-xl bg-transparent px-3 text-left outline-none transition-colors
-              hover:bg-white/[0.04] ${compact ? "py-3" : "py-3.5"}
-              ${isActive ? "bg-white/[0.03]" : ""}`}
+            style={{ borderLeft: isActive ? "3px solid #C9A84C" : "3px solid transparent" }}
+            className={"group flex w-full items-center gap-3.5 rounded-xl bg-transparent px-3 text-left outline-none transition-colors hover:bg-white/[0.04] " + (compact ? "py-3" : "py-3.5") + " " + (isActive ? "bg-white/[0.03]" : "")}
           >
             <span
-              className={`flex shrink-0 items-center justify-center rounded-xl border border-white/[0.08] shadow-inner
-                ${isActive ? "border-[#c9a84c]/35 bg-[#1c2010] text-[#c9a84c]" : "bg-[#1a1a1d] text-[#c9a84c] group-hover:border-[#c9a84c]/28"}
-                ${compact ? "size-[42px]" : "size-10"}`}
+              className={"flex shrink-0 items-center justify-center rounded-xl border border-white/[0.08] shadow-inner " + (isActive ? "border-[#c9a84c]/35 bg-[#1c2010] text-[#c9a84c]" : "bg-[#1a1a1d] text-[#c9a84c] group-hover:border-[#c9a84c]/28") + " " + (compact ? "size-[42px]" : "size-10")}
             >
               <Icon className={compact ? "size-5" : "size-[18px]"} strokeWidth={1.65} aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className={`block font-bold leading-tight text-white/95 ${compact ? "text-[15px]" : "text-[14px]"}`}>
+              <span className={"block font-bold leading-tight text-white/95 " + (compact ? "text-[15px]" : "text-[14px]")}>
                 {item.label}
               </span>
               <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-[0.22em] text-white/38">
@@ -68,13 +62,19 @@ function NavTiles({
 type RailProps = { onNavigate: (id: string) => void };
 
 export function DashboardSidebarRail({ onNavigate }: RailProps) {
-  const router = useRouter();
+  const router   = useRouter();
+  const pathname = usePathname();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleNavigate = (id: string) => {
     const entry = dashboardNavEntries.find((e) => e.id === id);
     if (entry?.href) {
       router.push(entry.href);
+      return;
+    }
+    // If we're not on the main dashboard, navigate there first
+    if (pathname !== "/dashboard") {
+      router.push("/dashboard");
       return;
     }
     setActiveId(id);
@@ -99,7 +99,7 @@ export function DashboardSidebarRail({ onNavigate }: RailProps) {
                   Private workspace
                 </p>
                 <p className="mt-2 text-[12px] leading-relaxed text-siwaky-muted">
-                  Built for SIWAKY operators only — upcoming team login will gate alerts, sounds, and live feeds.
+                  Built for SIWAKY operators only.
                 </p>
               </div>
             </div>
@@ -112,16 +112,13 @@ export function DashboardSidebarRail({ onNavigate }: RailProps) {
 
 function RailBrandHeader() {
   return (
-    <div className="relative z-10 overflow-visible border-b border-white/[0.065] px-6 py-9">
+    <div className="relative z-10 overflow-visible border-b border-white/[0.065] px-6 py-6">
       <div className="relative flex flex-col gap-3 overflow-visible">
-        {/* eslint-disable-next-line @next/next/no-img-element -- SVG wordmark */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/logo-siwaky.svg"
+          src="/logo.png"
           alt="SIWAKY"
-          width={150}
-          height={40}
-          decoding="async"
-          className="h-11 w-auto max-w-[188px] shrink-0 object-contain"
+          className="h-[44px] w-auto object-contain object-left"
         />
         <span
           aria-live="polite"
@@ -134,9 +131,6 @@ function RailBrandHeader() {
           Live ledger
         </span>
       </div>
-      <p className="mt-4 max-w-[16rem] text-[13px] leading-relaxed text-siwaky-muted">
-        Luxury-grade operations rail · SIWAKY internal
-      </p>
     </div>
   );
 }
@@ -146,7 +140,8 @@ function RailBrandHeader() {
 type DrawerProps = { onNavigate: (id: string) => void; onClose: () => void };
 
 export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
-  const router = useRouter();
+  const router   = useRouter();
+  const pathname = usePathname();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handleNavigate = (id: string) => {
@@ -156,15 +151,19 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
       router.push(entry.href);
       return;
     }
+    // If not on the main dashboard, navigate there and close drawer
+    if (pathname !== "/dashboard") {
+      onClose();
+      router.push("/dashboard");
+      return;
+    }
     setActiveId(id);
     onNavigate(id);
+    // Drawer is closed by DashboardShell's handleNavigate (calls setDrawerOpen(false))
   };
 
   return (
-    <div
-      className="flex h-full w-full flex-col overflow-hidden"
-      style={{ background: "#0e0e10" }}
-    >
+    <div className="flex h-full w-full flex-col overflow-hidden" style={{ background: "#0e0e10" }}>
       {/* ── Close button ── */}
       <div className="flex shrink-0 justify-end px-4 pt-5 pb-2">
         <button
@@ -179,20 +178,12 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
 
       {/* ── Brand header ── */}
       <div className="shrink-0 border-b border-white/[0.07] px-6 pb-5 pt-3">
-        <p
-          aria-label="SIWAKY"
-          style={{
-            color: "#C9A84C",
-            fontSize: 20,
-            fontWeight: 700,
-            letterSpacing: 6,
-            textTransform: "uppercase",
-            fontFamily: "inherit",
-            lineHeight: 1,
-          }}
-        >
-          SIWAKY
-        </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="SIWAKY"
+          className="h-[44px] w-auto object-contain object-left"
+        />
 
         <div className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-emerald-500/[0.22] bg-emerald-950/50 px-3 py-1.5">
           <span className="relative flex size-[7px] shrink-0">
@@ -213,12 +204,7 @@ export function DashboardSidebarDrawer({ onClose, onNavigate }: DrawerProps) {
 
       {/* ── Nav items ── */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <NavTiles
-          items={dashboardNavEntries}
-          onNavigate={handleNavigate}
-          activeId={activeId}
-          compact
-        />
+        <NavTiles items={dashboardNavEntries} onNavigate={handleNavigate} activeId={activeId} compact />
       </div>
     </div>
   );
