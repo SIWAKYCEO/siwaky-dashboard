@@ -40,7 +40,7 @@ export function DashboardShell({
   }, []);
 
   return (
-    <div dir="ltr" className="relative isolate flex min-h-[100dvh] w-full min-w-0 overflow-x-hidden text-white">
+    <div dir="ltr" className="relative isolate flex h-full w-full min-w-0 overflow-x-hidden text-white">
       {/* Decorative layers — clipped to viewport to avoid sideways scroll */}
       <span
         aria-hidden
@@ -49,7 +49,7 @@ export function DashboardShell({
       <span aria-hidden className="pointer-events-none absolute inset-0 bg-siwaky-bg" />
       <span aria-hidden className="pointer-events-none absolute inset-0 bg-lux-gradient opacity-[0.72]" />
 
-      <div className="relative z-[1] flex min-h-[100dvh] w-full min-w-0 overflow-x-hidden">
+      <div className="relative z-[1] flex h-full w-full min-w-0 overflow-x-hidden">
         <aside className="hidden shrink-0 xl:block">
           <DashboardSidebarRail onNavigate={handleNavigate} />
         </aside>

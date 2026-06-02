@@ -96,9 +96,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Solid canvas only — gradients live in DashboardShell to avoid stacked washes */}
 
-        <div className="min-h-[100dvh] w-full min-w-0 overflow-x-hidden bg-[#28282a] font-dashSans text-white antialiased">
+        <div className="h-[100dvh] w-full min-w-0 overflow-hidden bg-[#28282a] font-dashSans text-white antialiased">
 
-          <div className="min-h-dvh min-w-0 w-full overflow-x-hidden">{children}</div>
+          <div className="h-full min-w-0 w-full overflow-hidden">{children}</div>
 
         </div>
 
