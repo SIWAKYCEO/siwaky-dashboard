@@ -259,12 +259,7 @@ export function buildLiveMapMarkers(
     }
     const id = `${stableOrderFingerprint(o)}-${idx}`;
     const title = (o.product ?? "").trim() || "Product";
-    const subtitle = [
-      (o.city ?? "").trim(),
-      (o.country ?? "").trim(),
-    ]
-      .filter(Boolean)
-      .join(", ");
+    const subtitle = (o.country ?? "").trim();
     markers.push({
       id,
       lat: ll.lat,

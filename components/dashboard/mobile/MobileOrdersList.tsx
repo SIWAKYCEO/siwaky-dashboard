@@ -29,10 +29,10 @@ export function MobileOrdersList({ orders }: { orders: OrderRow[] }) {
       ) : (
         <div className="space-y-2">
           {latest.map((order, i) => {
-            const rev  = lineRevenue(order);
-            const name = (order.name ?? "").trim() || "—";
-            const city = (order.city ?? "").trim() || "—";
-            const date = fmtDate(order.date);
+            const rev     = lineRevenue(order);
+            const name    = (order.name ?? "").trim() || "—";
+            const country = (order.country ?? "").trim() || "—";
+            const date    = fmtDate(order.date);
 
             return (
               <div
@@ -49,12 +49,12 @@ export function MobileOrdersList({ orders }: { orders: OrderRow[] }) {
                   )}
                 </div>
 
-                {/* Left side (renders on visual right due to RTL): name + city */}
+                {/* Left side (renders on visual right due to RTL): name + country */}
                 <div className="min-w-0 flex-1 text-right">
                   <p className="truncate font-dashSans text-[14px] font-bold text-white">
                     {name}
                   </p>
-                  <p className="mt-0.5 font-dashSans text-[11px] text-white/45">{city}</p>
+                  <p className="mt-0.5 font-dashSans text-[11px] text-white/45">{country}</p>
                 </div>
               </div>
             );

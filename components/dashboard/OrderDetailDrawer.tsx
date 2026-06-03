@@ -117,7 +117,6 @@ export function OrderDetailDrawer({
                   <DetailSection title="Customer & location">
                     <FieldRow label="Customer" value={rowLabel(order.name)} />
                     <FieldRow label="Phone" value={rowLabel(order.phone)} mono />
-                    <FieldRow label="City" value={rowLabel(order.city)} />
                     <FieldRow label="Country" value={rowLabel(order.country)} />
                   </DetailSection>
 

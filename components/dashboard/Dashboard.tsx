@@ -68,6 +68,7 @@ export function Dashboard() {
   const [payload, setPayload] = useState<OrdersPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [buttonSyncing, setButtonSyncing] = useState(false);
   const [lastSyncIso, setLastSyncIso] = useState<string | null>(null);
   const [feedPollingActive, setFeedPollingActive] = useState(false);
   const [highlightFingerprints, setHighlightFingerprints] = useState<Set<string>>(() => new Set());
@@ -138,6 +139,7 @@ export function Dashboard() {
 
   const loadOrders = useCallback(async () => {
     setError(null);
+    setButtonSyncing(true);
     try {
       const data = await fetchOrders();
       ingestOrdersSnapshot(data);
@@ -145,6 +147,7 @@ export function Dashboard() {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
+      setButtonSyncing(false);
     }
   }, [ingestOrdersSnapshot]);
 
@@ -190,7 +193,7 @@ export function Dashboard() {
   return (
     <DashboardShell
       bindScrollRef={bindScrollRef}
-      refreshing={refreshing}
+      refreshing={refreshing || buttonSyncing}
       onRefresh={loadOrders}
       payload={payload}
       lastSyncIso={lastSyncIso}

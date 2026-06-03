@@ -5,6 +5,29 @@ import { getDashboardOrdersUpstreamBase } from "@/lib/dashboard/orders-upstream"
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Extract the real client IP in priority order:
+ * 1. CF-Connecting-IP (Cloudflare's trusted single-IP header)
+ * 2. First entry of X-Forwarded-For (leftmost = original client)
+ * 3. X-Real-IP
+ * 4. Empty string (FastAPI falls back to socket address)
+ */
+function extractRealClientIp(req: Request): string {
+  const cf = req.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+
+  const xff = req.headers.get("x-forwarded-for")?.trim();
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  const xReal = req.headers.get("x-real-ip")?.trim();
+  if (xReal) return xReal;
+
+  return "";
+}
+
 function redactUpstreamBase(base: string): string {
   try {
     const u = new URL(base.includes("://") ? base : `http://${base}`);
@@ -34,14 +57,13 @@ export async function POST(req: Request) {
   const upstreamBase = getDashboardOrdersUpstreamBase().replace(/\/$/, "");
   const upstream = `${upstreamBase}/api/orders`;
 
-  const xffIncoming = req.headers.get("x-forwarded-for") ?? "";
-  const xReal = req.headers.get("x-real-ip") ?? "";
+  const realClientIp = extractRealClientIp(req);
 
   console.log("[siwaky/api/orders] forwarding to FastAPI", {
     fastapiUpstream: redactUpstreamBase(upstreamBase),
     fastapiOrdersPath: "/api/orders",
     bodyBytes: new TextEncoder().encode(body).length,
-    forwardedForPresent: Boolean(xffIncoming || xReal),
+    realClientIp: realClientIp || "(empty — FastAPI will use socket addr)",
     hint: `Browser should POST ...${CHECKOUT_ORDER_POST_PATH} on storefront origin unless NEXT_PUBLIC_CHECKOUT_POST_URL is set.`,
   });
 
@@ -50,8 +72,10 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-forwarded-for": xffIncoming,
-        "x-real-ip": xReal,
+        // Forward the real client IP so FastAPI's _client_ip() reads it correctly.
+        // Both headers set to the same clean IP — FastAPI reads x-forwarded-for first.
+        "x-forwarded-for": realClientIp,
+        "x-real-ip": realClientIp,
         "user-agent": req.headers.get("user-agent") ?? "",
       },
       body,

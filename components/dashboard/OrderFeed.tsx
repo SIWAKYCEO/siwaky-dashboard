@@ -50,8 +50,8 @@ export function OrderFeed({
           const titleStr = [product, qty].filter(Boolean).join(" ");
 
           const name    = order.name?.trim();
-          const city    = [order.city?.trim(), order.country?.trim()].filter(Boolean).join(", ");
-          const subtitle = [name, city].filter(Boolean).join(" · ");
+          const country  = order.country?.trim() ?? "";
+          const subtitle = [name, country].filter(Boolean).join(" · ");
 
           const date = fmtDate(order.date);
 
